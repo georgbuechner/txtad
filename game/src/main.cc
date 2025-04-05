@@ -19,5 +19,4 @@ int main() {
   });
 
   thread_http.join();
-  return 0;
 }

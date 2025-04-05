@@ -1,0 +1,24 @@
+html, body {
+  height: 100%;
+  padding: 0em;
+}
+
+.terminal {
+  background-color: black;
+  height: 100%;
+  padding: 1em;
+  color: white;
+}
+
+.cmd {
+  background-color: black;
+  color: white;
+  border: none;
+}
+.cmd:focus {
+  outline: none;
+}
+
+.cmd::placeholder {
+  color: white;
+}
