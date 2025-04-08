@@ -5,6 +5,7 @@
 #ifndef SERVER_WEBSOCKET_SERVER_H_
 #define SERVER_WEBSOCKET_SERVER_H_
 
+#include <functional>
 #include <iostream>
 #include <map>
 #include <memory>
@@ -15,8 +16,9 @@
 
 class WebsocketServer {
   public:
+    using EventHandlerFn = std::function<void(std::string, std::string, std::string)>;
      ///< Connection_id-typedef.
-    typedef decltype(websocketpp::lib::weak_ptr<void>().lock().get()) connection_id;
+    typedef decltype(websocketpp::lib::weak_ptr<void>().lock().get()) t_connection_id;
 
     // public methods:
    
@@ -32,6 +34,9 @@ class WebsocketServer {
      */
     ~WebsocketServer();
 
+    // setter 
+    static void set_handle_event(EventHandlerFn fn);
+
     /**
      * Initializes and starts main loop. (THREAD)
      * @param[in] port 
@@ -39,29 +44,25 @@ class WebsocketServer {
     void Start(int port);
 
     /**
-     * Send json to als connections
+     * Send payload to given user
+     * @param[in] user_id 
+     * @param[in] payload
      */
-    void SendFieldToAllConnections(std::string payload);
-
-    /**
-     * Closes games every 5 seconds if finished. (THREAD)
-     * (if standalone_, closes thread)
-     * Updates lobby if a game is closed.
-     */
-    void CloseGames();
+    void SendMessage(const std::string& user_id, const std::string& payload);
 
   private:
 
     // typedefs:
-    typedef websocketpp::server<websocketpp::config::asio> server;
-    typedef server::message_ptr message_ptr;
-    typedef std::pair<int, std::string> error_obj;
+    typedef websocketpp::server<websocketpp::config::asio> t_server;
+    typedef t_server::message_ptr t_message_ptr;
     
     // members:
 
-    server server_;  ///< server object.
-    mutable std::shared_mutex mutex_connections_;  ///< Mutex for connections_.
-    std::map<connection_id, websocketpp::connection_hdl> connections_;  ///< Dictionary with all connections.
+    t_server _server;  ///< server object.
+    mutable std::shared_mutex _mutex;  ///< Mutex for connections_.
+    std::map<std::string, websocketpp::connection_hdl> _connections;  ///< Dictionary with all connections.
+
+    static EventHandlerFn _handle_event;
 
     // methods:
     
@@ -86,7 +87,9 @@ class WebsocketServer {
      * @param[in] hdl incomming connection.
      * @param[in] msg message.
      */
-    void on_message(server* srv, websocketpp::connection_hdl hdl, message_ptr msg);
+    void OnMessage(t_server* srv, websocketpp::connection_hdl hdl, t_message_ptr msg);
+
+    static const std::string ConnectionIDToString(t_connection_id connection_id);
 };
 
 #endif 

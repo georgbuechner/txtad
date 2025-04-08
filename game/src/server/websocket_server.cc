@@ -2,72 +2,105 @@
  * @author: fux
  */
 
+#include <nlohmann/json.hpp>
+#include <spdlog/spdlog.h>
+#include <sstream>
 #include "server/websocket_server.h"
+#include "utils/defines.h"
 
 using websocketpp::lib::placeholders::_1;
 using websocketpp::lib::placeholders::_2;
 using websocketpp::lib::bind;
 
 
+WebsocketServer::EventHandlerFn WebsocketServer::_handle_event = nullptr;
+
 WebsocketServer::WebsocketServer() {}
 
 WebsocketServer::~WebsocketServer() {
-  server_.stop();
+  _server.stop();
 }
+
+void WebsocketServer::set_handle_event(EventHandlerFn fn) {
+  _handle_event = fn;
+}
+
 
 void WebsocketServer::Start(int port) {
   try { 
-    std::cout << "WebsocketFrame::Start: set_access_channels" << std::endl;
-    server_.set_access_channels(websocketpp::log::alevel::none);
-    server_.clear_access_channels(websocketpp::log::alevel::frame_payload);
-    server_.init_asio(); 
-    server_.set_message_handler(bind(&WebsocketServer::on_message, this, &server_, ::_1, ::_2)); 
-    server_.set_open_handler(bind(&WebsocketServer::OnOpen, this, ::_1));
-    server_.set_close_handler(bind(&WebsocketServer::OnClose, this, ::_1));
-    server_.set_reuse_addr(true);
-    server_.listen(port); 
-    server_.start_accept(); 
-    std::cout << "WebsocketFrame:: successfully started websocket server on port: " << port << std::endl;
-    server_.run(); 
+    spdlog::get(txtad::LOGGER)->debug("WSS::Start: set_access_channels");
+    _server.set_access_channels(websocketpp::log::alevel::none);
+    _server.clear_access_channels(websocketpp::log::alevel::frame_payload);
+    _server.init_asio(); 
+    _server.set_message_handler(bind(&WebsocketServer::OnMessage, this, &_server, ::_1, ::_2)); 
+    _server.set_open_handler(bind(&WebsocketServer::OnOpen, this, ::_1));
+    _server.set_close_handler(bind(&WebsocketServer::OnClose, this, ::_1));
+    _server.set_reuse_addr(true);
+    _server.listen(port); 
+    _server.start_accept(); 
+    spdlog::get(txtad::LOGGER)->info("WSS::Start: Successfully started websocket server on port: {}", port);
+    _server.run(); 
   } catch (websocketpp::exception const& e) {
-    std::cout << "WebsocketFrame::Start: websocketpp::exception: " << e.what() << std::endl;
+    spdlog::get(txtad::LOGGER)->error("WSS::Start: websocketpp::exception: {}", e.what());
   } catch (std::exception& e) {
-    std::cout << "WebsocketFrame::Start: websocketpp::exception: " << e.what() << std::endl;
+    spdlog::get(txtad::LOGGER)->error("WSS::Start: websocketpp::exception: {}", e.what());
   }
 }
 
 void WebsocketServer::OnOpen(websocketpp::connection_hdl hdl) {
-  std::unique_lock ul_connections(mutex_connections_);
-  if (connections_.count(hdl.lock().get()) == 0)
-    connections_[hdl.lock().get()] = hdl;
+  std::unique_lock ul_connections(_mutex);
+  const std::string user_id = ConnectionIDToString(hdl.lock().get());
+  if (_connections.count(user_id) == 0) {
+    _connections[user_id] = hdl;
+  }
   else
-    std::cout << "WebsocketFrame::OnOpen: New connection, but connection already exists!" << std::endl;
+    spdlog::get(txtad::LOGGER)->warn("WSS::OnOpen: New connection, but connection already exists!");
 }
 
 void WebsocketServer::OnClose(websocketpp::connection_hdl hdl) {
-  std::unique_lock ul_connections(mutex_connections_);
-  if (connections_.count(hdl.lock().get()) > 0) {
+  std::unique_lock ul_connections(_mutex);
+  const std::string user_id = ConnectionIDToString(hdl.lock().get());
+  if (_connections.count(user_id) > 0) {
     try {
       // Delete connection.
-      if (connections_.size() > 1)
-        connections_.erase(hdl.lock().get());
+      if (_connections.size() > 1)
+        _connections.erase(user_id);
       else 
-        connections_.clear();
+        _connections.clear();
       ul_connections.unlock();
-      std::cout << "WebsocketFrame::OnClose: Connection closed successfully." << std::endl;
+      spdlog::get(txtad::LOGGER)->debug("WSS::OnClose: Connection closed successfully.");
     } catch (std::exception& e) {
-      std::cout << "WebsocketFrame::OnClose: Failed to close connection: " << e.what() << std::endl;
+      spdlog::get(txtad::LOGGER)->error("WSS::OnClose: Failed to close connection: {}", e.what());
     }
   }
   else 
-    std::cout << "WebsocketFrame::OnClose: Connection closed, but connection didn't exist!" << std::endl;
+    spdlog::get(txtad::LOGGER)->warn("WSS::OnClose: Connection closed, but connection didn't exist!");
 }
 
 
-void WebsocketServer::on_message(server* srv, websocketpp::connection_hdl hdl, message_ptr msg) {}
-
-void WebsocketServer::SendFieldToAllConnections(std::string payload) {
-  for (const auto& it : connections_) {
-    server_.send(it.second, payload, websocketpp::frame::opcode::value::text);
+void WebsocketServer::OnMessage(t_server* srv, websocketpp::connection_hdl hdl, t_message_ptr msg) {
+  spdlog::get(txtad::LOGGER)->debug("WSS::OnMessage: Got new message: {}", msg->get_payload());
+  try {
+    nlohmann::json json = nlohmann::json::parse(msg->get_payload());
+    if (json.contains("game") && json.contains("event")) {
+      _handle_event(ConnectionIDToString(hdl.lock().get()), json["game"], json["event"]);
+    } else {
+      spdlog::get(txtad::LOGGER)->warn("WSS::OnMessage: Missing \"game\" or \"event\"");
+    }
+  } catch (std::exception& e) {
+    spdlog::get(txtad::LOGGER)->warn("WSS::OnMessage: Unkown error: ", e.what());
   }
+}
+
+void WebsocketServer::SendMessage(const std::string& user_id, const std::string& payload) {
+  std::shared_lock sl_connections(_mutex);
+  if (_connections.count(user_id) > 0) {
+    _server.send(_connections.at(user_id), payload, websocketpp::frame::opcode::value::text);
+  }
+}
+
+std::string const WebsocketServer::ConnectionIDToString(t_connection_id connection_id) {
+  std::stringstream stream; 
+  stream << connection_id;
+  return stream.str();
 }

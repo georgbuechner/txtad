@@ -11,6 +11,10 @@ add_compile_options(-w)
 
 set(SRC_FILES 
   src/main.cc 
+  src/game/game.cc 
+  src/game/user.cc 
+  src/server/websocket_server.cc 
+  ../shared/utils/utils.cc
 )
 
 find_package(nlohmann_json CONFIG REQUIRED)
