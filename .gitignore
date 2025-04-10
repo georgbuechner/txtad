@@ -12,3 +12,8 @@ _deps
 CMakeUserPresets.json
 game/vcpkg/*
 game/build/*
+game/logs/*
+game/.cache/*
+data/games/*
+!data/games/test
+!data/games/original

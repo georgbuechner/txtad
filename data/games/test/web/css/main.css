@@ -1,0 +1,31 @@
+body {
+  background-color: red;
+  font-size: 11px;
+}
+
+.terminal {
+  height: 100vh;
+  width: 25%;
+  margin-left: 70%;
+  margin-right: 0%;
+  padding: 1em;
+  color: white;
+  background-color: rgba(0, 0, 0, 0.5);
+}
+
+.line { }
+
+.cmd {
+  background-color: transparent;
+  color: white;
+  border: none;
+  font-size: 11px;
+}
+
+.cmd:focus {
+  outline: none;
+}
+
+.cmd::placeholder {
+  color: white;
+}
