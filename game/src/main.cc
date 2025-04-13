@@ -12,7 +12,7 @@
 #define HTML_PATH "web/"
 #define GAMES_PATH "../data/games/"
 
-std::map<std::string, std::shared_ptr<Game>> InitGames(std::shared_ptr<WebsocketServer> wss) {
+std::map<std::string, std::shared_ptr<Game>> InitGames() {
   std::map<std::string, std::shared_ptr<Game>> games;
   for (const auto& dir : std::filesystem::directory_iterator(GAMES_PATH)) {
     const std::string filename = dir.path().filename();
@@ -30,7 +30,7 @@ int main() {
   std::shared_ptr<WebsocketServer> wss = std::make_shared<WebsocketServer>();
 
   // Create games
-  auto games = InitGames(wss);
+  auto games = InitGames();
 
   Game::set_msg_fn([&wss](const std::string& id, const std::string& msg) {
     spdlog::get(txtad::LOGGER)->debug("MAIN: SendMessage: {}, {}", id, msg);
