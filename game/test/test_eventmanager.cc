@@ -1,13 +1,10 @@
-#include "utils/defines.h"
-#include "utils/eventmanager/eventmanager.h"test
+#include "utils/eventmanager/eventmanager.h"
 #include "utils/eventmanager/listener.h"
 #include "utils/utils.h"
 #include <catch2/catch_test_macros.hpp>
-#include <iostream>
 #include <memory>
 #include <regex>
 #include <string>
-#include <vector>
 
 TEST_CASE("Test eventmanager basic use", "[eventmanager]") {
   const std::string E_SET_MANA = "#sa mana=20";

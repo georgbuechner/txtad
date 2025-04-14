@@ -22,7 +22,6 @@ class EventManager {
 
     void TakeEvent(std::string event) {
       for (const auto& it : _listeners) {
-        std::cout << "Checking: " << it.first << std::endl;
         if (it.second->Test(event)) {
           it.second->Execute(event);
           if (!it.second->permeable())
