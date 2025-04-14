@@ -1,5 +1,5 @@
 #include "utils/defines.h"
-#include "utils/eventmanager/eventmanager.h"
+#include "utils/eventmanager/eventmanager.h"test
 #include "utils/eventmanager/listener.h"
 #include "utils/utils.h"
 #include <catch2/catch_test_macros.hpp>
