@@ -15,3 +15,16 @@ void util::SetUpLogger(const std::string& name, spdlog::level::level_enum log_le
   // set log-level
   logger->set_level(log_level);
 }
+
+
+std::vector<std::string> util::Split(std::string str, std::string delimiter) {
+  std::vector<std::string> v_strs;
+  size_t pos=0;
+  while ((pos = str.find(delimiter)) != std::string::npos) {
+    if(pos!=0)
+        v_strs.push_back(str.substr(0, pos));
+    str.erase(0, pos + delimiter.length());
+  }
+  v_strs.push_back(str);
+  return v_strs;
+}
