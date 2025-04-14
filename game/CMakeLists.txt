@@ -17,6 +17,12 @@ set(SRC_FILES
   ../shared/utils/utils.cc
 )
 
+set(TEST_FILES 
+  test/main.cc 
+  test/test_eventmanager.cc
+  ../shared/utils/utils.cc
+)
+
 find_package(nlohmann_json CONFIG REQUIRED)
 find_package(spdlog CONFIG REQUIRED)
 find_package(httplib CONFIG REQUIRED)
@@ -24,6 +30,7 @@ find_package(websocketpp CONFIG REQUIRED)
 find_package(Catch2 CONFIG REQUIRED)
 
 add_executable(txtad.o ${SRC_FILES})
+add_executable(test.o ${TEST_FILES})
 
 add_compile_definitions(COMPILE_SPI_COMMANDS_FOR_CXX=1)
 add_compile_definitions(JSON_DIAGNOSTICS=1)
@@ -42,4 +49,13 @@ target_link_libraries(txtad.o PRIVATE
   Catch2::Catch2
 )
 
+target_link_libraries(test.o PRIVATE
+  nlohmann_json::nlohmann_json 
+  spdlog::spdlog 
+  httplib::httplib 
+  websocketpp::websocketpp 
+  Catch2::Catch2
+)
+
 target_include_directories(txtad.o PUBLIC "src" "../shared")
+target_include_directories(test.o PUBLIC "src" "../shared")
