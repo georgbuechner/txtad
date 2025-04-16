@@ -15,12 +15,17 @@ set(SRC_FILES
   src/game/user.cc 
   src/server/websocket_server.cc 
   ../shared/utils/utils.cc
+  ../shared/utils/parser/expression_parser.cc
+  ../shared/utils/fuzzy_search/fuzzy.cc
 )
 
 set(TEST_FILES 
   test/main.cc 
   test/test_eventmanager.cc
+  test/test_expression_parser.cc
   ../shared/utils/utils.cc
+  ../shared/utils/parser/expression_parser.cc
+  ../shared/utils/fuzzy_search/fuzzy.cc
 )
 
 find_package(nlohmann_json CONFIG REQUIRED)

@@ -4,19 +4,16 @@
 #ifndef SRC_TEXTADVENTURE_TOOLS_LOGICPARSER_H_
 #define SRC_TEXTADVENTURE_TOOLS_LOGICPARSER_H_
 
-#include <iostream>
 #include <map>
 #include <string>
 #include <vector>
 
-#include "fuzzy.h"
-
-class LogicParser{
+class ExpressionParser{
   public:
     /**
      * Constructor stetting up operands and simple operands.
      */
-    LogicParser();
+    ExpressionParser();
 
     /**
      * Contructor including the possibility to substitute certain strings
@@ -25,7 +22,7 @@ class LogicParser{
      * be substituted by the value of [current_room]).
      * @param[in] substitute (map with possible substitutes)
      */
-    LogicParser(std::map<std::string, std::string> substitute);
+    ExpressionParser(std::map<std::string, std::string> substitute);
 
     /**
      * return value of logic expression
@@ -34,14 +31,16 @@ class LogicParser{
      * @param[in] input
      * @return true or false
      */
-    bool Success(std::string input);
+    std::string evaluate(std::string input);
+    int Success(std::string input); // ~~
 
   private:
 
     std::map<std::string, std::string> substitue_;  ///< map with substitutes.
-    std::vector<char> opts_;
+    static std::vector<char> opts_;
     std::vector<std::string> opts_simple_;
 
+    int LastOpt(const std::string& inp);
     
     /**
      * Calculate value from elemenatry expressions.
@@ -114,20 +113,22 @@ class LogicParser{
      * @param[in] m (string to match).
      * @return occurances
      */
-  size_t NumFind(std::string str, std::string m);
+    size_t NumFind(std::string str, std::string m);
 
-  /**
-  * @param[in] str string to be splitet
-  * @param[in] delimitter 
-  * @return vector
-  */
-  std::vector<std::string> Split(std::string str, std::string delimiter);
+    /**
+    * @param[in] str string to be splitet
+    * @param[in] delimitter 
+    * @return vector
+    */
+    std::vector<std::string> Split(std::string str, std::string delimiter);
 
-  /**
-   * Delete spaces at the front and back.
-   * @param[in, out] str (string to modify)
-   */
-  void DeleteNonsense(std::string& str);
+    /**
+     * Delete spaces at the front and back.
+     * @param[in, out] str (string to modify)
+     */
+    static void DeleteNonsense(std::string& str);
+
+    static std::string DeleteWhitespaces(const std::string& str);
 };
 
 #endif
