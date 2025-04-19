@@ -6,7 +6,39 @@
 #include <algorithm>
 #include <string>
 
-std::vector<char> ExpressionParser::opts_ = {'>', '<', '=', '~', ':', '+', '-', '*', '/'};
+std::map<std::string, std::string(*)(const std::string&, const std::string&)> ExpressionParser::opts_ = {
+  {">", [](const std::string& a, const std::string& b) { return std::to_string(std::stoi(a) > std::stoi(b)); } },
+  {"<", [](const std::string& a, const std::string& b) { return std::to_string(std::stoi(a) < std::stoi(b)); } },
+  {">=", [](const std::string& a, const std::string& b) { return std::to_string(std::stoi(a) >= std::stoi(b)); } },
+  {"<=", [](const std::string& a, const std::string& b) { return std::to_string(std::stoi(a) <= std::stoi(b)); } },
+  {"=", [](const std::string& a, const std::string& b) { return std::to_string(a == b); } },
+  {"~", [](const std::string& a, const std::string& b) { return std::to_string(fuzzy::fuzzy(b, a)); } },
+  {":", [](const std::string& a, const std::string& b) -> std::string { 
+          const std::string vec = (a.front() != '[') ? "[" + a + "]" : a;
+          for (const auto& it : util::Split(vec.substr(1, vec.length()-2), "|")) {
+            const std::string e = DeleteWhitespaces(it);
+            for (const auto& elem : util::Split(b.substr(1, b.length()-2), ";")) {
+              if (DeleteWhitespaces(elem) == e) return "1";
+            }
+          }
+          return "0";
+        } },
+  {"~:", [](const std::string& a, const std::string& b) -> std::string { 
+          std::string res_vec = "";
+          for (const auto& elem : util::Split(b.substr(1, b.length()-1), ";")) {
+            auto res = fuzzy::fuzzy(DeleteWhitespaces(elem), a);
+            if (res != fuzzy::FuzzyMatch::NO_MATCH) 
+              res_vec += std::to_string(res) + ";";
+          }
+          if (res_vec.back() == ';') 
+            res_vec.pop_back();
+          return "[" + res_vec + "]";
+        } },
+  {"+", [](const std::string& a, const std::string& b) { return std::to_string(std::stoi(a) + std::stoi(b)); } },
+  {"-", [](const std::string& a, const std::string& b) { return std::to_string(std::stoi(a) - std::stoi(b)); } },
+  {"*", [](const std::string& a, const std::string& b) { return std::to_string(std::stoi(a) * std::stoi(b)); } },
+  {"/", [](const std::string& a, const std::string& b) { return std::to_string(std::stoi(a) / std::stoi(b)); } },
+};
 
 ExpressionParser::ExpressionParser() {
   opts_simple_ = {">", "<", "=", "~", "+"};
@@ -18,53 +50,33 @@ ExpressionParser::ExpressionParser(std::map<std::string, std::string> substitute
 }
 
 std::string ExpressionParser::evaluate(std::string input) {
-  auto pos = LastOpt(input); 
-  std::cout << input << ": " << pos << std::endl;
+  std::cout << input << std::endl;
+  auto [pos, opt] = LastOpt(input); 
   if (pos == -1) {
     return DeleteWhitespaces(input);
   }
 
   std::string cur = evaluate(input.substr(0, pos));
-  std::string opt = input.substr(pos, 1);
-  std::string next = DeleteWhitespaces(input.substr(pos+1, input.length()-pos));
+  std::string next = DeleteWhitespaces(input.substr(pos+opt.length(), input.length()-(pos + opt.length()-1)));
   std::cout << " - '" << cur << "', '" << opt << "', '" << next << "'" << std::endl;
-  if (opt == "=") 
-    return std::to_string(cur == next);
-  if (opt == "~")
-    return std::to_string(fuzzy::fuzzy(next, cur));
-  if (opt == ":") {
-    for (const auto& elem : util::Split(next.substr(1, next.length()-1), ";")) {
-      std::cout << elem << "(" + DeleteWhitespaces(elem) + ") == " << cur << std::endl;
-      if (DeleteWhitespaces(elem) == cur)
-        return "1";
-    }
-    return "0";
-  }
-  if (opt == ">") 
-    return std::to_string(std::stoi(cur) > std::stoi(next));
-  if (opt == "<") 
-    return std::to_string(std::stoi(cur) < std::stoi(next));
-  if (opt == "+") 
-    return std::to_string(std::stoi(cur) + std::stoi(next));
-  if (opt == "-") 
-    return std::to_string(std::stoi(cur) - std::stoi(next));
-  if (opt == "*") 
-    return std::to_string(std::stoi(cur) * std::stoi(next));
-  if (opt == "/") 
-    return std::to_string(std::stoi(cur) / std::stoi(next));
-  return "";
+  return (*opts_[opt])(cur, next);
 }
 
-int ExpressionParser::LastOpt(const std::string& inp) {
+std::pair<int, std::string> ExpressionParser::LastOpt(const std::string& inp) {
   int pos = -1;
-  for (const auto& it : opts_) {
-    int cur = inp.rfind(it);
-    if (cur != std::string::npos && cur > pos) 
-      pos = cur;
+  std::string opt = "";
+  for (const auto& [cur_opt, _] : opts_) {
+    int cur_pos = inp.rfind(cur_opt);
+    // If the operand was found, then check 1. if the position is the furthest
+    // back (add +1 to the current pass to avoid '=' being further back than
+    // '>=') 2. no operand found before, 3. the current operand is longer than
+    // the one found sofar.
+    if (cur_pos != std::string::npos && (cur_pos > pos+1 || cur_opt == "" || cur_opt.length() > opt.length())) {
+      pos = cur_pos;
+      opt = cur_opt;
+    }
   }
-  if (pos == 1000) 
-    return -1; 
-  return pos;
+  return {pos, opt};
 }
 
 int ExpressionParser::Success(std::string input) {

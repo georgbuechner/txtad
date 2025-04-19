@@ -37,10 +37,10 @@ class ExpressionParser{
   private:
 
     std::map<std::string, std::string> substitue_;  ///< map with substitutes.
-    static std::vector<char> opts_;
+    static std::map<std::string, std::string(*)(const std::string&, const std::string&)> opts_;
     std::vector<std::string> opts_simple_;
 
-    int LastOpt(const std::string& inp);
+    std::pair<int, std::string> LastOpt(const std::string& inp);
     
     /**
      * Calculate value from elemenatry expressions.
