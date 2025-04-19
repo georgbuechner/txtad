@@ -96,6 +96,17 @@ TEST_CASE("Text expression parser", "[parser]") {
   REQUIRE(parser.evaluate("hündin ~ jahrhundert =" + std::to_string(fuzzy::FuzzyMatch::NO_MATCH)) == "1");
   REQUIRE(parser.evaluate("hündin ~ jahrhundert =" + std::to_string(fuzzy::FuzzyMatch::FUZZY)) == "0");
 
+  // logical 
+  REQUIRE(parser.evaluate("1 && 1") == "1");
+  REQUIRE(parser.evaluate("1 && 0") == "0");
+  REQUIRE(parser.evaluate("0 && 1") == "0");
+  REQUIRE(parser.evaluate("0 && 0") == "0");
+  REQUIRE(parser.evaluate("1 || 1") == "1");
+  REQUIRE(parser.evaluate("1 || 0") == "1");
+  REQUIRE(parser.evaluate("0 || 1") == "1");
+  REQUIRE(parser.evaluate("0 || 0") == "0");
+  REQUIRE(parser.evaluate("(20*10>4) && (4:[10;3; 4])") == "1");
+
   // brackets 
   REQUIRE(parser.evaluate("4 - ( 2 + 2)") == "0");
   REQUIRE(parser.evaluate("4 - ( 2 + 2) + 2") == "2");

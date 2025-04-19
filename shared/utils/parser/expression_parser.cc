@@ -41,6 +41,8 @@ std::map<std::string, std::string(*)(const std::string&, const std::string&)> Ex
   {"-", [](const std::string& a, const std::string& b) { return std::to_string(std::stoi(a) - std::stoi(b)); } },
   {"*", [](const std::string& a, const std::string& b) { return std::to_string(std::stoi(a) * std::stoi(b)); } },
   {"/", [](const std::string& a, const std::string& b) { return std::to_string(std::stoi(a) / std::stoi(b)); } },
+  {"||", [](const std::string& a, const std::string& b) { return std::to_string(a == "1" || b == "1"); } },
+  {"&&", [](const std::string& a, const std::string& b) { return std::to_string(a == "1" && b == "1"); } },
 };
 
 ExpressionParser::ExpressionParser() {
