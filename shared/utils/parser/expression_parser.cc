@@ -1,6 +1,8 @@
 //#include "utils/parser/expression_parser.h"
 #include "expression_parser.h"
 #include "utils/fuzzy_search/fuzzy.h"
+#include "utils/utils.h"
+#include <iostream>
 #include <algorithm>
 #include <string>
 
@@ -30,6 +32,14 @@ std::string ExpressionParser::evaluate(std::string input) {
     return std::to_string(cur == next);
   if (opt == "~")
     return std::to_string(fuzzy::fuzzy(next, cur));
+  if (opt == ":") {
+    for (const auto& elem : util::Split(next.substr(1, next.length()-1), ";")) {
+      std::cout << elem << "(" + DeleteWhitespaces(elem) + ") == " << cur << std::endl;
+      if (DeleteWhitespaces(elem) == cur)
+        return "1";
+    }
+    return "0";
+  }
   if (opt == ">") 
     return std::to_string(std::stoi(cur) > std::stoi(next));
   if (opt == "<") 
