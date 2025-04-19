@@ -28,3 +28,16 @@ std::vector<std::string> util::Split(std::string str, std::string delimiter) {
   v_strs.push_back(str);
   return v_strs;
 }
+
+std::string util::Strip(std::string str, char c) {
+  for(;;) {
+    if (str.front() == ' ') 
+      str.erase(0, 1);
+    else if (str.back() == ' ') 
+      str.pop_back();
+    else 
+      break;
+  }
+  return str;
+
+}
