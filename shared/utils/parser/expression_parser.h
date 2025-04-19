@@ -25,13 +25,28 @@ class ExpressionParser{
     ExpressionParser(std::map<std::string, std::string> substitute);
 
     /**
-     * return value of logic expression
-     * Rules: only and (&) and or (|) allowed. String musst be formatted as 
-     * binary tree: (a&(a&a)) NOT (a & a & a)
+     * return value of logical or mathamtical expression
+     * Always retruns a string ("0" = false and "1" = true for boolean expressions 
+     * Operand: +, -, *, /, =, <, >, <=, >= 
+     * Compex operands: 
+     * fuzzy-search (~) -> 0|1|2|3|4
+     * - "Hund ~ Hündin" = "0" (no-match)
+     * - "Hund ~ hund" = "1" (Direct-match)
+     * - "Hund ~ Hunde" = "2" (starts-with-match)
+     * - "Hund ~ JahrHUNDert" = "3" (contains-match)
+     * - "Mimesis ~ Mimisis" = "4" (fuzzy-match)
+     * in-list (:) -> 0|1
+     * - "book:[bottle; lighter; book]" == "1"
+     * - "tabako:[bottle; lighter; book]" == "0"
+     * - "[tabako|lighter]:[bottle; lighter; book]" == "1"
+     * fuzzy-in-list (~:) -> list of fuzzy-match restults, f.e. [1,4]
+     * - "tobako~:[bottle; lighter; Tabako; Book]" == "[4]" (read as: "[fuzzy-match]
+     * -> can also be used like this: "[4] : (tobako~:[bottle; lighter; Tabako; Book])" == "1"
      * @param[in] input
-     * @return true or false
+     * @return string
      */
     std::string evaluate(std::string input);
+
     int Success(std::string input); // ~~
 
   private:

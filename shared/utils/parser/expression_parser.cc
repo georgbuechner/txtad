@@ -2,8 +2,11 @@
 #include "expression_parser.h"
 #include "utils/fuzzy_search/fuzzy.h"
 #include "utils/utils.h"
+#include <cstdlib>
+#include <exception>
 #include <iostream>
 #include <algorithm>
+#include <ostream>
 #include <string>
 
 std::map<std::string, std::string(*)(const std::string&, const std::string&)> ExpressionParser::opts_ = {
@@ -67,15 +70,21 @@ std::pair<int, std::string> ExpressionParser::LastOpt(const std::string& inp) {
   std::string opt = "";
   for (const auto& [cur_opt, _] : opts_) {
     int cur_pos = inp.rfind(cur_opt);
+    std::cout << "- " << cur_pos << ", " << cur_opt << " (stored: " << pos << ", " << opt << ")" << std::endl;
     // If the operand was found, then check 1. if the position is the furthest
     // back (add +1 to the current pass to avoid '=' being further back than
     // '>=') 2. no operand found before, 3. the current operand is longer than
     // the one found sofar.
-    if (cur_pos != std::string::npos && (cur_pos > pos+1 || cur_opt == "" || cur_opt.length() > opt.length())) {
+    std::cout << "- == " << (cur_pos != std::string::npos) << " && (" << (cur_pos-pos > 1) << " || ("
+      << (abs(cur_pos-pos) <= 1) << " && (" << (cur_opt == "") << " || " << (cur_opt.length() > opt.length()) 
+      << ")))" << std::endl;
+    if (cur_pos != std::string::npos && (cur_pos-pos > 1 || 
+          (abs(cur_pos-pos) <= 1 && (cur_opt == "" || cur_opt.length() > opt.length())))) {
       pos = cur_pos;
       opt = cur_opt;
     }
   }
+  std::cout << "- => " << opt << std::endl;
   return {pos, opt};
 }
 
