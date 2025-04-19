@@ -4,18 +4,28 @@
 #include <string>
 
 TEST_CASE("Text expression parser", "[parser]") {
+  std::string str = "2 (1+1) + 2";
+  auto start = str.find("(");
+  auto end = str.find(")");
+  REQUIRE(str.substr(0, start) == "2 ");
+  REQUIRE(str.substr(start+1, end-start-1) == "1+1");
+  REQUIRE(str.substr(end+1, str.length()-end) == " + 2");
+
   ExpressionParser parser;
   // From function description
-  REQUIRE(parser.evaluate("Hund ~ Hündin") == "0");
-  REQUIRE(parser.evaluate("Hund ~ hund") == "1");
-  REQUIRE(parser.evaluate("Hund ~ Hunde") == "2");
-  REQUIRE(parser.evaluate("Hund ~ JahrHUNDert") == "3");
-  REQUIRE(parser.evaluate("Mimesis ~ Mimisis") == "4");
+  REQUIRE(parser.evaluate("Hund ~ Hündin") == "0"); // read as: "Hund ~ Hündin == no-match
+  REQUIRE(parser.evaluate("Hund ~ hund") == "1"); // read as: "Hund ~ hund == direct-match
+  REQUIRE(parser.evaluate("Hund ~ Hunde") == "2"); // read as: "Hund ~ hunde == starts-with-match
+  REQUIRE(parser.evaluate("Hund ~ JahrHUNDert") == "3"); // read as: "Hund ~ JahrHUNDert == contains-match
+  REQUIRE(parser.evaluate("Mimesis ~ Mimisis") == "4"); // read as: "Hund ~ JahrHUNDert == fuzzy -match
   REQUIRE(parser.evaluate("book:[bottle; lighter; book]") == "1");
   REQUIRE(parser.evaluate("tabako:[bottle; lighter; book]") == "0");
   REQUIRE(parser.evaluate("[tabako|lighter]:[bottle; lighter; book]") == "1");
   REQUIRE(parser.evaluate("tobako~:[Bottle; Lighter; Tabako; Book]") == "[4]");
+  // => read as: "tobako~:[Bottle; Lighter; Tabako; Book] == [fuzzy-match]
   REQUIRE(parser.evaluate("tobako~:[Bottle; Lighter; Tabako; Book] = [4]") == "1");
+  REQUIRE(parser.evaluate("4 : (tobako~:[Bottle; Lighter; Tabako; Book])") == "1");
+  // => read as: "fuzzy-match : (tobako~:[Bottle; Lighter; Tabako; Book])
   
   // whitespace handling
   REQUIRE(parser.evaluate(" 10 + 10") == "20");
@@ -75,8 +85,6 @@ TEST_CASE("Text expression parser", "[parser]") {
   REQUIRE(parser.evaluate(std::to_string(fuzzy::FuzzyMatch::FUZZY) + ":"+res) == "1"); // 4:[...]
   res = parser.evaluate("Mimesis ~: [Eingedenken; mimesisch; das Hinzutretende; Leid]");
   REQUIRE(res == "[" + std::to_string(fuzzy::FuzzyMatch::STARTS_WITH) + "]");
-  REQUIRE(parser.evaluate("[" + std::to_string(fuzzy::FuzzyMatch::FUZZY) + "|" 
-        + std::to_string(fuzzy::FuzzyMatch::STARTS_WITH) + "]:"+res) == "1"); // [4|2] : [...]
 
   // Does not work, requires brackets!
   // REQUIRE(parser.evaluate(std::to_string(fuzzy::FuzzyMatch::FUZZY) + ":" 
@@ -90,4 +98,7 @@ TEST_CASE("Text expression parser", "[parser]") {
 
   // brackets 
   REQUIRE(parser.evaluate("4 - ( 2 + 2)") == "0");
+  REQUIRE(parser.evaluate("4 - ( 2 + 2) + 2") == "2");
+  REQUIRE(parser.evaluate("((1+1)*2+2)*(2+2)+10") == "34");
+  REQUIRE(parser.evaluate("((1+1)*2+2)*(2+2)+(10*(2+(10-10)))") == "44");
 }

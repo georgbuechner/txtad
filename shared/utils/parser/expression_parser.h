@@ -55,7 +55,8 @@ class ExpressionParser{
     static std::map<std::string, std::string(*)(const std::string&, const std::string&)> opts_;
     std::vector<std::string> opts_simple_;
 
-    std::pair<int, std::string> LastOpt(const std::string& inp);
+    static std::pair<int, std::string> LastOpt(const std::string& inp);
+    static std::pair<int, int> InBrackets(const std::string& inp, int pos);
     
     /**
      * Calculate value from elemenatry expressions.
