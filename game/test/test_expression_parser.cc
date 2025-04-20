@@ -12,6 +12,10 @@ TEST_CASE("Text expression parser", "[parser]") {
   REQUIRE(str.substr(end+1, str.length()-end) == " + 2");
 
   ExpressionParser parser;
+  REQUIRE(parser.EnsureExecutionOrder("10 * 10") == "100");
+  REQUIRE(parser.EnsureExecutionOrder("10*2") == "20");
+  // return;
+
   // From function description
   REQUIRE(parser.evaluate("Hund ~ Hündin") == "0"); // read as: "Hund ~ Hündin == no-match
   REQUIRE(parser.evaluate("Hund ~ hund") == "1"); // read as: "Hund ~ hund == direct-match
@@ -48,7 +52,7 @@ TEST_CASE("Text expression parser", "[parser]") {
   REQUIRE(parser.evaluate("10 + 10 + 10") == "30");
   REQUIRE(parser.evaluate("10 - 10 + 10") == "10");
   REQUIRE(parser.evaluate("10 * 10 - 10 + 5") == "95");
-  REQUIRE(parser.evaluate("10 / 10 - 10+5 * 5 ") == "-20");
+  REQUIRE(parser.evaluate("10 / 10 - 10+5 * 5 ") == "16");
   REQUIRE(parser.evaluate("10 / 5 * 2 ") == "4");  
 
   // comparision
@@ -112,4 +116,9 @@ TEST_CASE("Text expression parser", "[parser]") {
   REQUIRE(parser.evaluate("4 - ( 2 + 2) + 2") == "2");
   REQUIRE(parser.evaluate("((1+1)*2+2)*(2+2)+10") == "34");
   REQUIRE(parser.evaluate("((1+1)*2+2)*(2+2)+(10*(2+(10-10)))") == "44");
+
+  // Execution order 
+  REQUIRE(parser.evaluate("2+4*2") == "10");
+  std::cout << "=====" << std::endl;
+  REQUIRE(parser.evaluate("(10-10)*2+2+4*2") == "10");
 }

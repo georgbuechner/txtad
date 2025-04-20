@@ -39,5 +39,4 @@ std::string util::Strip(std::string str, char c) {
       break;
   }
   return str;
-
 }

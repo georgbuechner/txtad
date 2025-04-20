@@ -45,13 +45,19 @@ class ExpressionParser{
      * @param[in] input
      * @return string
      */
-    std::string evaluate(std::string input);
+    std::string evaluate(std::string input, bool no_brackets=false);
+
+    std::string EnsureExecutionOrder(std::string inp);
 
   private:
 
+    // members 
     std::map<std::string, std::string> substitue_;  ///< map with substitutes.
     static std::map<std::string, std::string(*)(const std::string&, const std::string&)> opts_;
 
+    // methods 
+
+    // static methods
     static std::pair<int, std::string> LastOpt(const std::string& inp);
     static std::pair<int, int> InBrackets(const std::string& inp, int pos);
 };

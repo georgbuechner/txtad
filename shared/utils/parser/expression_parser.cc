@@ -4,6 +4,7 @@
 #include "utils/utils.h"
 #include <cstdlib>
 #include <exception>
+#include <fmt/chrono.h>
 #include <iostream>
 #include <algorithm>
 #include <ostream>
@@ -51,8 +52,8 @@ ExpressionParser::ExpressionParser(std::map<std::string, std::string> substitute
   substitue_ = substitute;
 }
 
-std::string ExpressionParser::evaluate(std::string input) {
-  std::cout << input << std::endl;
+std::string ExpressionParser::evaluate(std::string input, bool no_brackets) {
+  std::cout << input << " (no brackets: " << no_brackets << ")" << std::endl;
   auto [pos, opt] = LastOpt(input); 
 
   // single entry
@@ -61,12 +62,20 @@ std::string ExpressionParser::evaluate(std::string input) {
   }
 
   // In brackets
-  auto [start, end] = InBrackets(input, pos);
-  std::cout << "For " << input << " at " << pos << " got: " << start << ", " << end << std::endl;
-  if (start != -1 && end != -1) {
-    return evaluate(input.substr(0, start) + evaluate(input.substr(start+1, end-start-1)) 
-      + input.substr(end+1, input.length()-end));
-  } 
+  if (!no_brackets) {
+    auto [start, end] = InBrackets(input, pos);
+    std::cout << "For " << input << ", " << pos << " got " << start << ", " << end << std::endl;
+    if (start != -1 && end != -1) {
+      return evaluate(input.substr(0, start) + evaluate(input.substr(start+1, end-start-1)) 
+        + input.substr(end+1, input.length()-end));
+    } else if (input.find("(") == std::string::npos && input.find(")") == std::string::npos) {
+      std::string modified = EnsureExecutionOrder(input);
+      if (modified != "") {
+        // std::exit(0);
+        return evaluate(modified);
+      }
+    }
+  }
 
   // Bracket-free equation
   std::string cur = evaluate(input.substr(0, pos));
@@ -127,4 +136,73 @@ std::pair<int, int> ExpressionParser::InBrackets(const std::string& inp, int pos
     }
   }
   return {start, end};
+}
+
+std::string ExpressionParser::EnsureExecutionOrder(std::string inp) {
+  std::cout << "EnsureExecutionOrder: " << inp << std::endl;
+  const std::vector<char> priority_operands = {'/', '*'};
+
+  // Check whether priority operands occur in given string
+  bool priority_operands_occur = false;
+  int num_operands = 0;
+  for (const auto& it : priority_operands) {
+    if (inp.find(it) != std::string::npos) {
+      priority_operands_occur = true;
+      break;
+    }
+  }
+  // If not, return empty string
+  if (!priority_operands_occur) 
+    return "";
+
+  // Insert brackets to ensure priority f.e. "2+3*5" -> "2+(3*5)"
+  std::string modified = "";
+  std::string waiting = "";
+  bool evaluate_at_next = false;
+  int last = 0;
+  for (const auto& c : inp) {
+    std::cout << "EnsureExecutionOrder: - " << modified << " (" << waiting << "), last: " << last << std::endl;
+
+    // If current char is not (part of) a priority operand, 
+    if (std::find(priority_operands.begin(), priority_operands.end(), c) == priority_operands.end()) {
+      for (const auto& it : opts_) {
+        auto pos = it.first.find(c);
+        // if it is, mark current position as 
+        if (pos != std::string::npos) {
+          if (evaluate_at_next) {
+            std::cout << "EnsureExecutionOrder: -> " << modified << " (evaluating: " << waiting << std::endl;
+            modified += evaluate(waiting, true);
+            evaluate_at_next = false;
+          } 
+          last = modified.length() + ((pos == 0) ? it.first.length() : it.first.length()-pos); 
+          break;
+        }
+      }
+    } else {
+      if (evaluate_at_next) {
+        std::cout << "EnsureExecutionOrder: -> " << modified << " (evaluating: " << waiting << std::endl;
+        waiting = evaluate(waiting, true);
+        std::cout << "EnsureExecutionOrder: => " << modified << " new waiting: " << waiting << std::endl;
+      } else {
+        std::cout << "EnsureExecutionOrder: => " << modified << " last: " << last << std::endl;
+        waiting = modified.substr(last, modified.length()-last);
+        std::cout << "EnsureExecutionOrder: => " << modified << " new waiting: " << waiting << std::endl;
+        modified.erase(modified.begin()+last, modified.end());
+        evaluate_at_next = true;
+      }
+    }
+
+    if (evaluate_at_next) 
+      waiting += c;
+    else {
+      modified +=c;
+    }
+  }
+  if (evaluate_at_next) {
+    std::cout << "EnsureExecutionOrder: -> evaluating: " << waiting << std::endl;
+    modified += evaluate(waiting, true);
+  }
+
+  std::cout << "EnsureExecutionOrder: => " << modified << std::endl;
+  return modified;
 }
