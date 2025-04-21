@@ -45,7 +45,8 @@ class ExpressionParser{
      * @param[in] input
      * @return string
      */
-    std::string evaluate(std::string input, bool no_brackets=false);
+    std::string Evaluate(std::string input);
+    std::string evaluate(std::string input);
 
     std::string EnsureExecutionOrder(std::string inp);
 
@@ -60,6 +61,8 @@ class ExpressionParser{
     // static methods
     static std::pair<int, std::string> LastOpt(const std::string& inp);
     static std::pair<int, int> InBrackets(const std::string& inp, int pos);
+    static int NextBracket(const std::string& inp, int pos);
+    static int PrevBracket(const std::string& inp, int pos);
 };
 
 #endif

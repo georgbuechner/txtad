@@ -31,9 +31,9 @@ std::vector<std::string> util::Split(std::string str, std::string delimiter) {
 
 std::string util::Strip(std::string str, char c) {
   for(;;) {
-    if (str.front() == ' ') 
+    if (str.front() == c) 
       str.erase(0, 1);
-    else if (str.back() == ' ') 
+    else if (str.back() == c) 
       str.pop_back();
     else 
       break;

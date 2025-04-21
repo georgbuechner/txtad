@@ -52,8 +52,13 @@ ExpressionParser::ExpressionParser(std::map<std::string, std::string> substitute
   substitue_ = substitute;
 }
 
-std::string ExpressionParser::evaluate(std::string input, bool no_brackets) {
-  std::cout << input << " (no brackets: " << no_brackets << ")" << std::endl;
+std::string ExpressionParser::Evaluate(std::string input) {
+  std::cout << "START: " << input << std::endl;
+  return evaluate(EnsureExecutionOrder(input));
+}
+
+std::string ExpressionParser::evaluate(std::string input) {
+  std::cout << input << std::endl;
   auto [pos, opt] = LastOpt(input); 
 
   // single entry
@@ -62,26 +67,20 @@ std::string ExpressionParser::evaluate(std::string input, bool no_brackets) {
   }
 
   // In brackets
-  if (!no_brackets) {
-    auto [start, end] = InBrackets(input, pos);
-    std::cout << "For " << input << ", " << pos << " got " << start << ", " << end << std::endl;
-    if (start != -1 && end != -1) {
-      return evaluate(input.substr(0, start) + evaluate(input.substr(start+1, end-start-1)) 
-        + input.substr(end+1, input.length()-end));
-    } else if (input.find("(") == std::string::npos && input.find(")") == std::string::npos) {
-      std::string modified = EnsureExecutionOrder(input);
-      if (modified != "") {
-        // std::exit(0);
-        return evaluate(modified);
-      }
-    }
-  }
+  auto [start, end] = InBrackets(input, pos);
+  std::cout << "For " << input << ", " << pos << " got " << start << ", " << end << std::endl;
+  if (start != -1 && end != -1) {
+    return evaluate(input.substr(0, start) + evaluate(input.substr(start+1, end-start-1)) 
+      + input.substr(end+1, input.length()-end));
+  } 
 
   // Bracket-free equation
   std::string cur = evaluate(input.substr(0, pos));
   std::string next = util::Strip(input.substr(pos+opt.length(), input.length()-(pos + opt.length()-1)));
   std::cout << " - '" << cur << "', '" << opt << "', '" << next << "'" << std::endl;
-  return (*opts_[opt])(cur, next);
+  std::cout << " - '" << util::Strip(cur, '(') << "', '" << opt << "', '" << util::Strip(next, ')') << "'" << std::endl;
+  return (*opts_[opt])(util::Strip(util::Strip(cur, '('), ')'), 
+      util::Strip(util::Strip(next, ')'), '('));
 }
 
 std::pair<int, std::string> ExpressionParser::LastOpt(const std::string& inp) {
@@ -109,6 +108,10 @@ std::pair<int, std::string> ExpressionParser::LastOpt(const std::string& inp) {
 }
 
 std::pair<int, int> ExpressionParser::InBrackets(const std::string& inp, int pos) {
+  return {PrevBracket(inp, pos), NextBracket(inp, pos)};
+}
+
+int ExpressionParser::NextBracket(const std::string& inp, int pos) {
   bool accept = true;
   int end = -1;
   for (int i=0; i<inp.length()-pos; i++) {
@@ -122,7 +125,11 @@ std::pair<int, int> ExpressionParser::InBrackets(const std::string& inp, int pos
       break;
     }
   }
-  accept = true;
+  return end;
+}
+
+int ExpressionParser::PrevBracket(const std::string& inp, int pos) {
+  bool accept = true;
   int start = -1; 
   for (int i=0; i<=pos; i++) {
     char c = inp[pos-i];
@@ -135,8 +142,9 @@ std::pair<int, int> ExpressionParser::InBrackets(const std::string& inp, int pos
       break;
     }
   }
-  return {start, end};
+  return start;
 }
+
 
 std::string ExpressionParser::EnsureExecutionOrder(std::string inp) {
   std::cout << "EnsureExecutionOrder: " << inp << std::endl;
@@ -153,15 +161,30 @@ std::string ExpressionParser::EnsureExecutionOrder(std::string inp) {
   }
   // If not, return empty string
   if (!priority_operands_occur) 
-    return "";
+    return inp;
 
   // Insert brackets to ensure priority f.e. "2+3*5" -> "2+(3*5)"
   std::string modified = "";
   std::string waiting = "";
   bool evaluate_at_next = false;
   int last = 0;
-  for (const auto& c : inp) {
+  for (unsigned int i=0; i<inp.length(); i++) {
+    const auto& c = inp[i];
     std::cout << "EnsureExecutionOrder: - " << modified << " (" << waiting << "), last: " << last << std::endl;
+    // Handle brackets:
+    if (c == '(') {
+      auto pos = NextBracket(inp, i+1);
+      std::cout << "EnsureExecutionOrder: next bracket? " << c << "->" << pos << std::endl;
+      if (pos != -1) {
+        std::cout << "EnsureExecutionOrder: handling bracket: (" + inp.substr(i+1, pos-i-1) + ")" << std::endl;
+        if (evaluate_at_next)
+          waiting += "(" + EnsureExecutionOrder(inp.substr(i+1, pos-i-1)) + ")";
+        else
+          modified += "(" + EnsureExecutionOrder(inp.substr(i+1, pos-i-1)) + ")";
+        i = pos;
+        continue;
+      }
+    }
 
     // If current char is not (part of) a priority operand, 
     if (std::find(priority_operands.begin(), priority_operands.end(), c) == priority_operands.end()) {
@@ -171,7 +194,7 @@ std::string ExpressionParser::EnsureExecutionOrder(std::string inp) {
         if (pos != std::string::npos) {
           if (evaluate_at_next) {
             std::cout << "EnsureExecutionOrder: -> " << modified << " (evaluating: " << waiting << std::endl;
-            modified += evaluate(waiting, true);
+            modified += "(" + waiting + ")";
             evaluate_at_next = false;
           } 
           last = modified.length() + ((pos == 0) ? it.first.length() : it.first.length()-pos); 
@@ -181,7 +204,7 @@ std::string ExpressionParser::EnsureExecutionOrder(std::string inp) {
     } else {
       if (evaluate_at_next) {
         std::cout << "EnsureExecutionOrder: -> " << modified << " (evaluating: " << waiting << std::endl;
-        waiting = evaluate(waiting, true);
+        waiting = "(" + waiting + ")"; // evaluate(waiting, true);
         std::cout << "EnsureExecutionOrder: => " << modified << " new waiting: " << waiting << std::endl;
       } else {
         std::cout << "EnsureExecutionOrder: => " << modified << " last: " << last << std::endl;
@@ -200,7 +223,7 @@ std::string ExpressionParser::EnsureExecutionOrder(std::string inp) {
   }
   if (evaluate_at_next) {
     std::cout << "EnsureExecutionOrder: -> evaluating: " << waiting << std::endl;
-    modified += evaluate(waiting, true);
+    modified += "(" + waiting + ")";
   }
 
   std::cout << "EnsureExecutionOrder: => " << modified << std::endl;
