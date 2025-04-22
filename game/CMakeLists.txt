@@ -23,6 +23,7 @@ set(TEST_FILES
   test/main.cc 
   test/test_eventmanager.cc
   test/test_expression_parser.cc
+  test/test_utils.cc
   ../shared/utils/utils.cc
   ../shared/utils/parser/expression_parser.cc
   ../shared/utils/fuzzy_search/fuzzy.cc

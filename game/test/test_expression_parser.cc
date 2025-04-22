@@ -1,5 +1,6 @@
 #include "utils/fuzzy_search/fuzzy.h"
 #include "utils/parser/expression_parser.h"
+#include "utils/utils.h"
 #include <catch2/catch_test_macros.hpp>
 #include <string>
 
@@ -122,6 +123,5 @@ TEST_CASE("Text expression parser", "[parser]") {
 
   // Execution order 
   REQUIRE(parser.Evaluate("2+4*2") == "10");
-  std::cout << "=====" << std::endl;
   REQUIRE(parser.Evaluate("(10-10)*2+2+4*2") == "10");
 }

@@ -11,6 +11,21 @@ namespace util
 {
   void SetUpLogger(const std::string& name, spdlog::level::level_enum log_level);
 
+  extern std::string LOGGER;
+
+  class LoggerContext {
+    public: 
+      LoggerContext(std::string logger) {
+        _prev = LOGGER;
+        LOGGER = logger;
+      }
+      ~LoggerContext() {
+        LOGGER = _prev;
+      }
+    private: 
+      std::string _prev;
+  };
+
   std::vector<std::string> Split(std::string str, std::string delimiter);
 
   /**

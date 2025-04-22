@@ -2,12 +2,13 @@
 #include "expression_parser.h"
 #include "utils/fuzzy_search/fuzzy.h"
 #include "utils/utils.h"
+#include "utils/defines.h"
 #include <cstdlib>
 #include <exception>
-#include <fmt/chrono.h>
 #include <iostream>
 #include <algorithm>
 #include <ostream>
+#include <spdlog/spdlog.h>
 #include <string>
 
 std::map<std::string, std::string(*)(const std::string&, const std::string&)> ExpressionParser::opts_ = {
@@ -53,12 +54,12 @@ ExpressionParser::ExpressionParser(std::map<std::string, std::string> substitute
 }
 
 std::string ExpressionParser::Evaluate(std::string input) {
-  std::cout << "START: " << input << std::endl;
+  spdlog::get(util::LOGGER)->info(fmt::format("EP:Evaluate. START: {}", input));
   return evaluate(EnsureExecutionOrder(input));
 }
 
 std::string ExpressionParser::evaluate(std::string input) {
-  std::cout << input << std::endl;
+  spdlog::get(util::LOGGER)->debug(fmt::format("EP:Evaluate. {}", input));
   auto [pos, opt] = LastOpt(input); 
 
   // single entry
@@ -68,7 +69,7 @@ std::string ExpressionParser::evaluate(std::string input) {
 
   // In brackets
   auto [start, end] = InBrackets(input, pos);
-  std::cout << "For " << input << ", " << pos << " got " << start << ", " << end << std::endl;
+  spdlog::get(util::LOGGER)->debug(fmt::format("EP:Evaluate. For {}, {} got {}, {}", input, pos, start, end));
   if (start != -1 && end != -1) {
     return evaluate(input.substr(0, start) + evaluate(input.substr(start+1, end-start-1)) 
       + input.substr(end+1, input.length()-end));
@@ -77,8 +78,7 @@ std::string ExpressionParser::evaluate(std::string input) {
   // Bracket-free equation
   std::string cur = evaluate(input.substr(0, pos));
   std::string next = util::Strip(input.substr(pos+opt.length(), input.length()-(pos + opt.length()-1)));
-  std::cout << " - '" << cur << "', '" << opt << "', '" << next << "'" << std::endl;
-  std::cout << " - '" << util::Strip(cur, '(') << "', '" << opt << "', '" << util::Strip(next, ')') << "'" << std::endl;
+  spdlog::get(util::LOGGER)->debug(fmt::format(" - '{}', '{}', {}", cur, opt, next));
   return (*opts_[opt])(util::Strip(util::Strip(cur, '('), ')'), 
       util::Strip(util::Strip(next, ')'), '('));
 }
@@ -88,11 +88,6 @@ std::pair<int, std::string> ExpressionParser::LastOpt(const std::string& inp) {
   std::string opt = "";
   for (const auto& [cur_opt, _] : opts_) {
     int cur_pos = inp.rfind(cur_opt);
-    // std::cout << "- " << cur_pos << ", " << cur_opt << " (stored: " << pos << ", " << opt << ")" << std::endl;
-    // std::cout << "- == " << (cur_pos != std::string::npos) << " && (" << (cur_pos-pos > 1) << " || ("
-    //   << (abs(cur_pos-pos) <= 1) << " && (" << (cur_opt == "") << " || " << (cur_opt.length() > opt.length()) 
-    //   << ")))" << std::endl;
-
     // If the operand was found, then check 1. if the position is the furthest
     // back (add +1 to the current pass to avoid '=' being further back than
     // '>=') 2. no operand found before, 3. the current operand is longer than
@@ -103,7 +98,6 @@ std::pair<int, std::string> ExpressionParser::LastOpt(const std::string& inp) {
       opt = cur_opt;
     }
   }
-  // std::cout << "- => " << opt << std::endl;
   return {pos, opt};
 }
 
@@ -147,7 +141,7 @@ int ExpressionParser::PrevBracket(const std::string& inp, int pos) {
 
 
 std::string ExpressionParser::EnsureExecutionOrder(std::string inp) {
-  std::cout << "EnsureExecutionOrder: " << inp << std::endl;
+  spdlog::get(util::LOGGER)->debug("EP:EnsureExecutionOrder. {}", inp);
   const std::vector<char> priority_operands = {'/', '*'};
 
   // Check whether priority operands occur in given string
@@ -170,13 +164,15 @@ std::string ExpressionParser::EnsureExecutionOrder(std::string inp) {
   int last = 0;
   for (unsigned int i=0; i<inp.length(); i++) {
     const auto& c = inp[i];
-    std::cout << "EnsureExecutionOrder: - " << modified << " (" << waiting << "), last: " << last << std::endl;
+    spdlog::get(util::LOGGER)->debug("EP:EnsureExecutionOrder. - {} -> {} (waiting: {}, last: {})", 
+        modified, c, waiting, last);
+    
     // Handle brackets:
     if (c == '(') {
       auto pos = NextBracket(inp, i+1);
-      std::cout << "EnsureExecutionOrder: next bracket? " << c << "->" << pos << std::endl;
       if (pos != -1) {
-        std::cout << "EnsureExecutionOrder: handling bracket: (" + inp.substr(i+1, pos-i-1) + ")" << std::endl;
+        // EnsureExecutionOrder for inside of bracket then add complete content
+        // to modified or waiting:
         if (evaluate_at_next)
           waiting += "(" + EnsureExecutionOrder(inp.substr(i+1, pos-i-1)) + ")";
         else
@@ -193,7 +189,7 @@ std::string ExpressionParser::EnsureExecutionOrder(std::string inp) {
         // if it is, mark current position as 
         if (pos != std::string::npos) {
           if (evaluate_at_next) {
-            std::cout << "EnsureExecutionOrder: -> " << modified << " (evaluating: " << waiting << std::endl;
+            spdlog::get(util::LOGGER)->debug(fmt::format("EP:EnsureExecutionOrder. -> {} (adding: {})", modified, waiting));
             modified += "(" + waiting + ")";
             evaluate_at_next = false;
           } 
@@ -203,13 +199,13 @@ std::string ExpressionParser::EnsureExecutionOrder(std::string inp) {
       }
     } else {
       if (evaluate_at_next) {
-        std::cout << "EnsureExecutionOrder: -> " << modified << " (evaluating: " << waiting << std::endl;
+        spdlog::get(util::LOGGER)->debug(fmt::format("EP:EnsureExecutionOrder. -> {} (adding: {})", modified, waiting));
         waiting = "(" + waiting + ")"; // evaluate(waiting, true);
-        std::cout << "EnsureExecutionOrder: => " << modified << " new waiting: " << waiting << std::endl;
+        spdlog::get(util::LOGGER)->debug(fmt::format("EP:EnsureExecutionOrder. -> {} (new waiting: {})", modified, waiting));
       } else {
-        std::cout << "EnsureExecutionOrder: => " << modified << " last: " << last << std::endl;
+        spdlog::get(util::LOGGER)->debug(fmt::format("EP:EnsureExecutionOrder. -> {} (last: {})", modified, last));
         waiting = modified.substr(last, modified.length()-last);
-        std::cout << "EnsureExecutionOrder: => " << modified << " new waiting: " << waiting << std::endl;
+        spdlog::get(util::LOGGER)->debug(fmt::format("EP:EnsureExecutionOrder. => {} (new waiting: {})", modified, waiting));
         modified.erase(modified.begin()+last, modified.end());
         evaluate_at_next = true;
       }
@@ -222,10 +218,10 @@ std::string ExpressionParser::EnsureExecutionOrder(std::string inp) {
     }
   }
   if (evaluate_at_next) {
-    std::cout << "EnsureExecutionOrder: -> evaluating: " << waiting << std::endl;
+    spdlog::get(util::LOGGER)->debug(fmt::format("EP:EnsureExecutionOrder. -> {} (adding: {})", modified, waiting));
     modified += "(" + waiting + ")";
   }
 
-  std::cout << "EnsureExecutionOrder: => " << modified << std::endl;
+  spdlog::get(util::LOGGER)->debug(fmt::format("EP:EnsureExecutionOrder. => {}", modified));
   return modified;
 }
