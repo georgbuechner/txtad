@@ -17,7 +17,7 @@ std::map<std::string, std::shared_ptr<Game>> InitGames() {
   for (const auto& dir : std::filesystem::directory_iterator(GAMES_PATH)) {
     const std::string filename = dir.path().filename();
     games[filename] = std::make_shared<Game>(dir.path(), filename);
-    spdlog::get(txtad::LOGGER)->info("MAIN:InitGames: Created game *{}*", filename);
+    spdlog::get(util::LOGGER)->info("MAIN:InitGames: Created game *{}*", filename);
   }
   return games;
 }
@@ -25,6 +25,7 @@ std::map<std::string, std::shared_ptr<Game>> InitGames() {
 int main() {
 
   util::SetUpLogger(txtad::LOGGER, spdlog::level::info);
+  util::LoggerContext scope(txtad::LOGGER);
 
   // Create websocket-server 
   std::shared_ptr<WebsocketServer> wss = std::make_shared<WebsocketServer>();
@@ -33,12 +34,12 @@ int main() {
   auto games = InitGames();
 
   Game::set_msg_fn([&wss](const std::string& id, const std::string& msg) {
-    spdlog::get(txtad::LOGGER)->debug("MAIN: SendMessage: {}, {}", id, msg);
+    spdlog::get(util::LOGGER)->debug("MAIN: SendMessage: {}, {}", id, msg);
     wss->SendMessage(id, msg);
   });
 
   WebsocketServer::set_handle_event([&games](const std::string& id, const std::string& game, const std::string& event) {
-    spdlog::get(txtad::LOGGER)->debug("MAIN: Handling: {}, {}", game, event);
+    spdlog::get(util::LOGGER)->debug("MAIN: Handling: {}, {}", game, event);
     if (games.count(game) > 0) {
       games.at(game)->HandleEvent(id, event);
     }
@@ -50,7 +51,7 @@ int main() {
       http_server.set_mount_point("/" + game.second->name(), game.second->path() + "/" + HTML_PATH);
       http_server.set_mount_point("/" + game.second->name(), HTML_PATH);
     }
-    spdlog::get(txtad::LOGGER)->info("MAIN: Successfully started http-server on port 4080");
+    spdlog::get(util::LOGGER)->info("MAIN: Successfully started http-server on port 4080");
     http_server.listen("0.0.0.0", 4080);
   });
 

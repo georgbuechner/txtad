@@ -1,4 +1,5 @@
 #include "game/user.h"
+#include "utils/utils.h"
 #include <spdlog/spdlog.h>
 
 User::User(const std::string& game_id, const std::string& id, txtad::MsgFn cout) 
@@ -6,7 +7,7 @@ User::User(const std::string& game_id, const std::string& id, txtad::MsgFn cout)
 
 // methods 
 void User::HandleEvent(const std::string& event) {
-  spdlog::get(_game_id)->info("User::HandleEvent ({}): {}", _id, event);
+  spdlog::get(util::LOGGER)->info("User::HandleEvent ({}): {}", _id, event);
   if (event == "new_connection")
     _cout("Username: ");
   else 
