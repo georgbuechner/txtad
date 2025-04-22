@@ -20,10 +20,12 @@ void Game::set_msg_fn(Game::MsgFn fn) { _cout = fn; }
 
 // methods 
 void Game::HandleEvent(const std::string& user_id, const std::string& event) {
-  spdlog::get(_name)->debug("Game::HandleEvent: Handling inp: {}", event);
+  util::LoggerContext scope(_name);
+
+  spdlog::get(util::LOGGER)->debug("Game::HandleEvent: Handling inp: {}", event);
   std::unique_lock ul(_mutex);
   if (_users.count(user_id) == 0) {
-    spdlog::get(_name)->debug("Game::HandleEvent: Creating new user: {}", user_id);
+    spdlog::get(util::LOGGER)->debug("Game::HandleEvent: Creating new user: {}", user_id);
     _users[user_id] = std::make_shared<User>(_name, user_id, [&_cout = _cout, user_id](const std::string& msg) {
       _cout(user_id, msg);
     });
