@@ -5,6 +5,7 @@
 #include <string>
 
 TEST_CASE("Text expression parser", "[parser]") {
+  // Assure substrings
   std::string str = "2 (1+1) + 2";
   auto start = str.find("(");
   auto end = str.find(")");
@@ -13,13 +14,12 @@ TEST_CASE("Text expression parser", "[parser]") {
   REQUIRE(str.substr(end+1, str.length()-end) == " + 2");
 
   ExpressionParser parser;
-  REQUIRE(parser.EnsureExecutionOrder("10 * 10") == "(10 * 10)");
-  REQUIRE(parser.EnsureExecutionOrder("10*2") == "(10*2)");
-  REQUIRE(parser.EnsureExecutionOrder("20+10*2") == "20+(10*2)");
-  REQUIRE(parser.EnsureExecutionOrder("20+10*2-10") == "20+(10*2)-10");
-  REQUIRE(parser.EnsureExecutionOrder("20+10*2/10") == "20+((10*2)/10)");
-  REQUIRE(parser.EnsureExecutionOrder("(1+1)*2+2") == "((1+1)*2)+2");
-  REQUIRE(parser.EnsureExecutionOrder("(1+1)*(2+2)") == "((1+1)*(2+2))");
+  REQUIRE(parser.Evaluate("10 * 10") == "100");
+  REQUIRE(parser.Evaluate("10*2") == "20");
+  REQUIRE(parser.Evaluate("20+10*2") == "40");
+  REQUIRE(parser.Evaluate("20+10*2-10") == "30");
+  REQUIRE(parser.Evaluate("20+10*2/10") == "22");
+  REQUIRE(parser.Evaluate("(1+1)*2+2") == "6");
   REQUIRE(parser.Evaluate("(1+1)*(2+2)") == "8");
 
   // From function description
@@ -124,4 +124,21 @@ TEST_CASE("Text expression parser", "[parser]") {
   // Execution order 
   REQUIRE(parser.Evaluate("2+4*2") == "10");
   REQUIRE(parser.Evaluate("(10-10)*2+2+4*2") == "10");
+}
+
+
+TEST_CASE("Text replacements", "[parser]") {
+  std::map<std::string, std::string> substitutes = {{"player_name", "fux"}, {"inventory", "[book; tabako; wine]"}};
+  ExpressionParser parser(substitutes);
+
+  // name reduction
+  REQUIRE(parser.Evaluate("{player_name}=fux") == "1");
+  REQUIRE(parser.Evaluate("{player_name}=jan") == "0");
+  REQUIRE(parser.Evaluate("{player_name}={player_name}") == "1");
+  REQUIRE(parser.Evaluate("{player_name}=player_name") == "0");
+
+  // list reduction
+  REQUIRE(parser.Evaluate("tabako:{inventory}") == "1");
+  REQUIRE(parser.Evaluate("[{fuzzy}] : (tobako~:{inventory})") == "1");
+  REQUIRE(parser.Evaluate("cigarettes:{inventory}") == "0");
 }

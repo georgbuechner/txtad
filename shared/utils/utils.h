@@ -5,11 +5,13 @@
 #define SHARED_UTILS_UTIL_H
 
 #include <spdlog/common.h>
+#include <spdlog/logger.h>
 #include <string>
 
 namespace util
 {
   void SetUpLogger(const std::string& name, spdlog::level::level_enum log_level);
+  std::shared_ptr<spdlog::logger> Logger();
 
   extern std::string LOGGER;
 
