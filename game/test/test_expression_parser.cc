@@ -23,18 +23,18 @@ TEST_CASE("Text expression parser", "[parser]") {
   REQUIRE(parser.Evaluate("(1+1)*(2+2)") == "8");
 
   // From function description
-  REQUIRE(parser.Evaluate("Hund ~ Hündin") == "0"); // read as: "Hund ~ Hündin == no-match
-  REQUIRE(parser.Evaluate("Hund ~ hund") == "1"); // read as: "Hund ~ hund == direct-match
-  REQUIRE(parser.Evaluate("Hund ~ Hunde") == "2"); // read as: "Hund ~ hunde == starts-with-match
-  REQUIRE(parser.Evaluate("Hund ~ JahrHUNDert") == "3"); // read as: "Hund ~ JahrHUNDert == contains-match
-  REQUIRE(parser.Evaluate("Mimesis ~ Mimisis") == "4"); // read as: "Hund ~ JahrHUNDert == fuzzy -match
+  REQUIRE(parser.Evaluate("Hund ~ Hündin = {no_match}") == "1"); // read as: "Hund ~ Hündin == no-match
+  REQUIRE(parser.Evaluate("Hund ~ hund = {direct}") == "1"); // read as: "Hund ~ hund == direct-match
+  REQUIRE(parser.Evaluate("Hund ~ Hunde = {starts_with}") == "1"); // read as: "Hund ~ hunde == starts-with-match
+  REQUIRE(parser.Evaluate("Hund ~ JahrHUNDert = {contains}") == "1"); // read as: "Hund ~ JahrHUNDert == contains-match
+  REQUIRE(parser.Evaluate("Mimesis ~ Mimisis = {fuzzy}") == "1"); // read as: "Hund ~ JahrHUNDert == fuzzy -match
   REQUIRE(parser.Evaluate("book:[bottle; lighter; book]") == "1");
   REQUIRE(parser.Evaluate("tabako:[bottle; lighter; book]") == "0");
   REQUIRE(parser.Evaluate("[tabako|lighter]:[bottle; lighter; book]") == "1");
   REQUIRE(parser.Evaluate("tobako~:[Bottle; Lighter; Tabako; Book]") == "[4]");
   // => read as: "tobako~:[Bottle; Lighter; Tabako; Book] == [fuzzy-match]
-  REQUIRE(parser.Evaluate("tobako~:[Bottle; Lighter; Tabako; Book] = [4]") == "1");
-  REQUIRE(parser.Evaluate("4 : (tobako~:[Bottle; Lighter; Tabako; Book])") == "1");
+  REQUIRE(parser.Evaluate("tobako~:[Bottle; Lighter; Tabako; Book] = [{fuzzy}]") == "1");
+  REQUIRE(parser.Evaluate("{fuzzy} : (tobako~:[Bottle; Lighter; Tabako; Book])") == "1");
   // => read as: "fuzzy-match : (tobako~:[Bottle; Lighter; Tabako; Book])
   
   // whitespace handling
@@ -62,10 +62,17 @@ TEST_CASE("Text expression parser", "[parser]") {
   REQUIRE(parser.Evaluate("10 / 5 * 2 ") == "4");  
 
   // comparision
-  REQUIRE(parser.Evaluate("10 = 10") == """1");
-  REQUIRE(parser.Evaluate("10 = 11") == """0");
+  REQUIRE(parser.Evaluate("10 = 10") == "1");
+  REQUIRE(parser.Evaluate("10 = 11") == "0");
   REQUIRE(parser.Evaluate("10 ~ 100") == std::to_string(fuzzy::FuzzyMatch::STARTS_WITH));
   REQUIRE(parser.Evaluate("10 ~ 110") == std::to_string(fuzzy::FuzzyMatch::CONTAINS));
+
+  REQUIRE(parser.Evaluate("hündin ~ jahrhundert = {no_match}") == "1");
+  REQUIRE(parser.Evaluate("Hund ~ hund = {direct}") == "1");
+  REQUIRE(parser.Evaluate("hund ~ hunde = {starts_with}") == "1");
+  REQUIRE(parser.Evaluate("hund ~ jahrhundert = {contains}") == "1");
+  REQUIRE(parser.Evaluate("Mimesis ~ mimisis = {fuzzy}") == "1");
+
   REQUIRE(parser.Evaluate("Hund ~ hund") == std::to_string(fuzzy::FuzzyMatch::DIRECT));
   REQUIRE(parser.Evaluate("hund ~ Hund") == std::to_string(fuzzy::FuzzyMatch::DIRECT));
   REQUIRE(parser.Evaluate("hund ~ hunde") == std::to_string(fuzzy::FuzzyMatch::STARTS_WITH));

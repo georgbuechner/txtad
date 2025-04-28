@@ -11,18 +11,13 @@
 class ExpressionParser{
   public:
     /**
-     * Constructor stetting up operands and simple operands.
-     */
-    ExpressionParser();
-
-    /**
      * Constructor including the possibility to substitute certain strings
      * with given values (for instance you could map room to the current player
      * room by including {"room", [current_room]} to the map. Then room will 
      * be substituted by the value of [current_room]).
      * @param[in] substitute (map with possible substitutes)
      */
-    ExpressionParser(std::map<std::string, std::string> substitute);
+    ExpressionParser(std::map<std::string, std::string> substitute = {});
 
     /**
      * return value of logical or mathematical expression
@@ -46,7 +41,6 @@ class ExpressionParser{
      * @return string
      */
     std::string Evaluate(std::string input);
-    std::string evaluate(std::string input);
 
   private:
 
@@ -55,7 +49,7 @@ class ExpressionParser{
     static std::map<std::string, std::string(*)(const std::string&, const std::string&)> _opts;
 
     // methods 
-
+    std::string evaluate(std::string input);
     std::string StripAndSubstitute(std::string str);
 
     // static methods 

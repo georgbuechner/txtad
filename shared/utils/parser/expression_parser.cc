@@ -48,8 +48,6 @@ std::map<std::string, std::string(*)(const std::string&, const std::string&)> Ex
   {"&&", [](const std::string& a, const std::string& b) { return std::to_string(a == "1" && b == "1"); } },
 };
 
-ExpressionParser::ExpressionParser() { }
-
 ExpressionParser::ExpressionParser(std::map<std::string, std::string> substitutes) {
   _substitutes = {{"no_match", "0"}, {"direct", "1"}, {"starts_with", "2"}, {"contains", "3"}, {"fuzzy", "4"}};
   _substitutes.insert(substitutes.begin(), substitutes.end());
@@ -57,7 +55,9 @@ ExpressionParser::ExpressionParser(std::map<std::string, std::string> substitute
 
 std::string ExpressionParser::Evaluate(std::string input) {
   util::Logger()->info(fmt::format("EP:Evaluate. START: {}", input));
-  return evaluate(EnsureExecutionOrder(input));
+  auto res = evaluate(EnsureExecutionOrder(input));
+  util::Logger()->info(fmt::format("EP:Evaluate. =>: {}", res));
+  return res;
 }
 
 std::string ExpressionParser::evaluate(std::string input) {
@@ -66,7 +66,7 @@ std::string ExpressionParser::evaluate(std::string input) {
 
   // If no operand was found, simply return string with whitespaces removed.
   if (pos == -1)
-    return util::Strip(input);
+    return StripAndSubstitute(input);
 
   // Check whether current operand is surrounded by brackets
   auto [start, end] = InBrackets(input, pos);

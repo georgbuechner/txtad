@@ -13,8 +13,8 @@ int main( int argc, char* argv[] ) {
   /* initialize random seed: */
   srand (time(NULL));
 
-  // util::SetUpLogger(txtad::LOGGER, spdlog::level::info);
-  util::SetUpLogger(txtad::LOGGER, spdlog::level::debug);
+  util::SetUpLogger(txtad::LOGGER, spdlog::level::info);
+  // util::SetUpLogger(txtad::LOGGER, spdlog::level::debug);
 
   util::LoggerContext scope(txtad::LOGGER);
   int result = Catch::Session().run( argc, argv );
