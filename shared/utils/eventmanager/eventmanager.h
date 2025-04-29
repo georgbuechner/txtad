@@ -6,6 +6,8 @@
 #include <memory>
 #include <string>
 #include "listener.h"
+#include "utils/parser/expression_parser.h"
+#include "utils/utils.h"
 
 class EventManager {
   public: 
@@ -20,9 +22,23 @@ class EventManager {
         _listeners.erase(id);
     }
 
-    void TakeEvent(std::string event) {
+    /**
+     * Takes an event-queue, throws events and modifies event-queue (clears it
+     * and eventually adds new events.
+     * @param[in, out] event-queue
+     * @param[in] parser
+     */
+    void TakeEvents(std::string& event_queue, const ExpressionParser& parser) {
+      std::vector<std::string> events = util::Split(event_queue, ";");
+      event_queue = "";
+      for (const auto& event : events) {
+        TakeEvent(event, parser);
+      }
+    }
+
+    void TakeEvent(std::string event, const ExpressionParser& parser) {
       for (const auto& it : _listeners) {
-        if (it.second->Test(event)) {
+        if (it.second->Test(event, parser)) {
           it.second->Execute(event);
           if (!it.second->permeable())
             return;

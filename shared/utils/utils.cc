@@ -18,6 +18,9 @@ void util::SetUpLogger(const std::string& name, spdlog::level::level_enum log_le
   logger->set_level(log_level);
 }
 
+std::shared_ptr<spdlog::logger> util::Logger() {
+  return spdlog::get(LOGGER);
+}
 
 std::vector<std::string> util::Split(std::string str, std::string delimiter) {
   std::vector<std::string> v_strs;
