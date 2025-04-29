@@ -1,6 +1,5 @@
 #include "utils/fuzzy_search/fuzzy.h"
 #include "utils/parser/expression_parser.h"
-#include "utils/utils.h"
 #include <catch2/catch_test_macros.hpp>
 #include <string>
 
@@ -136,7 +135,7 @@ TEST_CASE("Text expression parser", "[parser]") {
 
 TEST_CASE("Text replacements", "[parser]") {
   std::map<std::string, std::string> substitutes = {{"player_name", "fux"}, {"inventory", "[book; tabako; wine]"}};
-  ExpressionParser parser(substitutes);
+  ExpressionParser parser(&substitutes);
 
   // name reduction
   REQUIRE(parser.Evaluate("{player_name}=fux") == "1");

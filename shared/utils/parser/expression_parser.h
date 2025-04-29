@@ -5,6 +5,7 @@
 #define SRC_TEXTADVENTURE_TOOLS_LOGICPARSER_H_
 
 #include <map>
+#include <memory>
 #include <string>
 #include <vector>
 
@@ -17,7 +18,7 @@ class ExpressionParser{
      * be substituted by the value of [current_room]).
      * @param[in] substitute (map with possible substitutes)
      */
-    ExpressionParser(std::map<std::string, std::string> substitute = {});
+    ExpressionParser(const std::map<std::string, std::string>* substitute = {});
 
     /**
      * return value of logical or mathematical expression
@@ -40,17 +41,18 @@ class ExpressionParser{
      * @param[in] input (logical/mathematical expression)
      * @return string
      */
-    std::string Evaluate(std::string input);
+    std::string Evaluate(std::string input) const;
 
   private:
 
     // members 
-    std::map<std::string, std::string> _substitutes;  ///< map with substitutes.
+    const std::map<std::string, std::string>* _substitutes;  ///< map with substitutes.
+    static const std::map<std::string, std::string> _default_subsitutes;
     static std::map<std::string, std::string(*)(const std::string&, const std::string&)> _opts;
 
     // methods 
-    std::string evaluate(std::string input);
-    std::string StripAndSubstitute(std::string str);
+    std::string evaluate(std::string input) const;
+    std::string StripAndSubstitute(std::string str) const;
 
     // static methods 
 

@@ -7,9 +7,13 @@
 #include <exception>
 #include <iostream>
 #include <algorithm>
+#include <memory>
 #include <ostream>
 #include <spdlog/spdlog.h>
 #include <string>
+
+const std::map<std::string, std::string> ExpressionParser::_default_subsitutes = {{"no_match", "0"}, 
+  {"direct", "1"}, {"starts_with", "2"}, {"contains", "3"}, {"fuzzy", "4"}};
 
 std::map<std::string, std::string(*)(const std::string&, const std::string&)> ExpressionParser::_opts = {
   {">", [](const std::string& a, const std::string& b) { return std::to_string(std::stoi(a) > std::stoi(b)); } },
@@ -48,19 +52,18 @@ std::map<std::string, std::string(*)(const std::string&, const std::string&)> Ex
   {"&&", [](const std::string& a, const std::string& b) { return std::to_string(a == "1" && b == "1"); } },
 };
 
-ExpressionParser::ExpressionParser(std::map<std::string, std::string> substitutes) {
-  _substitutes = {{"no_match", "0"}, {"direct", "1"}, {"starts_with", "2"}, {"contains", "3"}, {"fuzzy", "4"}};
-  _substitutes.insert(substitutes.begin(), substitutes.end());
+ExpressionParser::ExpressionParser(const std::map<std::string, std::string>* substitutes) {
+  _substitutes = substitutes;
 }
 
-std::string ExpressionParser::Evaluate(std::string input) {
+std::string ExpressionParser::Evaluate(std::string input) const {
   util::Logger()->info(fmt::format("EP:Evaluate. START: {}", input));
   auto res = evaluate(EnsureExecutionOrder(input));
   util::Logger()->info(fmt::format("EP:Evaluate. =>: {}", res));
   return res;
 }
 
-std::string ExpressionParser::evaluate(std::string input) {
+std::string ExpressionParser::evaluate(std::string input) const {
   util::Logger()->debug(fmt::format("EP:Evaluate. {}", input));
   auto [pos, opt] = LastOpt(input); 
 
@@ -84,7 +87,7 @@ std::string ExpressionParser::evaluate(std::string input) {
   return (*_opts[opt])(StripAndSubstitute(a), StripAndSubstitute(b)); 
 }
 
-std::string ExpressionParser::StripAndSubstitute(std::string str) {
+std::string ExpressionParser::StripAndSubstitute(std::string str) const {
   // strip string from whitespaces and brackets
   str = util::Strip(util::Strip(util::Strip(str), ')'), '(');
 
@@ -96,9 +99,12 @@ std::string ExpressionParser::StripAndSubstitute(std::string str) {
       int closing = ClosingBracket(str, i+1, '{', '}');
       // Get substitute-name (string inbetween brackets) and check if it exists
       std::string subsitute = str.substr(i+1, closing-(i+1));
-      if (_substitutes.count(subsitute) > 0) {
+      std::string replacement = (_default_subsitutes.count(subsitute) > 0) 
+        ? _default_subsitutes.at(subsitute) : (_substitutes->count(subsitute) > 0) 
+          ? _substitutes->at(subsitute) : "";
+      if (replacement != "") {
         // Add substituted string to replaced string and increase index
-        replaced += _substitutes.at(subsitute);
+        replaced += replacement;
         i = closing;
       }
     } else {
