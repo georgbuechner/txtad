@@ -1,9 +1,0 @@
-{
-  "dependencies": [
-    "catch2",
-    "cpp-httplib",
-    "nlohmann-json",
-    "spdlog",
-    "websocketpp"
-  ]
-}
