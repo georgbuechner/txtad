@@ -5,6 +5,7 @@
 #include <regex>
 #include <map>
 #include <memory>
+#include <optional>
 
   // ***** ***** Forward Declarations ***** ***** //
 class EventManager;
@@ -12,7 +13,7 @@ class Listener;
 
   // ***** ***** Constructor ***** ***** //
 class Context {
-
+  
 public:
   Context(const std::string& name,
 	  const std::string& description,
@@ -42,7 +43,7 @@ public:
 
   // ***** ***** Attribute methods ***** ***** //
   void SetAttribute(const std::string& key, const std::string& value);
-  std::string GetAttribute(const std::string& key) const;
+  std::optional<std::string> GetAttribute(const std::string& key) const;
   void RemoveAttribute(const std::string& key);
   void AddAttribute(const std::string& key); 
   bool HasAttribute(const std::string& key) const;
@@ -61,5 +62,6 @@ private:
   EventManager* _event_manager;
 
 };
+
 
 #endif
