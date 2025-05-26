@@ -1,16 +1,12 @@
 #ifndef SRC_UTILS_CONTEXT_STACK_H
 #define SRC_UTILS_CONTEXT_STACK_H
 
-#include <algorithm>
-#include <iterator>
 #include <map>
 #include <memory>
 #include <string>
 #include <vector>
 #include "shared/objects/context/context.h"
-#include "shared/utils/eventmanager/eventmanager.h"
 #include "shared/utils/parser/expression_parser.h"
-#include "shared/utils/utils.h"
 
 class ContextStack {
   public: 

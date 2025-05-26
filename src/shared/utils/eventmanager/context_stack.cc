@@ -1,5 +1,6 @@
 #include "context_stack.h"
 #include "shared/utils/utils.h"
+#include <cstddef>
 
 ContextStack::ContextStack() {};
 
@@ -68,10 +69,13 @@ void ContextStack::TakeEvents(std::string& events, const ExpressionParser& parse
 }
 
 void ContextStack::TakeEvent(const std::string& event, const ExpressionParser& parser) {
-  for (const auto& it : _sorted_contexts) {
-    if (it) {
-      util::Logger()->info("CTX {} take_event: {}", it->id(), event);
-      it->TakeEvent(event, parser);
+  // (using index-based iteration, since container might be modified during
+  // iteration
+  for (size_t i=0; i<_sorted_contexts.size();) {
+    if (auto ctx = _sorted_contexts[i]) {
+      util::Logger()->info("CTX {} take_event: {}", ctx->id(), event);
+      ctx->TakeEvent(event, parser);
+      ++i;
     } {
       util::Logger()->info("CTX STACK: skipping, probably due to remove");
     }
