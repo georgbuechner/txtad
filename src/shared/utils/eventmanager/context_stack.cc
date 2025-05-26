@@ -45,6 +45,10 @@ bool ContextStack::erase(const std::string& id) {
   return true;
 }
 
+bool ContextStack::exists(const std::string& id) {
+  return _contexts.count(id) > 0;
+}
+
 std::shared_ptr<Context> ContextStack::get(const std::string& id) {
   const auto& it = _contexts.find(id);
   if (it != _contexts.end())

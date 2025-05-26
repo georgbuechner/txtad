@@ -2,6 +2,7 @@
 #define SRC_UTILS_EVENTMANAGER_LISTNER_H
 
 #include "shared/utils/parser/expression_parser.h"
+#include "shared/utils/utils.h"
 #include <functional>
 #include <regex>
 #include <string>

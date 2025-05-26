@@ -13,6 +13,7 @@ class ContextStack {
     ContextStack();
 
     // methods
+    bool exists(const std::string& id);
     bool insert(std::shared_ptr<Context> context);
     bool erase(const std::string& id);
     std::shared_ptr<Context> get(const std::string& id);

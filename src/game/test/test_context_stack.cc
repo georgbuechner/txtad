@@ -4,8 +4,10 @@
 #include "shared/utils/eventmanager/eventmanager.h"
 #include "shared/utils/utils.h"
 #include <catch2/catch_test_macros.hpp>
+#include <cstddef>
 #include <fmt/core.h>
 #include <memory>
+#include <regex>
 
 TEST_CASE("Test inserting, removing, getting and sorting", "[stack]") {
   ContextStack stack;
@@ -79,15 +81,31 @@ TEST_CASE("Test throwing events", "[stack]") {
     helpers::SetAttribute(attributes, args);
   };
   
-  Listener::Fn add_ctx = [&contexts, &stack](std::string event, std::string args) {
-    util::Logger()->info(fmt::format("Adding context: {}", args));
-    if (contexts.count(args) > 0)
-      stack.insert(contexts.at(args));
+  Listener::Fn add_ctx = [&contexts, &stack](std::string event, std::string ctx_id) {
+    util::Logger()->info(fmt::format("Adding context: {}", ctx_id));
+    if (contexts.count(ctx_id) > 0)
+      stack.insert(contexts.at(ctx_id));
   };
-  Listener::Fn remove_ctx = [&contexts, &stack](std::string event, std::string args) {
-    util::Logger()->info(fmt::format("Removing context: {}", args));
-    if (contexts.count(args) > 0)
-      stack.erase(args);
+  Listener::Fn remove_ctx = [&contexts, &stack](std::string event, std::string ctx_id) {
+    util::Logger()->info(fmt::format("Removing context: {}", ctx_id));
+    if (stack.exists(ctx_id))
+      stack.erase(ctx_id);
+  };
+  Listener::Fn replace_ctx = [&contexts, &stack](std::string event, std::string args) {
+    static const std::regex regex_expression("(.*) -> (.*)");
+    std::smatch base_match;
+    if (std::regex_match(args, base_match, regex_expression)) {
+      if (base_match.size() == 3) {
+        std::string ctx_from = base_match[1].str();
+        std::string ctx_to = base_match[2].str();
+        util::Logger()->info(fmt::format("Replacing context: {} with {}", ctx_from, ctx_to));
+        if (stack.exists(ctx_from)) {
+          stack.erase(ctx_from);
+        } 
+        if (contexts.count(ctx_to) > 0)
+          stack.insert(contexts.at(ctx_to));
+      }
+    }
   };
 
   Listener::Fn add_to_eventqueue = [&event_queue](std::string event, std::string args) {
@@ -98,6 +116,7 @@ TEST_CASE("Test throwing events", "[stack]") {
   std::shared_ptr<Context> ctx = std::make_shared<Context>("ctx_mechanic", 10);
   ctx->AddListener(std::make_shared<Listener>("H1", "#ctx remove (.*)", "", remove_ctx, true));
   ctx->AddListener(std::make_shared<Listener>("H2", "#ctx add (.*)", "", add_ctx, true));
+  ctx->AddListener(std::make_shared<Listener>("H3", "#ctx replace (.*)", "", replace_ctx, true));
   contexts[ctx->id()] = ctx;
   stack.insert(ctx);
 
@@ -110,7 +129,7 @@ TEST_CASE("Test throwing events", "[stack]") {
 
   // Create context "mindfullness"
   std::shared_ptr<Context> ctx_mindfullness = std::make_shared<Context>("mindfullness", 0);
-  ctx_mindfullness->AddListener(std::make_shared<Listener>("L1", "go east", "#ctx add scared;#ctx remove mindfullness",
+  ctx_mindfullness->AddListener(std::make_shared<Listener>("L1", "go east", "#ctx replace mindfullness -> scared",
       add_to_eventqueue, true));
   contexts[ctx_mindfullness->id()] = ctx_mindfullness;
 
@@ -119,7 +138,7 @@ TEST_CASE("Test throwing events", "[stack]") {
   REQUIRE(stack.get("scared") != nullptr);
   REQUIRE(stack.get("mindfullness") == nullptr);
 
-  SECTION("Switch rooms") {
+  SECTION("Switch states") {
     // Switch from scared to mindfullness
     event_queue = "go west";
     while (event_queue != "") {
