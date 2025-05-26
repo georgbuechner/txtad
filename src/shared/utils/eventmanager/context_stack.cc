@@ -1,4 +1,5 @@
 #include "context_stack.h"
+#include "shared/utils/utils.h"
 
 ContextStack::ContextStack() {};
 
@@ -58,9 +59,22 @@ std::vector<std::string> ContextStack::GetOrder() {
   return sorted_context_ids;
 }
 
-void ContextStack::TakeEvent(std::string event, const ExpressionParser& parser) {
+void ContextStack::TakeEvents(std::string& events, const ExpressionParser& parser) {
+  auto vec_events = util::Split(events, ";");
+  events = "";
+  for (const auto& event : vec_events) {
+    TakeEvent(event, parser);
+  }
+}
+
+void ContextStack::TakeEvent(const std::string& event, const ExpressionParser& parser) {
   for (const auto& it : _sorted_contexts) {
-    it->event_manager()->TakeEvent(event, parser);
+    if (it) {
+      util::Logger()->info("CTX {} take_event: {}", it->id(), event);
+      it->TakeEvent(event, parser);
+    } {
+      util::Logger()->info("CTX STACK: skipping, probably due to remove");
+    }
   }
 }
 

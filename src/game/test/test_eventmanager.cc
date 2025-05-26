@@ -1,3 +1,4 @@
+#include "game/test/helpers.h"
 #include "shared/utils/eventmanager/eventmanager.h"
 #include "shared/utils/eventmanager/listener.h"
 #include "shared/utils/parser/expression_parser.h"
@@ -7,47 +8,10 @@
 #include <memory>
 #include <string>
 
-void SetAttribute(std::map<std::string, std::string>& attributes, std::string inp) {
-  static std::vector<std::string> opts = {"+=", "-=", "++", "--", "*=", "/=", "="}; 
-  std::string opt;
-  int pos = -1;
-  for (const auto& it : opts) {
-    auto p = inp.find(it);
-    if (p != std::string::npos) {
-      opt = it;
-      pos = p;
-      break;
-    }
-  }
-  std::string attribute = inp.substr(0, pos);
-  std::string expression = inp.substr(pos+opt.length()); 
-
-  util::Logger()->info(fmt::format("attribute: {}, opt: {}, expression: {}", attribute, opt, expression));
-
-  if (attributes.count(attribute) == 0) {
-    return;
-  }
-
-  ExpressionParser parser(&attributes);
-
-  if (opt == "=")
-    attributes[attribute] = parser.Evaluate(expression);
-  else if (opt == "++")
-    attributes[attribute] = std::to_string(std::stoi(attributes.at(attribute)) + 1);
-  else if (opt == "--")
-    attributes[attribute] = std::to_string(std::stoi(attributes.at(attribute)) - 1);
-  else if (opt == "+=")
-    attributes[attribute] = std::to_string(std::stoi(attributes.at(attribute)) + std::stoi(parser.Evaluate(expression)));
-  else if (opt == "-=")
-    attributes[attribute] = std::to_string(std::stoi(attributes.at(attribute)) - std::stoi(parser.Evaluate(expression)));
-  else if (opt == "*=")
-    attributes[attribute] = std::to_string(std::stoi(attributes.at(attribute)) * std::stoi(parser.Evaluate(expression)));
-  else if (opt == "/=")
-    attributes[attribute] = std::to_string(std::stoi(attributes.at(attribute)) / std::stoi(parser.Evaluate(expression)));
-}
-
-void TakeEvents(const std::string& events, EventManager& em, ExpressionParser& parser) {
-  for (const auto& event : util::Split(events, ";")) {
+void TakeEvents(std::string& events, EventManager& em, ExpressionParser& parser) {
+  auto vec_events = util::Split(events, ";");
+  events = "";
+  for (const auto& event : vec_events) {
     em.TakeEvent(event, parser);
   }
 }
@@ -62,7 +26,7 @@ TEST_CASE("Test eventmanager basic use", "[eventmanager]") {
   std::string event_queue = "";
 
   Listener::Fn set_attribute = [&attributes](std::string event, std::string args) {
-    SetAttribute(attributes, args);
+    helpers::SetAttribute(attributes, args);
   };
 
   Listener::Fn add_to_eventqueue = [&event_queue](std::string event, std::string args) {
@@ -70,14 +34,14 @@ TEST_CASE("Test eventmanager basic use", "[eventmanager]") {
   };
 
   // Basic handlers
-  em.AddListener(std::make_shared<Listener>("M1", std::regex("#sa (.*)"), "", set_attribute, true));
+  em.AddListener(std::make_shared<Listener>("M1", "#sa (.*)", "", set_attribute, true));
 
   // Custom handlers
-  em.AddListener(std::make_shared<Listener>("P1", std::regex("go"), E_SET_MANA, 
+  em.AddListener(std::make_shared<Listener>("P1", "go", E_SET_MANA, 
         add_to_eventqueue, true));
-  em.AddListener(std::make_shared<Listener>("P2", std::regex("talk"), E_SET_MANA, 
+  em.AddListener(std::make_shared<Listener>("P2", "talk", E_SET_MANA, 
         add_to_eventqueue, true));
-  em.AddListener(std::make_shared<Listener>("P3", std::regex("talk"), E_SET_RUNES, 
+  em.AddListener(std::make_shared<Listener>("P3", "talk", E_SET_RUNES, 
         add_to_eventqueue, true));
 
   em.TakeEvent("talk", parser);
@@ -101,7 +65,7 @@ TEST_CASE("Test eventmanager: SetAttribute", "[eventmanager]") {
   std::string event_queue = "";
 
   Listener::Fn set_attribute = [&attributes](std::string event, std::string args) {
-    SetAttribute(attributes, args);
+    helpers::SetAttribute(attributes, args);
   };
 
   Listener::Fn add_to_eventqueue = [&event_queue](std::string event, std::string args) {
@@ -109,20 +73,20 @@ TEST_CASE("Test eventmanager: SetAttribute", "[eventmanager]") {
   };
 
   // Basic handlers
-  em.AddListener(std::make_shared<Listener>("M1", std::regex("#sa (.*)"), "", set_attribute, true));
+  em.AddListener(std::make_shared<Listener>("M1", "#sa (.*)", "", set_attribute, true));
 
   // Custom handlers
-  em.AddListener(std::make_shared<Listener>("P1", std::regex("set"), E_SET_MANA, 
+  em.AddListener(std::make_shared<Listener>("P1", "set", E_SET_MANA, 
         add_to_eventqueue, true));
-  em.AddListener(std::make_shared<Listener>("P2", std::regex("add"), E_ADD_MANA, 
+  em.AddListener(std::make_shared<Listener>("P2", "add", E_ADD_MANA, 
         add_to_eventqueue, true));
-  em.AddListener(std::make_shared<Listener>("P3", std::regex("inc"), E_INC_MANA, 
+  em.AddListener(std::make_shared<Listener>("P3", "inc", E_INC_MANA, 
         add_to_eventqueue, true));
-  em.AddListener(std::make_shared<Listener>("P4", std::regex("dec"), E_DEC_MANA, 
+  em.AddListener(std::make_shared<Listener>("P4", "dec", E_DEC_MANA, 
         add_to_eventqueue, true));
-  em.AddListener(std::make_shared<Listener>("P5", std::regex("set_to"), E_SET_RUNES_TO_MANA, 
+  em.AddListener(std::make_shared<Listener>("P5", "set_to", E_SET_RUNES_TO_MANA, 
         add_to_eventqueue, true));
-  em.AddListener(std::make_shared<Listener>("P6", std::regex("inc_by"), E_INC_RUNES_BY_DOUBLE_MANA, 
+  em.AddListener(std::make_shared<Listener>("P6", "inc_by", E_INC_RUNES_BY_DOUBLE_MANA, 
         add_to_eventqueue, true));
 
   em.TakeEvent("set", parser);
@@ -161,19 +125,19 @@ TEST_CASE("Test permeability", "[eventmanager]") {
   std::string event_queue = "";
 
   Listener::Fn set_attribute = [&attributes](std::string event, std::string args) {
-    SetAttribute(attributes, args);
+    helpers::SetAttribute(attributes, args);
   };
   Listener::Fn add_to_eventqueue = [&event_queue](std::string event, std::string args) {
     event_queue += ((event_queue != "") ? ";" : "") + args;
   };
 
   // Basic handlers
-  em.AddListener(std::make_shared<Listener>("M1", std::regex("#sa (.*)"), "", set_attribute, true));
+  em.AddListener(std::make_shared<Listener>("M1", "#sa (.*)", "", set_attribute, true));
 
   // Custom handlers
-  em.AddListener(std::make_shared<Listener>("P2", std::regex("talk"), E_SET_MANA, 
+  em.AddListener(std::make_shared<Listener>("P2", "talk", E_SET_MANA, 
         add_to_eventqueue, false));
-  em.AddListener(std::make_shared<Listener>("P3", std::regex("talk"), E_SET_RUNES, 
+  em.AddListener(std::make_shared<Listener>("P3", "talk", E_SET_RUNES, 
         add_to_eventqueue, true));
 
   em.TakeEvent("talk", parser);
@@ -193,20 +157,20 @@ TEST_CASE("Test logic", "[eventmanager]") {
   std::string event_queue = "";
 
   Listener::Fn set_attribute = [&attributes](std::string event, std::string args) {
-    SetAttribute(attributes, args);
+    helpers::SetAttribute(attributes, args);
   };
   Listener::Fn add_to_eventqueue = [&event_queue](std::string event, std::string args) {
     event_queue += ((event_queue != "") ? ";" : "") + args;
   };
 
   // Basic handlers
-  em.AddListener(std::make_shared<Listener>("M1", std::regex("#sa (.*)"), "", set_attribute, true));
+  em.AddListener(std::make_shared<Listener>("M1", "#sa (.*)", "", set_attribute, true));
 
   SECTION("First invalid") {
     // Custom handlers
-    em.AddListener(std::make_shared<Listener>("P2", std::regex("talk"), E_SET_MANA, 
+    em.AddListener(std::make_shared<Listener>("P2", "talk", E_SET_MANA, 
           add_to_eventqueue, true, "{mana} = 10"));
-    em.AddListener(std::make_shared<Listener>("P3", std::regex("talk"), E_SET_RUNES, 
+    em.AddListener(std::make_shared<Listener>("P3", "talk", E_SET_RUNES, 
           add_to_eventqueue, true, "{mana} = 5"));
 
     em.TakeEvent("talk", parser);
@@ -215,9 +179,9 @@ TEST_CASE("Test logic", "[eventmanager]") {
 
   SECTION("Second invalid") {
     // Custom handlers
-    em.AddListener(std::make_shared<Listener>("P2", std::regex("talk"), E_SET_MANA, 
+    em.AddListener(std::make_shared<Listener>("P2", "talk", E_SET_MANA, 
           add_to_eventqueue, true, "{mana} > 10"));
-    em.AddListener(std::make_shared<Listener>("P3", std::regex("talk"), E_SET_RUNES, 
+    em.AddListener(std::make_shared<Listener>("P3", "talk", E_SET_RUNES, 
           add_to_eventqueue, true, "{mana} >= 10"));
 
     em.TakeEvent("talk", parser);
@@ -226,9 +190,9 @@ TEST_CASE("Test logic", "[eventmanager]") {
 
   SECTION("Both invalid") {
     // Custom handlers
-    em.AddListener(std::make_shared<Listener>("P2", std::regex("talk"), E_SET_MANA, 
+    em.AddListener(std::make_shared<Listener>("P2", "talk", E_SET_MANA, 
           add_to_eventqueue, true, "{mana} ~ zehn == {direct}"));
-    em.AddListener(std::make_shared<Listener>("P3", std::regex("talk"), E_SET_RUNES, 
+    em.AddListener(std::make_shared<Listener>("P3", "talk", E_SET_RUNES, 
           add_to_eventqueue, true, "{mana} != 10"));
 
     em.TakeEvent("talk", parser);
@@ -237,9 +201,9 @@ TEST_CASE("Test logic", "[eventmanager]") {
 
   SECTION("Both valid") {
     // Custom handlers
-    em.AddListener(std::make_shared<Listener>("P2", std::regex("talk"), E_SET_MANA, 
+    em.AddListener(std::make_shared<Listener>("P2", "talk", E_SET_MANA, 
           add_to_eventqueue, true, "{mana} <= 10"));
-    em.AddListener(std::make_shared<Listener>("P3", std::regex("talk"), E_SET_RUNES, 
+    em.AddListener(std::make_shared<Listener>("P3", "talk", E_SET_RUNES, 
           add_to_eventqueue, true, "{mana} >= 10"));
 
     em.TakeEvent("talk", parser);
@@ -248,11 +212,11 @@ TEST_CASE("Test logic", "[eventmanager]") {
 
   SECTION("Update while throwing (priority high enougth)") {
     // Custom handlers
-    em.AddListener(std::make_shared<Listener>("P2", std::regex("talk"), E_SET_MANA, 
+    em.AddListener(std::make_shared<Listener>("P2", "talk", E_SET_MANA, 
           add_to_eventqueue, true, "{mana} = 10"));
-    em.AddListener(std::make_shared<Listener>("P3", std::regex("talk"), E_SET_RUNES, 
+    em.AddListener(std::make_shared<Listener>("P3", "talk", E_SET_RUNES, 
           add_to_eventqueue, true, "{mana} = 5"));
-    em.AddListener(std::make_shared<Listener>("G1", std::regex("#sa .*"), E_SET_RUNES, 
+    em.AddListener(std::make_shared<Listener>("G1", "#sa .*", E_SET_RUNES, 
         add_to_eventqueue, true, "{mana} = 10"));
 
     em.TakeEvent("talk", parser);
@@ -265,11 +229,11 @@ TEST_CASE("Test logic", "[eventmanager]") {
 
   SECTION("Update while throwing (priority not high enouth for start-values)") {
     // Custom handlers
-    em.AddListener(std::make_shared<Listener>("P2", std::regex("talk"), E_SET_MANA, 
+    em.AddListener(std::make_shared<Listener>("P2", "talk", E_SET_MANA, 
           add_to_eventqueue, true, "{mana} = 10"));
-    em.AddListener(std::make_shared<Listener>("P3", std::regex("talk"), E_SET_RUNES, 
+    em.AddListener(std::make_shared<Listener>("P3", "talk", E_SET_RUNES, 
           add_to_eventqueue, true, "{mana} = 5"));
-    em.AddListener(std::make_shared<Listener>("P4", std::regex("#sa .*"), E_SET_RUNES, 
+    em.AddListener(std::make_shared<Listener>("P4", "#sa .*", E_SET_RUNES, 
         add_to_eventqueue, true, "{mana} = 10"));
 
     em.TakeEvent("talk", parser);
@@ -282,11 +246,11 @@ TEST_CASE("Test logic", "[eventmanager]") {
 
   SECTION("Update while throwing (priority not high enouth, but using correct values)") {
     // Custom handlers
-    em.AddListener(std::make_shared<Listener>("P2", std::regex("talk"), E_SET_MANA, 
+    em.AddListener(std::make_shared<Listener>("P2", "talk", E_SET_MANA, 
           add_to_eventqueue, true, "{mana} = 10"));
-    em.AddListener(std::make_shared<Listener>("P3", std::regex("talk"), E_SET_RUNES, 
+    em.AddListener(std::make_shared<Listener>("P3", "talk", E_SET_RUNES, 
           add_to_eventqueue, true, "{mana} = 5"));
-    em.AddListener(std::make_shared<Listener>("P4", std::regex("#sa .*"), E_SET_RUNES, 
+    em.AddListener(std::make_shared<Listener>("P4", "#sa .*", E_SET_RUNES, 
         add_to_eventqueue, true, "{mana} = 20"));
 
     em.TakeEvent("talk", parser);

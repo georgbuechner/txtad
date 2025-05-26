@@ -1,6 +1,7 @@
 #ifndef SRC_OBJECT_CONTEXT_CONTEXT_H
 #define SRC_OBJECT_CONTEXT_CONTEXT_H
 
+#include "shared/utils/eventmanager/eventmanager.h"
 #include "shared/utils/utils.h"
 #include <string>
 #include <regex>
@@ -11,21 +12,25 @@
   // ***** ***** Forward Declarations ***** ***** //
 class EventManager;
 class Listener;
+class ExpressionParser;
 
   // ***** ***** Constructor ***** ***** //
 class Context {
   
 public:
-  Context(const std::string& id, const std::string& name, const std::string& description, 
-      const std::string& entry_condition_pattern, int priority, bool permeable, EventManager* event_manager)
-    : _id(id), _name(name), _description(description), _entry_condition_pattern(entry_condition_pattern),
-      _entry_condition(std::regex(entry_condition_pattern)), _priority(priority), _permeable(permeable), 
-      _event_manager(event_manager) {
+  Context(const std::string& id, int priority, bool permeable=true)
+    : _id(id), _name(""), _description(""), _entry_condition_pattern(""),
+      _entry_condition(std::regex("")), _priority(priority), _permeable(permeable), 
+      _event_manager(std::make_unique<EventManager>()) {
     util::Logger()->debug(fmt::format("Context. Context {} created", id)); 
   }
-  ~Context() { 
-    delete _event_manager; 
-    util::Logger()->debug(fmt::format("Context. Context {} deleted.", _id)); 
+
+  Context(const std::string& id, const std::string& name, const std::string& description, 
+      const std::string& entry_condition_pattern="", int priority=0, bool permeable=true)
+    : _id(id), _name(name), _description(description), _entry_condition_pattern(entry_condition_pattern),
+      _entry_condition(std::regex(entry_condition_pattern)), _priority(priority), _permeable(permeable), 
+      _event_manager(std::make_unique<EventManager>()) {
+    util::Logger()->debug(fmt::format("Context. Context {} created", id)); 
   }
 
   // ***** ***** Getters ***** ***** //
@@ -34,7 +39,6 @@ public:
   std::string description() const;
   std::string entry_condition_pattern() const;
   int priority() const;
-  EventManager* event_manager();
 
   // ***** ***** Setters ***** ***** //
   void set_name(const std::string& name);
@@ -55,6 +59,8 @@ public:
   bool HasAttribute(const std::string& key) const;
   
   // ***** ***** Listener methods calling EventManager ***** ***** //
+  bool TakeEvent(std::string event, const ExpressionParser& parser);
+
   void AddListener(std::shared_ptr<Listener> listener);
   void RemoveListener(const std::string& id);
 
@@ -69,7 +75,7 @@ private:
   int _priority;
   bool _permeable;
 
-  EventManager* _event_manager;
+  std::unique_ptr<EventManager> _event_manager;
 };
 
 #endif

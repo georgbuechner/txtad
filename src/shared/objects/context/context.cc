@@ -25,10 +25,6 @@ int Context::priority() const {
   return _priority;
 }
 
-EventManager* Context::event_manager() {
-  return _event_manager;
-}
-
 // ***** ***** Setters ***** ***** //
 void Context::set_name(const std::string& name) {
   _name = name;
@@ -93,11 +89,16 @@ bool Context::HasAttribute(const std::string& key) const {
 }
   
   // ***** ***** Listener methods calling EventManager ***** ***** //
+
+bool Context::TakeEvent(std::string event, const ExpressionParser& parser) {
+  return _event_manager->TakeEvent(event, parser);
+}
+
 void Context::AddListener(std::shared_ptr<Listener> listener) {
   if (_event_manager) {
     _event_manager->AddListener(listener);
   } else {
-    util::Logger()->debug(fmt::format("Context::AddListener: event_manager does not exist for listener {}", listener->id()));
+    util::Logger()->error(fmt::format("Context::AddListener: event_manager does not exist for listener {}", listener->id()));
   }
 }
 
@@ -105,6 +106,6 @@ void Context::RemoveListener(const std::string& id) {
   if (_event_manager) {
     _event_manager->RemoveListener(id);
   } else {
-    util::Logger()->debug(fmt::format("Context::RemoveListener: event_manager does not exist for id {}", id));
+    util::Logger()->error(fmt::format("Context::RemoveListener: event_manager does not exist for id {}", id));
   }
 }

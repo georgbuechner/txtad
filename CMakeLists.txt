@@ -27,6 +27,8 @@ set(GAME_TEST_FILES
   src/game/test/test_context_stack.cc
   src/game/test/test_expression_parser.cc
   src/game/test/test_utils.cc
+  src/game/test/test_context.cc
+  src/game/test/helpers.cc
   src/shared/objects/context/context.cc
   src/shared/utils/eventmanager/context_stack.cc
   src/shared/utils/utils.cc

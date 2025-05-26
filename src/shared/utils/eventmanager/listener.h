@@ -19,11 +19,13 @@ class Listener {
      * @param[in] permeable (stop execution if not permeable)
      * @param[in] logic (additional evaluation)
      */
-    Listener(std::string id, std::regex event, std::string arguments, Fn fn, bool permeable, std::string logic="") : 
-      _id(id), _event(event), _logic(logic), _arguments(arguments), _fn(fn), _permeable(permeable) {}
+    Listener(std::string id, std::string regex_expression, std::string arguments, Fn fn, bool permeable, std::string logic="") : 
+      _id(id), _event(regex_expression), _regex_expression(std::regex(regex_expression)), _logic(logic), _arguments(arguments), 
+      _fn(fn), _permeable(permeable) {}
 
     // getter 
     std::string id() const { return _id; }
+    std::string event() const { return _event; }
     bool permeable() const { return _permeable; } 
 
     // methods 
@@ -31,7 +33,7 @@ class Listener {
       if (_logic != "" && parser.Evaluate(_logic) != "1")
         return false;
       std::smatch base_match;
-      if (std::regex_match(event, base_match, _event)) {
+      if (std::regex_match(event, base_match, _regex_expression)) {
         if (base_match.size() == 2)
           _arguments = base_match[1].str();
         return true;
@@ -45,7 +47,8 @@ class Listener {
 
   private: 
     const std::string _id; 
-    const std::regex _event;
+    const std::string _event;
+    const std::regex _regex_expression;
     const std::string _logic;
     std::string _arguments;
     const Fn _fn;

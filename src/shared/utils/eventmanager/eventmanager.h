@@ -6,6 +6,7 @@
 #include <string>
 #include "listener.h"
 #include "shared/utils/parser/expression_parser.h"
+#include "shared/utils/utils.h"
 
 class EventManager {
   public: 
@@ -23,7 +24,9 @@ class EventManager {
     bool TakeEvent(std::string event, const ExpressionParser& parser) {
       bool accepted = false;
       for (const auto& it : _listeners) {
+        util::Logger()->info(fmt::format("Testing {}: {} <-> {}", it.first, it.second->event(), event));
         if (it.second->Test(event, parser)) {
+          util::Logger()->info("acceped!");
           accepted = true;
           it.second->Execute(event);
           if (!it.second->permeable())
