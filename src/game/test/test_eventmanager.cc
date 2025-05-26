@@ -46,6 +46,12 @@ void SetAttribute(std::map<std::string, std::string>& attributes, std::string in
     attributes[attribute] = std::to_string(std::stoi(attributes.at(attribute)) / std::stoi(parser.Evaluate(expression)));
 }
 
+void TakeEvents(const std::string& events, EventManager& em, ExpressionParser& parser) {
+  for (const auto& event : util::Split(events, ";")) {
+    em.TakeEvent(event, parser);
+  }
+}
+
 TEST_CASE("Test eventmanager basic use", "[eventmanager]") {
   const std::string E_SET_MANA = "#sa mana=20";
   const std::string E_SET_RUNES = "#sa runes=100";
@@ -76,7 +82,7 @@ TEST_CASE("Test eventmanager basic use", "[eventmanager]") {
 
   em.TakeEvent("talk", parser);
   REQUIRE(event_queue == E_SET_MANA + ";" + E_SET_RUNES);
-  em.TakeEvents(event_queue, parser);
+  TakeEvents(event_queue, em, parser);
   REQUIRE(attributes["mana"] == "20");
   REQUIRE(attributes["runes"] == "100");
 }
@@ -172,7 +178,7 @@ TEST_CASE("Test permeability", "[eventmanager]") {
 
   em.TakeEvent("talk", parser);
   REQUIRE(event_queue == E_SET_MANA);
-  em.TakeEvents(event_queue, parser);
+  TakeEvents(event_queue, em, parser);
   REQUIRE(attributes["mana"] == "20");
   REQUIRE(attributes["runes"] == "5");
 }
@@ -251,7 +257,7 @@ TEST_CASE("Test logic", "[eventmanager]") {
 
     em.TakeEvent("talk", parser);
     REQUIRE(event_queue == E_SET_MANA);
-    em.TakeEvents(event_queue, parser);
+    TakeEvents(event_queue, em, parser);
     REQUIRE(attributes["mana"] == "20");
     REQUIRE(event_queue == E_SET_RUNES); 
   }
@@ -268,7 +274,7 @@ TEST_CASE("Test logic", "[eventmanager]") {
 
     em.TakeEvent("talk", parser);
     REQUIRE(event_queue == E_SET_MANA);
-    em.TakeEvents(event_queue, parser);
+    TakeEvents(event_queue, em, parser);
     REQUIRE(attributes["mana"] == "20");
     REQUIRE(event_queue == ""); // -> did not work because r4 has lower priority
                                 // than 1 (the default set-handler
@@ -285,7 +291,7 @@ TEST_CASE("Test logic", "[eventmanager]") {
 
     em.TakeEvent("talk", parser);
     REQUIRE(event_queue == E_SET_MANA);
-    em.TakeEvents(event_queue, parser);
+    TakeEvents(event_queue, em, parser);
     REQUIRE(attributes["mana"] == "20");
     REQUIRE(event_queue == E_SET_RUNES); 
   }

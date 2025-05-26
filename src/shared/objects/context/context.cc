@@ -1,11 +1,15 @@
+#include <fmt/core.h>
 #include <fmt/format.h>
-#include <iostream>
 #include <spdlog/spdlog.h>
 #include "context.h"
-#include "utils/defines.h"
-#include "utils/event_manager/event_manager.h"
+#include "shared/utils/eventmanager/eventmanager.h"
+#include "shared/utils/utils.h"
 
   // ***** ***** Getters ***** ***** //
+std::string Context::id() const {
+  return _id;
+}
+
 std::string Context::name() const {
   return _name;
 }
@@ -19,6 +23,10 @@ std::string Context::entry_condition_pattern() const {
 }
 int Context::priority() const {
   return _priority;
+}
+
+EventManager* Context::event_manager() {
+  return _event_manager;
 }
 
 // ***** ***** Setters ***** ***** //
@@ -89,7 +97,7 @@ void Context::AddListener(std::shared_ptr<Listener> listener) {
   if (_event_manager) {
     _event_manager->AddListener(listener);
   } else {
-    util::Logger()->debug(fmt::format("Context::AddListener: event_manager does not exist for listener {}", listener));
+    util::Logger()->debug(fmt::format("Context::AddListener: event_manager does not exist for listener {}", listener->id()));
   }
 }
 
@@ -97,7 +105,6 @@ void Context::RemoveListener(const std::string& id) {
   if (_event_manager) {
     _event_manager->RemoveListener(id);
   } else {
-    spdlog::get(txtad::LOGGER)->debug("Context::RemoveListener: event_manager does not exist for id {}", id);
+    util::Logger()->debug(fmt::format("Context::RemoveListener: event_manager does not exist for id {}", id));
+  }
 }
-
-

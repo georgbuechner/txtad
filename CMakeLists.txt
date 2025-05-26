@@ -14,6 +14,8 @@ set(GAME_SRC_FILES
   src/game/game/game.cc 
   src/game/game/user.cc 
   src/game/server/websocket_server.cc 
+  src/shared/objects/context/context.cc
+  src/shared/utils/eventmanager/context_stack.cc
   src/shared/utils/utils.cc
   src/shared/utils/parser/expression_parser.cc
   src/shared/utils/fuzzy_search/fuzzy.cc
@@ -22,8 +24,11 @@ set(GAME_SRC_FILES
 set(GAME_TEST_FILES 
   src/game/test/main.cc 
   src/game/test/test_eventmanager.cc
+  src/game/test/test_context_stack.cc
   src/game/test/test_expression_parser.cc
   src/game/test/test_utils.cc
+  src/shared/objects/context/context.cc
+  src/shared/utils/eventmanager/context_stack.cc
   src/shared/utils/utils.cc
   src/shared/utils/parser/expression_parser.cc
   src/shared/utils/fuzzy_search/fuzzy.cc

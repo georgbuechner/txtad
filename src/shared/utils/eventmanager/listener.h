@@ -3,7 +3,6 @@
 
 #include "shared/utils/parser/expression_parser.h"
 #include <functional>
-#include <iostream>
 #include <regex>
 #include <string>
 
@@ -29,7 +28,6 @@ class Listener {
 
     // methods 
     bool Test(const std::string& event, const ExpressionParser& parser) {
-      std::cout << event << " -> " << ", " << _logic << std::endl;
       if (_logic != "" && parser.Evaluate(_logic) != "1")
         return false;
       std::smatch base_match;
