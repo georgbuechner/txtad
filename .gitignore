@@ -16,3 +16,4 @@ game/.cache/*
 data/games/*
 !data/games/test
 !data/games/original
+.dir-locals.el
