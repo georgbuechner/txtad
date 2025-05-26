@@ -6,6 +6,7 @@
 #include <catch2/catch_test_macros.hpp>
 #include <cstddef>
 #include <fmt/core.h>
+#include <iostream>
 #include <memory>
 #include <regex>
 
@@ -112,11 +113,16 @@ TEST_CASE("Test throwing events", "[stack]") {
     event_queue += ((event_queue != "") ? ";" : "") + args;
   };
 
+  Listener::Fn cout = [&event_queue](std::string event, std::string args) {
+    util::Logger()->info("PRINT: >>{}<<", args);
+  };
+
   // Create Base context
   std::shared_ptr<Context> ctx = std::make_shared<Context>("ctx_mechanic", 10);
   ctx->AddListener(std::make_shared<Listener>("H1", "#ctx remove (.*)", "", remove_ctx, true));
   ctx->AddListener(std::make_shared<Listener>("H2", "#ctx add (.*)", "", add_ctx, true));
   ctx->AddListener(std::make_shared<Listener>("H3", "#ctx replace (.*)", "", replace_ctx, true));
+  ctx->AddListener(std::make_shared<Listener>("H4", "#print (.*)", "", cout, true));
   contexts[ctx->id()] = ctx;
   stack.insert(ctx);
 
@@ -134,9 +140,9 @@ TEST_CASE("Test throwing events", "[stack]") {
   contexts[ctx_mindfullness->id()] = ctx_mindfullness;
 
   // "ctx_mechanic" and "scared" or initial contexts
-  REQUIRE(stack.get("ctx_mechanic") != nullptr);
-  REQUIRE(stack.get("scared") != nullptr);
-  REQUIRE(stack.get("mindfullness") == nullptr);
+  REQUIRE(stack.exists("ctx_mechanic"));
+  REQUIRE(stack.exists("scared"));
+  REQUIRE(!stack.exists("mindfullness"));
 
   SECTION("Switch states") {
     // Switch from scared to mindfullness
@@ -144,14 +150,32 @@ TEST_CASE("Test throwing events", "[stack]") {
     while (event_queue != "") {
       stack.TakeEvents(event_queue, parser);
     }
-    REQUIRE(stack.get("scared") == nullptr);
-    REQUIRE(stack.get("mindfullness") != nullptr);
+    REQUIRE(!stack.exists("scared"));
+    REQUIRE(stack.exists("mindfullness"));
     // Switch back to scared 
     event_queue = "go east";
     while (event_queue != "") {
       stack.TakeEvents(event_queue, parser);
     }
-    REQUIRE(stack.get("scared") != nullptr);
-    REQUIRE(stack.get("mindfullness") == nullptr);
+    REQUIRE(stack.exists("scared"));
+    REQUIRE(!stack.exists("mindfullness"));
+  }
+
+  SECTION("Test priority and permeability") {
+    // Create Curse context
+    std::shared_ptr<Context> ctx_curse = std::make_shared<Context>("curse", 5, false);
+    ctx_curse->AddListener(std::make_shared<Listener>("L1", "go west", "#print You are cursed and can't go west",
+        add_to_eventqueue, true));
+    contexts[ctx_curse->id()] = ctx_mindfullness;
+    stack.insert(ctx_curse);
+
+    // Attempt to go west
+    event_queue = "go west";
+    while (event_queue != "") {
+      stack.TakeEvents(event_queue, parser);
+    }
+    // Nothing changed, becuse curse prevents going west
+    REQUIRE(stack.exists("scared"));
+    REQUIRE(!stack.exists("mindfullness"));
   }
 }

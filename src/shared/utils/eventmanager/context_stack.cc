@@ -78,10 +78,12 @@ void ContextStack::TakeEvent(const std::string& event, const ExpressionParser& p
   for (size_t i=0; i<_sorted_contexts.size();) {
     if (auto ctx = _sorted_contexts[i]) {
       util::Logger()->info("CTX {} take_event: {}", ctx->id(), event);
-      ctx->TakeEvent(event, parser);
+      // If event acepted by context and context is non-permeable: stop!
+      if (ctx->TakeEvent(event, parser) && !ctx->permeable())
+        return;
       ++i;
-    } {
-      util::Logger()->info("CTX STACK: skipping, probably due to remove");
+    } else {
+      util::Logger()->warn("CTX STACK: skipping, probably due to remove");
     }
   }
 }

@@ -24,6 +24,9 @@ std::string Context::entry_condition_pattern() const {
 int Context::priority() const {
   return _priority;
 }
+bool Context::permeable() const {
+  return _permeable;
+}
 
 // ***** ***** Setters ***** ***** //
 void Context::set_name(const std::string& name) {

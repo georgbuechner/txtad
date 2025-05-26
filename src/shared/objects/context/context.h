@@ -39,6 +39,7 @@ public:
   std::string description() const;
   std::string entry_condition_pattern() const;
   int priority() const;
+  bool permeable() const;
 
   // ***** ***** Setters ***** ***** //
   void set_name(const std::string& name);
