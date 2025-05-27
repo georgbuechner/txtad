@@ -1,8 +1,10 @@
 #include <fmt/core.h>
 #include <fmt/format.h>
+#include <regex>
 #include <spdlog/spdlog.h>
 #include "context.h"
 #include "shared/utils/eventmanager/eventmanager.h"
+#include "shared/utils/eventmanager/listener.h"
 #include "shared/utils/utils.h"
 
   // ***** ***** Getters ***** ***** //
@@ -19,7 +21,7 @@ std::string Context::description() const {
 }
 
 std::string Context::entry_condition_pattern() const {
-  return _entry_condition_pattern;
+  return _entry_condition.str();
 }
 int Context::priority() const {
   return _priority;
@@ -38,18 +40,17 @@ void Context::set_description(const std::string& description) {
 }
 
 void Context::set_entry_condition(const std::string& pattern) {
-  _entry_condition_pattern = pattern;
-  _entry_condition = std::regex(pattern);
+  _entry_condition = util::Regex(pattern);
 }
 
   // ***** ***** String representation of the class ***** ***** //
 std::string Context::ToString() const {
-  return "Name: " + _name + "\n" + "Description: " + _description + "\n" + "Entry Condition (regex): " + _entry_condition_pattern;
+  return "Name: " + _name + "\n" + "Description: " + _description + "\n" + "Entry Condition (regex): " + _entry_condition.str();
 }
   
   // ***** ***** Entry check ***** ***** //
 bool Context::CheckEntry(const std::string& test) const {
-  return std::regex_match(test, _entry_condition);
+  return std::regex_match(test, static_cast<std::regex>(_entry_condition));
 }
 
   // ***** ***** Attribute methods ***** ***** //

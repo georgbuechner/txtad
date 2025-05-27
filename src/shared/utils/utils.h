@@ -4,6 +4,7 @@
 #ifndef SHARED_UTILS_UTIL_H
 #define SHARED_UTILS_UTIL_H
 
+#include <regex>
 #include <spdlog/common.h>
 #include <spdlog/logger.h>
 #include <string>
@@ -26,6 +27,16 @@ namespace util
       }
     private: 
       std::string _prev;
+  };
+
+  class Regex {
+    public: 
+      Regex(const std::string& pattern) : _pattern(pattern), _regex(std::regex(pattern)) {}
+      const std::string& str() const { return _pattern; } 
+      operator const std::regex&() const { return _regex; } 
+    private: 
+      std::string _pattern;
+      std::regex _regex;
   };
 
   std::vector<std::string> Split(std::string str, std::string delimiter);

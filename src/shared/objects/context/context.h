@@ -2,6 +2,7 @@
 #define SRC_OBJECT_CONTEXT_CONTEXT_H
 
 #include "shared/utils/eventmanager/eventmanager.h"
+#include "shared/utils/eventmanager/listener.h"
 #include "shared/utils/utils.h"
 #include <string>
 #include <regex>
@@ -18,18 +19,15 @@ class ExpressionParser;
 class Context {
   
 public:
-  Context(const std::string& id, int priority, bool permeable=true)
-    : _id(id), _name(""), _description(""), _entry_condition_pattern(""),
-      _entry_condition(std::regex("")), _priority(priority), _permeable(permeable), 
-      _event_manager(std::make_unique<EventManager>()) {
+  Context(const std::string& id, int priority, bool permeable=true) : _id(id), _name(""), _description(""), 
+      _entry_condition(""), _priority(priority), _permeable(permeable), _event_manager(std::make_unique<EventManager>()) {
     util::Logger()->debug(fmt::format("Context. Context {} created", id)); 
   }
 
   Context(const std::string& id, const std::string& name, const std::string& description, 
       const std::string& entry_condition_pattern="", int priority=0, bool permeable=true)
-    : _id(id), _name(name), _description(description), _entry_condition_pattern(entry_condition_pattern),
-      _entry_condition(std::regex(entry_condition_pattern)), _priority(priority), _permeable(permeable), 
-      _event_manager(std::make_unique<EventManager>()) {
+    : _id(id), _name(name), _description(description), _entry_condition(entry_condition_pattern), 
+      _priority(priority), _permeable(permeable), _event_manager(std::make_unique<EventManager>()) {
     util::Logger()->debug(fmt::format("Context. Context {} created", id)); 
   }
 
@@ -70,8 +68,7 @@ private:
   const std::string _id;
   std::string _name;
   std::string _description;
-  std::string _entry_condition_pattern;
-  std::regex _entry_condition;
+  util::Regex _entry_condition;
   std::map<std::string, std::string> _attributes;
   int _priority;
   bool _permeable;

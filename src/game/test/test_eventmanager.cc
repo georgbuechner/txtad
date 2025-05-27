@@ -33,16 +33,15 @@ TEST_CASE("Test eventmanager basic use", "[eventmanager]") {
     event_queue += ((event_queue != "") ? ";" : "") + args;
   };
 
+  LForwarder::set_overwite_fn(add_to_eventqueue);
+
   // Basic handlers
-  em.AddListener(std::make_shared<Listener>("M1", "#sa (.*)", "", set_attribute, true));
+  em.AddListener(std::make_shared<LHandler>("M1", "#sa (.*)", set_attribute));
 
   // Custom handlers
-  em.AddListener(std::make_shared<Listener>("P1", "go", E_SET_MANA, 
-        add_to_eventqueue, true));
-  em.AddListener(std::make_shared<Listener>("P2", "talk", E_SET_MANA, 
-        add_to_eventqueue, true));
-  em.AddListener(std::make_shared<Listener>("P3", "talk", E_SET_RUNES, 
-        add_to_eventqueue, true));
+  em.AddListener(std::make_shared<LForwarder>("P1", "go", E_SET_MANA, true));
+  em.AddListener(std::make_shared<LForwarder>("P2", "talk", E_SET_MANA, true));
+  em.AddListener(std::make_shared<LForwarder>("P3", "talk", E_SET_RUNES, true));
 
   em.TakeEvent("talk", parser);
   REQUIRE(event_queue == E_SET_MANA + ";" + E_SET_RUNES);
@@ -71,23 +70,18 @@ TEST_CASE("Test eventmanager: SetAttribute", "[eventmanager]") {
   Listener::Fn add_to_eventqueue = [&event_queue](std::string event, std::string args) {
     event_queue += ((event_queue != "") ? ";" : "") + args;
   };
+  LForwarder::set_overwite_fn(add_to_eventqueue);
 
   // Basic handlers
-  em.AddListener(std::make_shared<Listener>("M1", "#sa (.*)", "", set_attribute, true));
+  em.AddListener(std::make_shared<LHandler>("M1", "#sa (.*)", set_attribute));
 
   // Custom handlers
-  em.AddListener(std::make_shared<Listener>("P1", "set", E_SET_MANA, 
-        add_to_eventqueue, true));
-  em.AddListener(std::make_shared<Listener>("P2", "add", E_ADD_MANA, 
-        add_to_eventqueue, true));
-  em.AddListener(std::make_shared<Listener>("P3", "inc", E_INC_MANA, 
-        add_to_eventqueue, true));
-  em.AddListener(std::make_shared<Listener>("P4", "dec", E_DEC_MANA, 
-        add_to_eventqueue, true));
-  em.AddListener(std::make_shared<Listener>("P5", "set_to", E_SET_RUNES_TO_MANA, 
-        add_to_eventqueue, true));
-  em.AddListener(std::make_shared<Listener>("P6", "inc_by", E_INC_RUNES_BY_DOUBLE_MANA, 
-        add_to_eventqueue, true));
+  em.AddListener(std::make_shared<LForwarder>("P1", "set", E_SET_MANA, true));
+  em.AddListener(std::make_shared<LForwarder>("P2", "add", E_ADD_MANA, true));
+  em.AddListener(std::make_shared<LForwarder>("P3", "inc", E_INC_MANA, true));
+  em.AddListener(std::make_shared<LForwarder>("P4", "dec", E_DEC_MANA, true));
+  em.AddListener(std::make_shared<LForwarder>("P5", "set_to", E_SET_RUNES_TO_MANA, true));
+  em.AddListener(std::make_shared<LForwarder>("P6", "inc_by", E_INC_RUNES_BY_DOUBLE_MANA, true));
 
   em.TakeEvent("set", parser);
   em.TakeEvent(event_queue, parser);
@@ -130,15 +124,14 @@ TEST_CASE("Test permeability", "[eventmanager]") {
   Listener::Fn add_to_eventqueue = [&event_queue](std::string event, std::string args) {
     event_queue += ((event_queue != "") ? ";" : "") + args;
   };
+  LForwarder::set_overwite_fn(add_to_eventqueue);
 
   // Basic handlers
-  em.AddListener(std::make_shared<Listener>("M1", "#sa (.*)", "", set_attribute, true));
+  em.AddListener(std::make_shared<LHandler>("M1", "#sa (.*)", set_attribute));
 
   // Custom handlers
-  em.AddListener(std::make_shared<Listener>("P2", "talk", E_SET_MANA, 
-        add_to_eventqueue, false));
-  em.AddListener(std::make_shared<Listener>("P3", "talk", E_SET_RUNES, 
-        add_to_eventqueue, true));
+  em.AddListener(std::make_shared<LForwarder>("P2", "talk", E_SET_MANA, false));
+  em.AddListener(std::make_shared<LForwarder>("P3", "talk", E_SET_RUNES, true));
 
   em.TakeEvent("talk", parser);
   REQUIRE(event_queue == E_SET_MANA);
@@ -162,16 +155,15 @@ TEST_CASE("Test logic", "[eventmanager]") {
   Listener::Fn add_to_eventqueue = [&event_queue](std::string event, std::string args) {
     event_queue += ((event_queue != "") ? ";" : "") + args;
   };
+  LForwarder::set_overwite_fn(add_to_eventqueue);
 
   // Basic handlers
-  em.AddListener(std::make_shared<Listener>("M1", "#sa (.*)", "", set_attribute, true));
+  em.AddListener(std::make_shared<LHandler>("M1", "#sa (.*)", set_attribute));
 
   SECTION("First invalid") {
     // Custom handlers
-    em.AddListener(std::make_shared<Listener>("P2", "talk", E_SET_MANA, 
-          add_to_eventqueue, true, "{mana} = 10"));
-    em.AddListener(std::make_shared<Listener>("P3", "talk", E_SET_RUNES, 
-          add_to_eventqueue, true, "{mana} = 5"));
+    em.AddListener(std::make_shared<LForwarder>("P2", "talk", E_SET_MANA, true, "{mana} = 10"));
+    em.AddListener(std::make_shared<LForwarder>("P3", "talk", E_SET_RUNES, true, "{mana} = 5"));
 
     em.TakeEvent("talk", parser);
     REQUIRE(event_queue == E_SET_MANA);
@@ -179,10 +171,8 @@ TEST_CASE("Test logic", "[eventmanager]") {
 
   SECTION("Second invalid") {
     // Custom handlers
-    em.AddListener(std::make_shared<Listener>("P2", "talk", E_SET_MANA, 
-          add_to_eventqueue, true, "{mana} > 10"));
-    em.AddListener(std::make_shared<Listener>("P3", "talk", E_SET_RUNES, 
-          add_to_eventqueue, true, "{mana} >= 10"));
+    em.AddListener(std::make_shared<LForwarder>("P2", "talk", E_SET_MANA, true, "{mana} > 10"));
+    em.AddListener(std::make_shared<LForwarder>("P3", "talk", E_SET_RUNES, true, "{mana} >= 10"));
 
     em.TakeEvent("talk", parser);
     REQUIRE(event_queue == E_SET_RUNES);
@@ -190,10 +180,8 @@ TEST_CASE("Test logic", "[eventmanager]") {
 
   SECTION("Both invalid") {
     // Custom handlers
-    em.AddListener(std::make_shared<Listener>("P2", "talk", E_SET_MANA, 
-          add_to_eventqueue, true, "{mana} ~ zehn == {direct}"));
-    em.AddListener(std::make_shared<Listener>("P3", "talk", E_SET_RUNES, 
-          add_to_eventqueue, true, "{mana} != 10"));
+    em.AddListener(std::make_shared<LForwarder>("P2", "talk", E_SET_MANA, true, "{mana} ~ zehn == {direct}"));
+    em.AddListener(std::make_shared<LForwarder>("P3", "talk", E_SET_RUNES, true, "{mana} != 10"));
 
     em.TakeEvent("talk", parser);
     REQUIRE(event_queue == "");
@@ -201,10 +189,8 @@ TEST_CASE("Test logic", "[eventmanager]") {
 
   SECTION("Both valid") {
     // Custom handlers
-    em.AddListener(std::make_shared<Listener>("P2", "talk", E_SET_MANA, 
-          add_to_eventqueue, true, "{mana} <= 10"));
-    em.AddListener(std::make_shared<Listener>("P3", "talk", E_SET_RUNES, 
-          add_to_eventqueue, true, "{mana} >= 10"));
+    em.AddListener(std::make_shared<LForwarder>("P2", "talk", E_SET_MANA, true, "{mana} <= 10"));
+    em.AddListener(std::make_shared<LForwarder>("P3", "talk", E_SET_RUNES, true, "{mana} >= 10"));
 
     em.TakeEvent("talk", parser);
     REQUIRE(event_queue == fmt::format("{};{}", E_SET_MANA, E_SET_RUNES));
@@ -212,12 +198,9 @@ TEST_CASE("Test logic", "[eventmanager]") {
 
   SECTION("Update while throwing (priority high enougth)") {
     // Custom handlers
-    em.AddListener(std::make_shared<Listener>("P2", "talk", E_SET_MANA, 
-          add_to_eventqueue, true, "{mana} = 10"));
-    em.AddListener(std::make_shared<Listener>("P3", "talk", E_SET_RUNES, 
-          add_to_eventqueue, true, "{mana} = 5"));
-    em.AddListener(std::make_shared<Listener>("G1", "#sa .*", E_SET_RUNES, 
-        add_to_eventqueue, true, "{mana} = 10"));
+    em.AddListener(std::make_shared<LForwarder>("P2", "talk", E_SET_MANA, true, "{mana} = 10"));
+    em.AddListener(std::make_shared<LForwarder>("P3", "talk", E_SET_RUNES, true, "{mana} = 5"));
+    em.AddListener(std::make_shared<LForwarder>("G1", "#sa .*", E_SET_RUNES, true, "{mana} = 10"));
 
     em.TakeEvent("talk", parser);
     REQUIRE(event_queue == E_SET_MANA);
@@ -229,12 +212,9 @@ TEST_CASE("Test logic", "[eventmanager]") {
 
   SECTION("Update while throwing (priority not high enouth for start-values)") {
     // Custom handlers
-    em.AddListener(std::make_shared<Listener>("P2", "talk", E_SET_MANA, 
-          add_to_eventqueue, true, "{mana} = 10"));
-    em.AddListener(std::make_shared<Listener>("P3", "talk", E_SET_RUNES, 
-          add_to_eventqueue, true, "{mana} = 5"));
-    em.AddListener(std::make_shared<Listener>("P4", "#sa .*", E_SET_RUNES, 
-        add_to_eventqueue, true, "{mana} = 10"));
+    em.AddListener(std::make_shared<LForwarder>("P2", "talk", E_SET_MANA, true, "{mana} = 10"));
+    em.AddListener(std::make_shared<LForwarder>("P3", "talk", E_SET_RUNES, true, "{mana} = 5"));
+    em.AddListener(std::make_shared<LForwarder>("P4", "#sa .*", E_SET_RUNES, true, "{mana} = 10"));
 
     em.TakeEvent("talk", parser);
     REQUIRE(event_queue == E_SET_MANA);
@@ -246,12 +226,9 @@ TEST_CASE("Test logic", "[eventmanager]") {
 
   SECTION("Update while throwing (priority not high enouth, but using correct values)") {
     // Custom handlers
-    em.AddListener(std::make_shared<Listener>("P2", "talk", E_SET_MANA, 
-          add_to_eventqueue, true, "{mana} = 10"));
-    em.AddListener(std::make_shared<Listener>("P3", "talk", E_SET_RUNES, 
-          add_to_eventqueue, true, "{mana} = 5"));
-    em.AddListener(std::make_shared<Listener>("P4", "#sa .*", E_SET_RUNES, 
-        add_to_eventqueue, true, "{mana} = 20"));
+    em.AddListener(std::make_shared<LForwarder>("P2", "talk", E_SET_MANA, true, "{mana} = 10"));
+    em.AddListener(std::make_shared<LForwarder>("P3", "talk", E_SET_RUNES, true, "{mana} = 5"));
+    em.AddListener(std::make_shared<LForwarder>("P4", "#sa .*", E_SET_RUNES, true, "{mana} = 20"));
 
     em.TakeEvent("talk", parser);
     REQUIRE(event_queue == E_SET_MANA);

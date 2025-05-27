@@ -1,12 +1,10 @@
 #include "game/test/helpers.h"
 #include "shared/objects/context/context.h"
 #include "shared/utils/eventmanager/context_stack.h"
-#include "shared/utils/eventmanager/eventmanager.h"
+#include "shared/utils/eventmanager/listener.h"
 #include "shared/utils/utils.h"
 #include <catch2/catch_test_macros.hpp>
-#include <cstddef>
 #include <fmt/core.h>
-#include <iostream>
 #include <memory>
 #include <regex>
 
@@ -109,34 +107,35 @@ TEST_CASE("Test throwing events", "[stack]") {
     }
   };
 
-  Listener::Fn add_to_eventqueue = [&event_queue](std::string event, std::string args) {
-    event_queue += ((event_queue != "") ? ";" : "") + args;
-  };
-
   Listener::Fn cout = [&event_queue](std::string event, std::string args) {
     util::Logger()->info("PRINT: >>{}<<", args);
   };
 
+  Listener::Fn add_to_eventqueue = [&event_queue](std::string event, std::string args) {
+    event_queue += ((event_queue != "") ? ";" : "") + args;
+  };
+
+  LForwarder::set_overwite_fn(add_to_eventqueue);
+
+
   // Create Base context
   std::shared_ptr<Context> ctx = std::make_shared<Context>("ctx_mechanic", 10);
-  ctx->AddListener(std::make_shared<Listener>("H1", "#ctx remove (.*)", "", remove_ctx, true));
-  ctx->AddListener(std::make_shared<Listener>("H2", "#ctx add (.*)", "", add_ctx, true));
-  ctx->AddListener(std::make_shared<Listener>("H3", "#ctx replace (.*)", "", replace_ctx, true));
-  ctx->AddListener(std::make_shared<Listener>("H4", "#print (.*)", "", cout, true));
+  ctx->AddListener(std::make_shared<LHandler>("H1", "#ctx remove (.*)", remove_ctx));
+  ctx->AddListener(std::make_shared<LHandler>("H2", "#ctx add (.*)", add_ctx));
+  ctx->AddListener(std::make_shared<LHandler>("H3", "#ctx replace (.*)", replace_ctx));
+  ctx->AddListener(std::make_shared<LHandler>("H4", "#print (.*)", cout));
   contexts[ctx->id()] = ctx;
   stack.insert(ctx);
 
   // Create context "scared"
   std::shared_ptr<Context> ctx_scared = std::make_shared<Context>("scared", 0);
-  ctx_scared->AddListener(std::make_shared<Listener>("L1", "go west", "#ctx add mindfullness;#ctx remove scared",
-      add_to_eventqueue, true));
+  ctx_scared->AddListener(std::make_shared<LForwarder>("L1", "go west", "#ctx add mindfullness;#ctx remove scared", true));
   contexts[ctx_scared->id()] = ctx_scared;
   stack.insert(ctx_scared);
 
   // Create context "mindfullness"
   std::shared_ptr<Context> ctx_mindfullness = std::make_shared<Context>("mindfullness", 0);
-  ctx_mindfullness->AddListener(std::make_shared<Listener>("L1", "go east", "#ctx replace mindfullness -> scared",
-      add_to_eventqueue, true));
+  ctx_mindfullness->AddListener(std::make_shared<LForwarder>("L1", "go east", "#ctx replace mindfullness -> scared", true));
   contexts[ctx_mindfullness->id()] = ctx_mindfullness;
 
   // "ctx_mechanic" and "scared" or initial contexts
@@ -164,8 +163,7 @@ TEST_CASE("Test throwing events", "[stack]") {
   SECTION("Test priority and permeability") {
     // Create Curse context
     std::shared_ptr<Context> ctx_curse = std::make_shared<Context>("curse", 5, false);
-    ctx_curse->AddListener(std::make_shared<Listener>("L1", "go west", "#print You are cursed and can't go west",
-        add_to_eventqueue, true));
+    ctx_curse->AddListener(std::make_shared<LForwarder>("L1", "go west", "#print You are cursed and can't go west", true));
     contexts[ctx_curse->id()] = ctx_mindfullness;
     stack.insert(ctx_curse);
 
