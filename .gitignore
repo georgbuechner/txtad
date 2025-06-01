@@ -13,6 +13,9 @@ game/vcpkg/*
 game/build/*
 game/logs/*
 game/.cache/*
+game/txtad.o
+game/txtad_test.o
 data/games/*
 !data/games/test
 !data/games/original
+.dir-locals.el
