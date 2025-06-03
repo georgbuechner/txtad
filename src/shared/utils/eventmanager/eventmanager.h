@@ -6,7 +6,6 @@
 #include <string>
 #include "listener.h"
 #include "shared/utils/parser/expression_parser.h"
-#include "shared/utils/utils.h"
 
 class EventManager {
   public: 

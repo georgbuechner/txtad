@@ -1,6 +1,8 @@
 #include "context_stack.h"
 #include "shared/utils/utils.h"
+#include <algorithm>
 #include <cstddef>
+#include <iterator>
 
 ContextStack::ContextStack() {};
 
@@ -55,6 +57,16 @@ std::shared_ptr<Context> ContextStack::get(const std::string& id) {
     return it->second;
   util::Logger()->warn(fmt::format("ContextStack::Get. Context {} not found.", id));
   return nullptr;
+}
+
+std::vector<std::shared_ptr<Context>> ContextStack::find(const std::string& id_part) {
+  std::vector<std::shared_ptr<Context>> ctxs; 
+  for (const auto& it : _contexts) {
+    if (it.second->id().find(id_part) != std::string::npos) {
+      ctxs.push_back(it.second);
+    }
+  }
+  return ctxs;
 }
 
 std::vector<std::string> ContextStack::GetOrder() {
