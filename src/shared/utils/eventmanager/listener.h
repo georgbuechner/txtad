@@ -55,6 +55,8 @@ class LForwarder : public LHandler {
      */
     LForwarder(std::string id, std::string re_event, std::string arguments, bool permeable, std::string logic="");
 
+    LForwarder(const nlohmann::json& json);
+
     // methods 
     bool Test(const std::string& event, const ExpressionParser& parser) override;
 

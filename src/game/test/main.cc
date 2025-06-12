@@ -1,5 +1,6 @@
 #include "game/utils/defines.h"
 #include "shared/utils/utils.h"
+#include <spdlog/common.h>
 #define CATCH_CONFIG_RUNNER
 #include <catch2/catch_test_macros.hpp>
 #include <catch2/catch_session.hpp>
@@ -12,7 +13,7 @@ int main( int argc, char* argv[] ) {
   /* initialize random seed: */
   srand (time(NULL));
 
-  util::SetUpLogger(txtad::FILES_PATH, txtad::TEST_LOGGER, spdlog::level::info);
+  util::SetUpLogger(txtad::FILES_PATH, txtad::TEST_LOGGER, spdlog::level::debug);
 
   util::LoggerContext scope(txtad::TEST_LOGGER);
   int result = Catch::Session().run( argc, argv );

@@ -75,7 +75,7 @@ TEST_CASE("Test throwing events", "[stack]") {
   ContextStack stack;
   std::map<std::string, std::shared_ptr<Context>> contexts;
   
-  // difine basic handlers
+  // define basic handlers
   Listener::Fn set_attribute = [&attributes](std::string event, std::string args) {
     helpers::SetAttribute(attributes, args);
   };
@@ -98,9 +98,8 @@ TEST_CASE("Test throwing events", "[stack]") {
         std::string ctx_from = base_match[1].str();
         std::string ctx_to = base_match[2].str();
         util::Logger()->info(fmt::format("Replacing context: {} with {}", ctx_from, ctx_to));
-        if (stack.exists(ctx_from)) {
+        if (stack.exists(ctx_from))
           stack.erase(ctx_from);
-        } 
         if (contexts.count(ctx_to) > 0)
           stack.insert(contexts.at(ctx_to));
       }

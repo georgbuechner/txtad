@@ -1,13 +1,11 @@
 /**
  * @author fux
  */
-#ifndef SRC_TEXTADVENTURE_TOOLS_LOGICPARSER_H_
-#define SRC_TEXTADVENTURE_TOOLS_LOGICPARSER_H_
+#ifndef SHARED_UTILS_PARSER_EXPRESSIONPARSER_H_
+#define SHARED_UTILS_PARSER_EXPRESSIONPARSER_H_
 
 #include <map>
-#include <memory>
 #include <string>
-#include <vector>
 
 class ExpressionParser{
   public:

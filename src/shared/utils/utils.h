@@ -4,6 +4,8 @@
 #ifndef SHARED_UTILS_UTIL_H
 #define SHARED_UTILS_UTIL_H
 
+#include <nlohmann/json_fwd.hpp>
+#include <optional>
 #include <regex>
 #include <spdlog/common.h>
 #include <spdlog/logger.h>
@@ -48,6 +50,10 @@ namespace util
    * @return striped string
    */
   std::string Strip(std::string str, char c=' ');
+
+  std::optional<nlohmann::json> LoadJsonFromDisc(const std::string& path);
+
+  void WriteJsonToDisc(const std::string& path, const nlohmann::json& json);
 }
 
 #endif

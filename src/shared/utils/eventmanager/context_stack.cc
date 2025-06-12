@@ -45,7 +45,7 @@ bool ContextStack::erase(const std::string& id) {
   return true;
 }
 
-bool ContextStack::exists(const std::string& id) {
+bool ContextStack::exists(const std::string& id) const {
   return _contexts.count(id) > 0;
 }
 
@@ -68,6 +68,7 @@ void ContextStack::TakeEvents(std::string& events, const ExpressionParser& parse
   auto vec_events = util::Split(events, ";");
   events = "";
   for (const auto& event : vec_events) {
+    util::Logger()->debug(fmt::format("ContextStack::TakeEvents: {}", event));
     TakeEvent(event, parser);
   }
 }
@@ -87,4 +88,3 @@ void ContextStack::TakeEvent(const std::string& event, const ExpressionParser& p
     }
   }
 }
-

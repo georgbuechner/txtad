@@ -7,6 +7,7 @@
 #include "shared/utils/eventmanager/listener.h"
 #include "shared/utils/utils.h"
 
+
   // ***** ***** Getters ***** ***** //
 std::string Context::id() const {
   return _id;
@@ -28,6 +29,9 @@ int Context::priority() const {
 }
 bool Context::permeable() const {
   return _permeable;
+}
+bool Context::shared() const {
+  return _shared;
 }
 
 // ***** ***** Setters ***** ***** //

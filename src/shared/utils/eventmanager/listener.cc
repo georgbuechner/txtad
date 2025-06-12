@@ -1,5 +1,6 @@
 #include "shared/utils/eventmanager/listener.h"
 #include "shared/utils/utils.h"
+#include <nlohmann/json.hpp>
 
 // l-handler
 
@@ -36,6 +37,11 @@ Listener::Fn LForwarder::_overwride_fn = nullptr;
 LForwarder::LForwarder(std::string id, std::string re_event, std::string arguments, bool permeable, std::string logic) : 
     LHandler(id, re_event, _overwride_fn, permeable), _logic(logic) { 
   _arguments = arguments; 
+}
+
+LForwarder::LForwarder(const nlohmann::json& json) : LHandler(json.at("id"), json.at("re_event"), _overwride_fn, json.at("permeable")),
+    _logic(json.value("logic", "")) {
+  _arguments = json.at("arguments");
 }
 
 // methods 

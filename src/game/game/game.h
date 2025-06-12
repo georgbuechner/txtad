@@ -2,6 +2,10 @@
 #define SRC_GAME_GAME_H 
 
 #include "game/game/user.h"
+#include "shared/objects/context/context.h"
+#include "shared/objects/settings/settings.h"
+#include "shared/objects/text/text.h"
+#include "shared/utils/parser/expression_parser.h"
 #include <functional>
 #include <map>
 #include <memory>
@@ -17,6 +21,9 @@ class Game {
     // getter 
     std::string path() const;
     std::string name() const;
+    const std::map<std::string, std::shared_ptr<Context>>& contexts() const;
+    const std::map<std::string, std::shared_ptr<Text>>& texts() const;
+    const Settings& settings() const;
     
     // setter 
     static void set_msg_fn(MsgFn fn);
@@ -25,11 +32,20 @@ class Game {
     void HandleEvent(const std::string& user_id, const std::string& event);
 
   private: 
+    static MsgFn _cout;
+
     mutable std::shared_mutex _mutex;  ///< Mutex for connections_.
     const std::string _path;
     const std::string _name;
     std::map<std::string, std::shared_ptr<User>> _users;
-    static MsgFn _cout;
+    std::shared_ptr<User> _cur_user;
+
+    ExpressionParser _parser;
+
+    Settings _settings;
+    std::shared_ptr<Context> _mechanics_ctx;
+    std::map<std::string, std::shared_ptr<Context>> _contexts;
+    std::map<std::string, std::shared_ptr<Text>> _texts;
 };
 
 #endif

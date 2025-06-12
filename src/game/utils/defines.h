@@ -12,6 +12,13 @@ namespace txtad {
   const std::string FILES_PATH = "game/";
   const std::string HTML_PATH = "web/";
   const std::string GAMES_PATH = "data/games/";
+  const std::string GAME_SETTINGS = "settings.json";
+  const std::string GAME_FILES = "game_files/";
+
+  const std::string TEMPLATE_EXTENSION = ".template";
+  const std::string CONTEXT_EXTENSION = ".context";
+  const std::string TEXT_EXTENSION = ".text";
+
 };
 
 #endif

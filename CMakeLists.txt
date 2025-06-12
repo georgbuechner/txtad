@@ -19,22 +19,28 @@ set(GAME_SRC_FILES
   src/shared/utils/eventmanager/listener.cc
   src/shared/utils/utils.cc
   src/shared/utils/parser/expression_parser.cc
+  src/shared/utils/parser/game_file_parser.cc
   src/shared/utils/fuzzy_search/fuzzy.cc
 )
 
 set(GAME_TEST_FILES 
   src/game/test/main.cc 
-  src/game/test/test_eventmanager.cc
-  src/game/test/test_context_stack.cc
-  src/game/test/test_expression_parser.cc
-  src/game/test/test_utils.cc
   src/game/test/test_context.cc
+  src/game/test/test_context_stack.cc
+  src/game/test/test_eventmanager.cc
+  src/game/test/test_expression_parser.cc
+  src/game/test/test_game.cc
+  src/game/test/test_text.cc
+  src/game/test/test_utils.cc
   src/game/test/helpers.cc
+  src/game/game/game.cc
+  src/game/game/user.cc
   src/shared/objects/context/context.cc
   src/shared/utils/eventmanager/context_stack.cc
   src/shared/utils/eventmanager/listener.cc
   src/shared/utils/utils.cc
   src/shared/utils/parser/expression_parser.cc
+  src/shared/utils/parser/game_file_parser.cc
   src/shared/utils/fuzzy_search/fuzzy.cc
 )
 
