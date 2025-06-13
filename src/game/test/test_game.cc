@@ -1,5 +1,6 @@
 #include "game/game/game.h"
 #include "game/utils/defines.h"
+#include "shared/utils/defines.h"
 #include "shared/utils/parser/expression_parser.h"
 #include "shared/utils/utils.h"
 #include <catch2/catch_test_macros.hpp>
@@ -14,7 +15,7 @@ class TestGameWrapper {
 
   public: 
     TestGameWrapper(const std::string& name, const nlohmann::json& settings, 
-          const std::map<std::string, nlohmann::json>& contexts,
+          const std::map<std::string, std::vector<nlohmann::json>>& contexts,
           const std::map<std::string, nlohmann::json>& texts) 
         : _path(txtad::GAMES_PATH + "/" + name) {
       const std::string game_files_path = _path + "/" + txtad::GAME_FILES;
@@ -34,11 +35,12 @@ class TestGameWrapper {
       }
 
       // Write contexts to disc
-      for (const auto& [path, json] : contexts) {
+      for (const auto& [path, jsons] : contexts) {
         if (!fs::exists(path)) {
           const std::string file_path = game_files_path + "/" + path;
           fs::create_directories(file_path);
-          util::WriteJsonToDisc(file_path + "/" + json.at("id").get<std::string>() + txtad::CONTEXT_EXTENSION, json);
+          for (const auto& json : jsons)
+            util::WriteJsonToDisc(file_path + "/" + json.at("id").get<std::string>() + txtad::CONTEXT_EXTENSION, json);
         }
       }
     }
@@ -59,7 +61,19 @@ TEST_CASE("Test Creating Game", "[game]") {
     {"description", "Test room no. 1"},
     {"attributes", {{"gravity", "10"}, {"darkness", "99"}}},
     {"listeners", {
-      {{"id", "L1"}, {"re_event", "go left"}, {"arguments", "#ctx replace mindfullness -> scared"}, {"permeable", true}}
+      {{"id", "L2"}, {"re_event", "go right"}, {"ctx", "rooms/room_2"}, {"arguments", "#ctx replace *rooms -> <ctx>"}, 
+        {"permeable", true}, {"use_ctx_regex", UseCtx::NO}}
+    }},
+  };
+
+  const nlohmann::json ctx_room_2 = {
+    {"id", "room_2"},
+    {"name", "Room 2"},
+    {"description", "Test room no. 1"},
+    {"attributes", {{"gravity", "99"}, {"darkness", "10"}}},
+    {"listeners", {
+      {{"id", "L1"}, {"re_event", "go (.*)"}, {"ctx", "rooms/room_1"}, {"arguments", "#ctx replace *rooms -> <ctx>"}, 
+        {"permeable", true}, {"use_ctx_regex", UseCtx::Name}}
     }},
   };
 
@@ -71,7 +85,7 @@ TEST_CASE("Test Creating Game", "[game]") {
 
   const std::string GAME_NAME = "test_game";
   const std::string GAME_PATH = txtad::GAMES_PATH + GAME_NAME;
-  TestGameWrapper test_game_wrapper(GAME_NAME, settings, {{"rooms", ctx_room_1}}, {{"texts/start", txt_text_1}});
+  TestGameWrapper test_game_wrapper(GAME_NAME, settings, {{"rooms", {ctx_room_1, ctx_room_2}}}, {{"texts/start", txt_text_1}});
 
   Game game(GAME_PATH, GAME_NAME);
 
@@ -90,8 +104,11 @@ TEST_CASE("Test Creating Game", "[game]") {
   REQUIRE(ctx->GetAttribute("gravity") == ctx_room_1["attributes"]["gravity"]); 
   REQUIRE(ctx->GetAttribute("darkness") == ctx_room_1["attributes"]["darkness"]); 
   ExpressionParser parser;
-  REQUIRE(ctx->TakeEvent("go right", parser) == false);
-  REQUIRE(ctx->TakeEvent("go left", parser) == true);
+  REQUIRE(ctx->TakeEvent("go left", parser) == false);
+  REQUIRE(ctx->TakeEvent("go right", parser) == true);
+  auto ctx_2 = game.contexts().at("rooms/room_2");
+  REQUIRE(ctx_2->TakeEvent("go left", parser) == false);
+  REQUIRE(ctx_2->TakeEvent("go Room 1", parser) == true);
   // Test texts 
   REQUIRE(game.texts().count("texts/start") > 0);
   std::string event_queue;

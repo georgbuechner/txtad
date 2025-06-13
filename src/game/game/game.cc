@@ -75,6 +75,8 @@ Game::Game(std::string path, std::string name)
       util::Logger()->warn(fmt::format("Handler::cout_txt. Text \"{}\" not found.", txt_id));
   };
 
+  LForwarder::set_overwite_fn(add_to_eventqueue);
+
   _mechanics_ctx = std::make_shared<Context>("ctx_mechanic", 10);
   _mechanics_ctx->AddListener(std::make_shared<LHandler>("H1", "#ctx remove (.*)", remove_ctx));
   _mechanics_ctx->AddListener(std::make_shared<LHandler>("H2", "#ctx add (.*)", add_ctx));

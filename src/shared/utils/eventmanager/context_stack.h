@@ -17,6 +17,7 @@ class ContextStack {
     bool insert(std::shared_ptr<Context> context);
     bool erase(const std::string& id);
     std::shared_ptr<Context> get(const std::string& id);
+    std::vector<std::shared_ptr<Context>> find(const std::string& id_part);
 
     std::vector<std::string> GetOrder();
     void TakeEvents(std::string& events, const ExpressionParser& parser);

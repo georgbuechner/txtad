@@ -10,9 +10,9 @@ User::User(const std::string& game_id, const std::string& id, txtad::MsgFn cout,
   util::Logger()->info(fmt::format("User::User({}). Copying/linking contexts...", _id));
   for (const auto& [key, ctx] : contexts) {
     if (ctx->shared()) {
-      _context_stack.insert(ctx);
+      _contexts[key] = ctx;
     } else {
-      _context_stack.insert(std::make_shared<Context>(*ctx));
+      _contexts[key] = std::make_shared<Context>(*ctx);
     }
   }
   util::Logger()->info(fmt::format("User::User({}). Adding initial contexts...", _id));

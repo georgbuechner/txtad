@@ -1,5 +1,6 @@
 #include "game/test/helpers.h"
 #include "shared/objects/context/context.h"
+#include "shared/utils/defines.h"
 #include "shared/utils/eventmanager/context_stack.h"
 #include "shared/utils/eventmanager/listener.h"
 #include "shared/utils/utils.h"
@@ -174,5 +175,130 @@ TEST_CASE("Test throwing events", "[stack]") {
     // Nothing changed, becuse curse prevents going west
     REQUIRE(stack.exists("scared"));
     REQUIRE(!stack.exists("mindfullness"));
+  }
+}
+
+TEST_CASE("Test throwing events (with context-listener)", "[stack]") {
+  std::map<std::string, std::string> attributes = {{"mana", "10"}, {"runes", "5"}};
+  ExpressionParser parser(&attributes);
+  std::string event_queue = "";
+
+  ContextStack stack;
+  std::map<std::string, std::shared_ptr<Context>> contexts;
+  
+  // difine basic handlers
+  Listener::Fn set_attribute = [&attributes](std::string event, std::string args) {
+    helpers::SetAttribute(attributes, args);
+  };
+  
+  Listener::Fn add_ctx = [&contexts, &stack](std::string event, std::string ctx_id) {
+    util::Logger()->info(fmt::format("Adding context: {}", ctx_id));
+    if (contexts.count(ctx_id) > 0)
+      stack.insert(contexts.at(ctx_id));
+    else 
+      util::Logger()->error(fmt::format("[add_ctx] failed: ctx '{}' not found!", ctx_id));
+  };
+  Listener::Fn remove_ctx = [&contexts, &stack](std::string event, std::string ctx_id) {
+    util::Logger()->info(fmt::format("Removing context: {}", ctx_id));
+    if (ctx_id.front() == '*') {
+      for (const auto& ctx : stack.find(ctx_id.substr(1))) 
+        stack.erase(ctx->id());
+      return;
+    } else if (stack.exists(ctx_id))
+      stack.erase(ctx_id);
+    else 
+      util::Logger()->error(fmt::format("[remove_ctx] failed: ctx '{}' not found!", ctx_id));
+  };
+  Listener::Fn replace_ctx = [&contexts, &stack, &add_ctx, &remove_ctx](std::string event, std::string args) {
+    static const std::regex regex_expression("(.*) -> (.*)");
+    std::smatch base_match;
+    if (std::regex_match(args, base_match, regex_expression)) {
+      if (base_match.size() == 3) {
+        std::string ctx_from = base_match[1].str();
+        std::string ctx_to = base_match[2].str();
+        util::Logger()->info(fmt::format("Replacing context: {} with {}", ctx_from, ctx_to));
+        // Get context to add: 
+        remove_ctx("", ctx_from);
+        add_ctx("", ctx_to);
+      }
+    }
+  };
+
+  Listener::Fn cout = [&event_queue](std::string event, std::string args) {
+    util::Logger()->info("PRINT: >>{}<<", args);
+  };
+
+  Listener::Fn add_to_eventqueue = [&event_queue](std::string event, std::string args) {
+    event_queue += ((event_queue != "") ? ";" : "") + args;
+  };
+
+  LForwarder::set_overwite_fn(add_to_eventqueue);
+
+
+  // Create Base context
+  std::shared_ptr<Context> ctx = std::make_shared<Context>("ctx_mechanic", 10);
+  ctx->AddListener(std::make_shared<LHandler>("H1", "#ctx remove (.*)", remove_ctx));
+  ctx->AddListener(std::make_shared<LHandler>("H2", "#ctx add (.*)", add_ctx));
+  ctx->AddListener(std::make_shared<LHandler>("H3", "#ctx replace (.*)", replace_ctx));
+  ctx->AddListener(std::make_shared<LHandler>("H4", "#print (.*)", cout));
+  contexts[ctx->id()] = ctx;
+  stack.insert(ctx);
+
+  // Create contexts 
+  std::shared_ptr<Context> ctx_scared = std::make_shared<Context>("rooms.scared", "Scared", "", "");
+  contexts[ctx_scared->id()] = ctx_scared;
+  std::shared_ptr<Context> ctx_mindfullness = std::make_shared<Context>("rooms.mindfullness", "Mindfullness", "", "west");
+  contexts[ctx_mindfullness->id()] = ctx_mindfullness;
+
+
+  // Add listeners to context "scared"
+  ctx_scared->AddListener(std::make_shared<LContextForwarder>("L1", "go (.*)", ctx_mindfullness, 
+        "#ctx remove *rooms;#ctx add <ctx>", true, UseCtx::REGEX));
+  
+  // Add listeners to context "mindfullness"
+  ctx_mindfullness->AddListener(std::make_shared<LContextForwarder>("L1", "go (.*)", ctx_scared, 
+        "#ctx replace *rooms -> <ctx>", true, UseCtx::Name));
+
+
+  // Set initial contexts
+  stack.insert(ctx_scared);
+
+  // "ctx_mechanic" and "scared" or initial contexts
+  REQUIRE(stack.exists("ctx_mechanic"));
+  REQUIRE(stack.exists("rooms.scared"));
+  REQUIRE(!stack.exists("rooms.mindfullness"));
+
+  SECTION("Switch states") {
+    // Switch from scared to mindfullness
+    event_queue = "go west";
+    while (event_queue != "") {
+      stack.TakeEvents(event_queue, parser);
+    }
+    REQUIRE(!stack.exists("rooms.scared"));
+    REQUIRE(stack.exists("rooms.mindfullness"));
+    // Switch back to scared 
+    event_queue = "go scared";
+    while (event_queue != "") {
+      stack.TakeEvents(event_queue, parser);
+    }
+    REQUIRE(stack.exists("rooms.scared"));
+    REQUIRE(!stack.exists("rooms.mindfullness"));
+  }
+
+  SECTION("Test priority and permeability") {
+    // Create Curse context
+    std::shared_ptr<Context> ctx_curse = std::make_shared<Context>("curse", 5, false);
+    ctx_curse->AddListener(std::make_shared<LForwarder>("L1", "go west", "#print You are cursed and can't go west", true));
+    contexts[ctx_curse->id()] = ctx_mindfullness;
+    stack.insert(ctx_curse);
+
+    // Attempt to go west
+    event_queue = "go west";
+    while (event_queue != "") {
+      stack.TakeEvents(event_queue, parser);
+    }
+    // Nothing changed, becuse curse prevents going west
+    REQUIRE(stack.exists("rooms.scared"));
+    REQUIRE(!stack.exists("rooms.mindfullness"));
   }
 }

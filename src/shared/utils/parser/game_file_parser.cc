@@ -69,7 +69,20 @@ void parser::LoadListeners(std::map<std::string, std::shared_ptr<Context>>& cont
     std::map<std::string, nlohmann::json> listeners) {
   for (const auto& [ctx_id, json_listeners] : listeners) {
     for (const auto& json_listener : json_listeners.get<std::vector<nlohmann::json>>()) {
-      contexts.at(ctx_id)->AddListener(std::make_shared<LForwarder>(json_listener));
+      // Add/ Create context-listener
+      if (json_listener.contains("ctx")) {
+        auto it_ctx = contexts.find(json_listener["ctx"]);
+        if (it_ctx != contexts.end()) {
+          contexts.at(ctx_id)->AddListener(std::make_shared<LContextForwarder>(json_listener, it_ctx->second));
+        } else {
+          util::Logger()->warn(fmt::format("parser::LoadListeners. For listener \"{}\", context \"{}\" not found.", 
+              json_listener["id"].get<std::string>(), ctx_id));
+        }
+      } 
+      // Add/ Create "normal" listener
+      else {
+        contexts.at(ctx_id)->AddListener(std::make_shared<LForwarder>(json_listener));
+      }
     }
   }
 }
