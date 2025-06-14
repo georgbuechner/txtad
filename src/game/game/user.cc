@@ -7,20 +7,24 @@ User::User(const std::string& game_id, const std::string& id, txtad::MsgFn cout,
     const std::map<std::string, std::shared_ptr<Context>>& contexts, 
     const std::vector<std::string>& initial_contexts) 
     : _game_id(game_id), _id(id), _cout(cout) { 
-  util::Logger()->info(fmt::format("User::User({}). Copying/linking contexts...", _id));
+  int shared = 0;
+  int copied = 0;
+  util::Logger()->info("User::User({}). Copying/linking contexts...", _id);
   for (const auto& [key, ctx] : contexts) {
     if (ctx->shared()) {
       _contexts[key] = ctx;
+      shared++;
     } else {
       _contexts[key] = std::make_shared<Context>(*ctx);
+      copied++;
     }
   }
-  util::Logger()->info(fmt::format("User::User({}). Adding initial contexts...", _id));
+  util::Logger()->info("User::User({}). Shared {} and copied {} contexts", _id, shared, copied);
   for (const auto& it : initial_contexts) {
     if (_contexts.count(it) > 0)
       LinkContextToStack(_contexts.at(it));
     else 
-      util::Logger()->error(fmt::format("User::User({}). Invalid initial context found: {}", _id, it));
+      util::Logger()->error("User::User({}). Invalid initial context found: {}", _id, it);
   }
 }
 

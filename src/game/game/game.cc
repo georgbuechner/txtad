@@ -20,18 +20,18 @@ Game::Game(std::string path, std::string name)
 
   // Create baisc handlers
   Listener::Fn add_ctx = [&user=_cur_user](std::string event, std::string ctx_id) {
-    util::Logger()->info(fmt::format("Adding context: {}", ctx_id));
+    util::Logger()->info("Adding context: {}", ctx_id);
     if (user->contexts().count(ctx_id) > 0)
       user->LinkContextToStack(user->contexts().at(ctx_id));
     else 
-      util::Logger()->warn(fmt::format("Handler::link_ctx. Context \"{}\" not found.", ctx_id));
+      util::Logger()->warn("Handler::link_ctx. Context \"{}\" not found.", ctx_id);
   };
   Listener::Fn remove_ctx = [&user=_cur_user](std::string event, std::string ctx_id) {
-    util::Logger()->info(fmt::format("Adding context: {}", ctx_id));
+    util::Logger()->info("Adding context: {}", ctx_id);
     if (user->context_stack().exists(ctx_id))
       user->RemoveContext(ctx_id);
     else 
-      util::Logger()->warn(fmt::format("Handler::remove_ctx. Context \"{}\" not found.", ctx_id));
+      util::Logger()->warn("Handler::remove_ctx. Context \"{}\" not found.", ctx_id);
   };
   Listener::Fn replace_ctx = [&user=_cur_user](std::string event, std::string args) {
     static const std::regex regex_expression("(.*) -> (.*)");
@@ -45,9 +45,9 @@ Game::Game(std::string path, std::string name)
           if (user->contexts().count(ctx_to) > 0)
             user->LinkContextToStack(user->contexts().at(ctx_to));
           else 
-            util::Logger()->warn(fmt::format("Handler::replace_ctx. (To-)Context \"{}\" not found.", ctx_to));
+            util::Logger()->warn("Handler::replace_ctx. (To-)Context \"{}\" not found.", ctx_to);
         } else {
-          util::Logger()->warn(fmt::format("Handler::replace_ctx. (From-)Context \"{}\" not found.", ctx_from));
+          util::Logger()->warn("Handler::replace_ctx. (From-)Context \"{}\" not found.", ctx_from);
         }
       }
     }
@@ -65,14 +65,14 @@ Game::Game(std::string path, std::string name)
     if (auto ctx = user->GetContext(ctx_id))
       print(user->id(), ctx->description());
     else 
-      util::Logger()->warn(fmt::format("Handler::cout_ctx. Context \"{}\" not found.", ctx_id));
+      util::Logger()->warn("Handler::cout_ctx. Context \"{}\" not found.", ctx_id);
   };
 
   Listener::Fn cout_txt = [&print = _cout, &user=_cur_user, &texts=_texts](std::string event, std::string txt_id) {
     if (texts.count(txt_id) > 0)
       print(user->id(), texts.at(txt_id)->print(user->event_queue()));
     else
-      util::Logger()->warn(fmt::format("Handler::cout_txt. Text \"{}\" not found.", txt_id));
+      util::Logger()->warn("Handler::cout_txt. Text \"{}\" not found.", txt_id);
   };
 
   LForwarder::set_overwite_fn(add_to_eventqueue);

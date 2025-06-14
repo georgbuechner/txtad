@@ -6,6 +6,7 @@
 #include <string>
 #include "listener.h"
 #include "shared/utils/parser/expression_parser.h"
+#include "shared/utils/utils.h"
 
 class EventManager {
   public: 
@@ -25,7 +26,9 @@ class EventManager {
       for (const auto& it : _listeners) {
         if (it.second->Test(event, parser)) {
           accepted = true;
+          util::Logger()->debug("Calling execute...");
           it.second->Execute(event);
+          util::Logger()->debug("Calling execute done.");
           if (!it.second->permeable())
             return true;
         }

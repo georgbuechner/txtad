@@ -85,7 +85,7 @@ bool Context::RemoveAttribute(const std::string& key) {
 
 bool Context::AddAttribute(const std::string& key, std::string initial_value) {
   if (_attributes.count(key) > 0) {
-    util::Logger()->debug(fmt::format("Context::AddAttribute: attribute {} already exists", key));
+    util::Logger()->debug("Context::AddAttribute: attribute {} already exists", key);
     return false;
   }
   _attributes[key] = initial_value;
@@ -106,7 +106,7 @@ void Context::AddListener(std::shared_ptr<Listener> listener) {
   if (_event_manager) {
     _event_manager->AddListener(listener);
   } else {
-    util::Logger()->error(fmt::format("Context::AddListener: event_manager does not exist for listener {}", listener->id()));
+    util::Logger()->error("Context::AddListener: event_manager does not exist for listener {}", listener->id());
   }
 }
 
@@ -114,6 +114,6 @@ void Context::RemoveListener(const std::string& id) {
   if (_event_manager) {
     _event_manager->RemoveListener(id);
   } else {
-    util::Logger()->error(fmt::format("Context::RemoveListener: event_manager does not exist for id {}", id));
+    util::Logger()->error("Context::RemoveListener: event_manager does not exist for id {}", id);
   }
 }

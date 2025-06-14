@@ -51,14 +51,14 @@ ExpressionParser::ExpressionParser(const std::map<std::string, std::string>* sub
 }
 
 std::string ExpressionParser::Evaluate(std::string input) const {
-  util::Logger()->info(fmt::format("EP:Evaluate. START: {}", input));
+  util::Logger()->info("EP:Evaluate. START: {}", input);
   auto res = evaluate(EnsureExecutionOrder(input));
-  util::Logger()->info(fmt::format("EP:Evaluate. =>: {}", res));
+  util::Logger()->info("EP:Evaluate. =>: {}", res);
   return res;
 }
 
 std::string ExpressionParser::evaluate(std::string input) const {
-  util::Logger()->debug(fmt::format("EP:Evaluate. {}", input));
+  util::Logger()->debug("EP:Evaluate. {}", input);
   auto [pos, opt] = LastOpt(input); 
 
   // If no operand was found, simply return string with whitespaces removed.
@@ -77,7 +77,7 @@ std::string ExpressionParser::evaluate(std::string input) const {
   std::string a = evaluate(input.substr(0, pos));
   std::string b = util::Strip(input.substr(pos+opt.length(), input.length()-(pos + opt.length()-1)));
 
-  util::Logger()->debug(fmt::format(" - '{}', '{}', {}", a, opt, b));
+  util::Logger()->debug(" - '{}', '{}', {}", a, opt, b);
   return (*_opts[opt])(StripAndSubstitute(a), StripAndSubstitute(b)); 
 }
 
@@ -207,7 +207,7 @@ std::string ExpressionParser::EnsureExecutionOrder(std::string inp) {
         if (pos != std::string::npos) {
           // If waiting is not empty added waiting to modified, surrounded by brackets
           if (waiting != "") {
-            util::Logger()->debug(fmt::format("EP:EnsureExecutionOrder. -> {} (adding: {})", modified, waiting));
+            util::Logger()->debug("EP:EnsureExecutionOrder. -> {} (adding: {})", modified, waiting);
             modified += "(" + waiting + ")";
             waiting = "";
           } 
@@ -221,15 +221,15 @@ std::string ExpressionParser::EnsureExecutionOrder(std::string inp) {
     else {
       // If waiting already set, surround with brackets 
       if (waiting != "") {
-        util::Logger()->debug(fmt::format("EP:EnsureExecutionOrder. -> {} (adding: {})", modified, waiting));
+        util::Logger()->debug("EP:EnsureExecutionOrder. -> {} (adding: {})", modified, waiting);
         waiting = "(" + waiting + ")"; // evaluate(waiting, true);
-        util::Logger()->debug(fmt::format("EP:EnsureExecutionOrder. -> {} (new waiting: {})", modified, waiting));
+        util::Logger()->debug("EP:EnsureExecutionOrder. -> {} (new waiting: {})", modified, waiting);
       } 
       // Otherwise, set new waiting (last -> current pos)
       else {
-        util::Logger()->debug(fmt::format("EP:EnsureExecutionOrder. -> {} (last: {})", modified, last));
+        util::Logger()->debug("EP:EnsureExecutionOrder. -> {} (last: {})", modified, last);
         waiting = modified.substr(last, modified.length()-last);
-        util::Logger()->debug(fmt::format("EP:EnsureExecutionOrder. => {} (new waiting: {})", modified, waiting));
+        util::Logger()->debug("EP:EnsureExecutionOrder. => {} (new waiting: {})", modified, waiting);
         modified.erase(modified.begin()+last, modified.end());
       }
     }
@@ -239,10 +239,10 @@ std::string ExpressionParser::EnsureExecutionOrder(std::string inp) {
   }
   // If waiting is not empty add to modified surrounded by brackets
   if (waiting != "") {
-    util::Logger()->debug(fmt::format("EP:EnsureExecutionOrder. -> {} (adding: {})", modified, waiting));
+    util::Logger()->debug("EP:EnsureExecutionOrder. -> {} (adding: {})", modified, waiting);
     modified += "(" + waiting + ")";
   }
 
-  util::Logger()->debug(fmt::format("EP:EnsureExecutionOrder. => {}", modified));
+  util::Logger()->debug("EP:EnsureExecutionOrder. => {}", modified);
   return modified;
 }

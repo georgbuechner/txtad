@@ -29,6 +29,7 @@ bool LHandler::Test(const std::string& event, const ExpressionParser& parser) {
 }
 
 void LHandler::Execute(std::string event) const {
+  util::Logger()->info("LHandler::Execute... {}", _id);
   if (!_fn) {
     util::Logger()->error("LHandler::Execute. Function from handler: {} not initialized!", _id);
   } else {

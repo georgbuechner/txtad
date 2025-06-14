@@ -22,14 +22,14 @@ public:
   Context(const std::string& id, int priority, bool permeable=true) : _id(id), _name(""), _description(""), 
       _entry_condition(""), _priority(priority), _permeable(permeable), _shared(true),
       _event_manager(std::make_unique<EventManager>()) {
-    util::Logger()->debug(fmt::format("Context. Context {} created", id)); 
+    util::Logger()->debug("Context. Context {} created", id); 
   }
 
   Context(const std::string& id, const std::string& name, const std::string& description, 
       const std::string& entry_condition_pattern="", int priority=0, bool permeable=true)
     : _id(id), _name(name), _description(description), _entry_condition(entry_condition_pattern), 
       _priority(priority), _permeable(permeable), _shared(true), _event_manager(std::make_unique<EventManager>()) {
-    util::Logger()->debug(fmt::format("Context. Context \"{}\" created", _id)); 
+    util::Logger()->debug("Context. Context \"{}\" created", _id); 
   }
 
   Context(const std::string& id, const nlohmann::json& json) : _id(id + "/" + json.at("id").get<std::string>()), 
@@ -37,7 +37,7 @@ public:
       _attributes(json.value("attributes", std::map<std::string, std::string>())), 
       _priority(json.value("priority", 0)), _permeable(json.value("permeable", 0) == 1), _shared(json.value("shared", true)),
       _event_manager(std::make_unique<EventManager>()) {
-    util::Logger()->debug(fmt::format("Context. Context {} created", _id)); 
+    util::Logger()->debug("Context. Context {} created", _id); 
   }
 
   Context(const Context& other) : _id(other._id), _name(other._name), _description(other._description),

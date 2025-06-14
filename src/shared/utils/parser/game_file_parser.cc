@@ -30,20 +30,20 @@ void parser::LoadObjects(const std::string& path, std::map<std::string, std::sha
       if (dir_entry.path().extension().string() == txtad::TEMPLATE_EXTENSION)
         continue;
 
-      util::Logger()->debug(fmt::format("Game::Game. Parsing: {}", dir_entry.path().string()));
+      util::Logger()->debug("Game::Game. Parsing: {}", dir_entry.path().string());
 
       // Add new context
       if (dir_entry.path().extension() == txtad::CONTEXT_EXTENSION) {
         if (auto ctx = parser::CreateContextFromPath(dir_entry.path(), id_path_offset)) {
           if (contexts.count(ctx->id()) > 0) {
-            util::Logger()->warn(fmt::format("Game::Game. Context \"{}\" already exists. Dublicate id?", ctx->id()));
+            util::Logger()->warn("Game::Game. Context \"{}\" already exists. Dublicate id?", ctx->id());
           } else {
             contexts[ctx->id()] = ctx;
             // Potentially adds listener: 
             if (auto ctx_listeners = GetContextListener(dir_entry.path())) {
               listeners[ctx->id()] = *ctx_listeners;
             }
-            util::Logger()->debug(fmt::format("Game::Game. Created context: \"{}\".", ctx->id()));
+            util::Logger()->debug("Game::Game. Created context: \"{}\".", ctx->id());
           }
         }
       }
@@ -51,15 +51,15 @@ void parser::LoadObjects(const std::string& path, std::map<std::string, std::sha
       else if (dir_entry.path().extension() == txtad::TEXT_EXTENSION) {
         if (auto txt = parser::CreateTextFromPath(dir_entry.path(), id_path_offset)) {
           if (texts.count(txt->id()) > 0) {
-            util::Logger()->warn(fmt::format("Game::Game. Text \"{}\" already exists. Dublicate id?", txt->id()));
+            util::Logger()->warn("Game::Game. Text \"{}\" already exists. Dublicate id?", txt->id());
           } else {
             texts[txt->id()] = txt;
-            util::Logger()->debug(fmt::format("Game::Game. Created text: \"{}\".", txt->id()));
+            util::Logger()->debug("Game::Game. Created text: \"{}\".", txt->id());
           }
         }
       } else {
-        util::Logger()->warn(fmt::format("Game::Game. File \"{}\" has invalid extension: \"{}\".", 
-            dir_entry.path().string(), dir_entry.path().extension().string()));
+        util::Logger()->warn("Game::Game. File \"{}\" has invalid extension: \"{}\".", 
+            dir_entry.path().string(), dir_entry.path().extension().string());
       }
     }
   }
@@ -75,8 +75,8 @@ void parser::LoadListeners(std::map<std::string, std::shared_ptr<Context>>& cont
         if (it_ctx != contexts.end()) {
           contexts.at(ctx_id)->AddListener(std::make_shared<LContextForwarder>(json_listener, it_ctx->second));
         } else {
-          util::Logger()->warn(fmt::format("parser::LoadListeners. For listener \"{}\", context \"{}\" not found.", 
-              json_listener["id"].get<std::string>(), ctx_id));
+          util::Logger()->warn("parser::LoadListeners. For listener \"{}\", context \"{}\" not found.", 
+              json_listener["id"].get<std::string>(), ctx_id);
         }
       } 
       // Add/ Create "normal" listener

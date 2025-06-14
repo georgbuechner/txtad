@@ -9,7 +9,7 @@ ContextStack::ContextStack() {};
 // methods
 bool ContextStack::insert(std::shared_ptr<Context> context) {
   if (_contexts.count(context->id()) > 0) {
-    util::Logger()->warn(fmt::format("ContextStack::Add. Context {} already exists.", context->id()));
+    util::Logger()->warn("ContextStack::Add. Context {} already exists.", context->id());
     return false;
   }
   _contexts.emplace(context->id(), context);
@@ -33,7 +33,7 @@ bool ContextStack::insert(std::shared_ptr<Context> context) {
 
 bool ContextStack::erase(const std::string& id) {
   if (_contexts.count(id) == 0) {
-    util::Logger()->warn(fmt::format("ContextStack::Remove. Context {} not found.", id));
+    util::Logger()->warn("ContextStack::Remove. Context {} not found.", id);
     return false;
   }
   _contexts.erase(id);
@@ -42,7 +42,7 @@ bool ContextStack::erase(const std::string& id) {
   if (it != _sorted_contexts.end()) {
     _sorted_contexts.erase(it);
   } else {
-    util::Logger()->error(fmt::format("ContextStack::Remove. Context {} removed from map but was not found in vector.", id));
+    util::Logger()->error("ContextStack::Remove. Context {} removed from map but was not found in vector.", id);
   }
   return true;
 }
@@ -55,7 +55,7 @@ std::shared_ptr<Context> ContextStack::get(const std::string& id) {
   const auto& it = _contexts.find(id);
   if (it != _contexts.end())
     return it->second;
-  util::Logger()->warn(fmt::format("ContextStack::Get. Context {} not found.", id));
+  util::Logger()->warn("ContextStack::Get. Context {} not found.", id);
   return nullptr;
 }
 
@@ -80,7 +80,7 @@ void ContextStack::TakeEvents(std::string& events, const ExpressionParser& parse
   auto vec_events = util::Split(events, ";");
   events = "";
   for (const auto& event : vec_events) {
-    util::Logger()->debug(fmt::format("ContextStack::TakeEvents: {}", event));
+    util::Logger()->debug("ContextStack::TakeEvents: {}", event);
     TakeEvent(event, parser);
   }
 }

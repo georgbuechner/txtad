@@ -18,7 +18,7 @@ void helpers::SetAttribute(std::map<std::string, std::string>& attributes, std::
   std::string attribute = inp.substr(0, pos);
   std::string expression = inp.substr(pos+opt.length()); 
 
-  util::Logger()->info(fmt::format("attribute: {}, opt: {}, expression: {}", attribute, opt, expression));
+  util::Logger()->info("attribute: {}, opt: {}, expression: {}", attribute, opt, expression);
 
   if (attributes.count(attribute) == 0) {
     return;

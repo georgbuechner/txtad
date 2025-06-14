@@ -82,12 +82,12 @@ TEST_CASE("Test throwing events", "[stack]") {
   };
   
   Listener::Fn add_ctx = [&contexts, &stack](std::string event, std::string ctx_id) {
-    util::Logger()->info(fmt::format("Adding context: {}", ctx_id));
+    util::Logger()->info("Adding context: {}", ctx_id);
     if (contexts.count(ctx_id) > 0)
       stack.insert(contexts.at(ctx_id));
   };
   Listener::Fn remove_ctx = [&contexts, &stack](std::string event, std::string ctx_id) {
-    util::Logger()->info(fmt::format("Removing context: {}", ctx_id));
+    util::Logger()->info("Removing context: {}", ctx_id);
     if (stack.exists(ctx_id))
       stack.erase(ctx_id);
   };
@@ -98,7 +98,7 @@ TEST_CASE("Test throwing events", "[stack]") {
       if (base_match.size() == 3) {
         std::string ctx_from = base_match[1].str();
         std::string ctx_to = base_match[2].str();
-        util::Logger()->info(fmt::format("Replacing context: {} with {}", ctx_from, ctx_to));
+        util::Logger()->info("Replacing context: {} with {}", ctx_from, ctx_to);
         if (stack.exists(ctx_from))
           stack.erase(ctx_from);
         if (contexts.count(ctx_to) > 0)
@@ -192,14 +192,14 @@ TEST_CASE("Test throwing events (with context-listener)", "[stack]") {
   };
   
   Listener::Fn add_ctx = [&contexts, &stack](std::string event, std::string ctx_id) {
-    util::Logger()->info(fmt::format("Adding context: {}", ctx_id));
+    util::Logger()->info("Adding context: {}", ctx_id);
     if (contexts.count(ctx_id) > 0)
       stack.insert(contexts.at(ctx_id));
     else 
-      util::Logger()->error(fmt::format("[add_ctx] failed: ctx '{}' not found!", ctx_id));
+      util::Logger()->error("[add_ctx] failed: ctx '{}' not found!", ctx_id);
   };
   Listener::Fn remove_ctx = [&contexts, &stack](std::string event, std::string ctx_id) {
-    util::Logger()->info(fmt::format("Removing context: {}", ctx_id));
+    util::Logger()->info("Removing context: {}", ctx_id);
     if (ctx_id.front() == '*') {
       for (const auto& ctx : stack.find(ctx_id.substr(1))) 
         stack.erase(ctx->id());
@@ -207,7 +207,7 @@ TEST_CASE("Test throwing events (with context-listener)", "[stack]") {
     } else if (stack.exists(ctx_id))
       stack.erase(ctx_id);
     else 
-      util::Logger()->error(fmt::format("[remove_ctx] failed: ctx '{}' not found!", ctx_id));
+      util::Logger()->error("[remove_ctx] failed: ctx '{}' not found!", ctx_id);
   };
   Listener::Fn replace_ctx = [&contexts, &stack, &add_ctx, &remove_ctx](std::string event, std::string args) {
     static const std::regex regex_expression("(.*) -> (.*)");
@@ -216,7 +216,7 @@ TEST_CASE("Test throwing events (with context-listener)", "[stack]") {
       if (base_match.size() == 3) {
         std::string ctx_from = base_match[1].str();
         std::string ctx_to = base_match[2].str();
-        util::Logger()->info(fmt::format("Replacing context: {} with {}", ctx_from, ctx_to));
+        util::Logger()->info("Replacing context: {} with {}", ctx_from, ctx_to);
         // Get context to add: 
         remove_ctx("", ctx_from);
         add_ctx("", ctx_to);
