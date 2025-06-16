@@ -1,0 +1,22 @@
+{
+  "id": "general",
+  "name": "General",
+  "description": "holds general game-handlers",
+  "shared": true,
+  "priority":-15,
+  "listeners": [
+    {
+      "id": "L1", 
+      "re_event": "#ctx replace *rooms -> .*", 
+      "arguments": "#> {ctx.*rooms->description}", 
+      "permeable": true
+    },
+    {
+      "id": "Q1",
+      "re_event": ".*",
+      "arguments": "#> Don't punish me with stuff I can't do!",
+      "permeable": false
+    }
+
+  ]
+}

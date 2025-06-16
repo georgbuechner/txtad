@@ -6,6 +6,7 @@
 
 namespace txtad {
   using MsgFn = std::function<void(std::string)>;
+  using SubstituteFN = std::function<std::string(std::string)>;
 
   const std::string LOGGER = "LMain";
   const std::string TEST_LOGGER = "LMainTest";
@@ -16,8 +17,8 @@ namespace txtad {
   const std::string GAME_FILES = "game_files/";
 
   const std::string TEMPLATE_EXTENSION = ".template";
-  const std::string CONTEXT_EXTENSION = ".context";
-  const std::string TEXT_EXTENSION = ".text";
+  const std::string CONTEXT_EXTENSION = ".ctx";
+  const std::string TEXT_EXTENSION = ".txt";
 
 };
 

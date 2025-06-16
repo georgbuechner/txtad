@@ -32,8 +32,8 @@ public:
     util::Logger()->debug("Context. Context \"{}\" created", _id); 
   }
 
-  Context(const std::string& id, const nlohmann::json& json) : _id(id + "/" + json.at("id").get<std::string>()), 
-      _name(json.at("name")), _description(json.at("description")), _entry_condition(json.value("re_entrycondition", "")),
+  Context(const std::string& id, const nlohmann::json& json) : _id(id), _name(json.at("name")), 
+      _description(json.at("description")), _entry_condition(json.value("re_entrycondition", "")),
       _attributes(json.value("attributes", std::map<std::string, std::string>())), 
       _priority(json.value("priority", 0)), _permeable(json.value("permeable", 0) == 1), _shared(json.value("shared", true)),
       _event_manager(std::make_unique<EventManager>()) {
@@ -43,7 +43,13 @@ public:
   Context(const Context& other) : _id(other._id), _name(other._name), _description(other._description),
     _entry_condition(other.entry_condition_pattern()), _attributes(other._attributes), _priority(other._priority),
     _permeable(other._permeable), 
-    _event_manager(other._event_manager ? std::make_unique<EventManager>(*other._event_manager) : nullptr) {}
+    _event_manager(other._event_manager 
+        ? std::make_unique<EventManager>(*other._event_manager) 
+        : std::make_unique<EventManager>()) {}
+
+  ~Context() { 
+    util::Logger()->info("Context {} deleted!", _id);
+  }
 
   // ***** ***** Getters ***** ***** //
   std::string id() const;

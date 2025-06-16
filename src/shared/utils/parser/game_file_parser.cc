@@ -38,10 +38,10 @@ void parser::LoadObjects(const std::string& path, std::map<std::string, std::sha
           if (contexts.count(ctx->id()) > 0) {
             util::Logger()->warn("Game::Game. Context \"{}\" already exists. Dublicate id?", ctx->id());
           } else {
-            contexts[ctx->id()] = ctx;
+            contexts.emplace(ctx->id(), ctx);
             // Potentially adds listener: 
             if (auto ctx_listeners = GetContextListener(dir_entry.path())) {
-              listeners[ctx->id()] = *ctx_listeners;
+              listeners.emplace(ctx->id(), *ctx_listeners);
             }
             util::Logger()->debug("Game::Game. Created context: \"{}\".", ctx->id());
           }
@@ -89,7 +89,9 @@ void parser::LoadListeners(std::map<std::string, std::shared_ptr<Context>>& cont
 
 std::shared_ptr<Context> parser::CreateContextFromPath(std::filesystem::path path, size_t id_path_offset) {
   if (const auto& json = util::LoadJsonFromDisc(path.string())) {
-    std::string base_id = path.parent_path().string().substr(id_path_offset);
+    // std::string base_id = path.parent_path().string().substr(id_path_offset);
+    path.replace_extension();
+    std::string base_id = path.string().substr(id_path_offset);
     return std::make_shared<Context>(base_id, *json);
   } 
   return nullptr;

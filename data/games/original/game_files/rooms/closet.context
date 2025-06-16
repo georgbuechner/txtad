@@ -1,9 +1,0 @@
-{
-  "id": "closet",
-  "name": "Shabby closet",
-  "description": "Webs everywhere",
-  "listeners": [
-    {"id": "L1", "re_event": "go to (.*)", "ctx": "rooms/freedom", "arguments":
-    "#ctx replace *rooms -> <ctx>", "permeable": true, "use_ctx_regex": 2}
-  ]
-}

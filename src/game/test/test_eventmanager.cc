@@ -236,5 +236,4 @@ TEST_CASE("Test logic", "[eventmanager]") {
     REQUIRE(attributes["mana"] == "20");
     REQUIRE(event_queue == E_SET_RUNES); 
   }
-
 }

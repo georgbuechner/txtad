@@ -81,7 +81,7 @@ class LContextForwarder : public LForwarder {
      * @param[in] permeable (stop execution if not permeable)
      * @param[in] logic (additional evaluation)
      */
-    LContextForwarder(std::string id, std::string re_event, std::shared_ptr<Context> ctx, std::string arguments, 
+    LContextForwarder(std::string id, std::string re_event, std::weak_ptr<Context> ctx, std::string arguments, 
         bool permeable, UseCtx use_ctx_regex, std::string logic="");
 
     LContextForwarder(const nlohmann::json& json, std::shared_ptr<Context> ctx);
@@ -91,8 +91,11 @@ class LContextForwarder : public LForwarder {
 
   private: 
     const std::string _logic;
-    std::shared_ptr<Context> _ctx;
+    std::weak_ptr<Context> _ctx;
     const UseCtx _use_ctx_regex;
+
+    static std::string GetCtxId(std::weak_ptr<Context> _ctx);
+    static std::string GetCtxName(std::weak_ptr<Context> _ctx);
 };
 
 #endif

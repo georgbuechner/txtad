@@ -51,6 +51,45 @@ std::string util::Strip(std::string str, char c) {
   return str;
 }
 
+std::pair<int, int> util::InBrackets(const std::string& inp, int pos) {
+  return {OpeningBracket(inp, pos), ClosingBracket(inp, pos)};
+}
+
+
+int util::ClosingBracket(const std::string& inp, int pos, char open, char close) {
+  int accept = 0;
+  int end = -1;
+  for (int i=0; i<inp.length()-pos; i++) {
+    char c = inp[pos+i];
+    if (c == open) 
+      accept++;
+    else if (c == close && accept > 0) 
+      accept--;
+    else if (c == close && accept == 0) {
+      end = pos+i;
+      break;
+    }
+  }
+  return end;
+}
+
+int util::OpeningBracket(const std::string& inp, int pos, char open, char close) {
+  int accept = 0;
+  int start = -1; 
+  for (int i=0; i<=pos; i++) {
+    char c = inp[pos-i];
+    if (c == close) 
+      accept++;
+    else if (c == open && accept > 0) 
+      accept--;
+    else if (c == open && accept == 0) {
+      start = pos-i;
+      break;
+    }
+  }
+  return start;
+}
+
 std::optional<nlohmann::json> util::LoadJsonFromDisc(const std::string& path) {
   try {
     std::ifstream ifs(path);

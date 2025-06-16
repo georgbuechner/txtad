@@ -27,21 +27,22 @@ class TestGameWrapper {
       fs::create_directory(game_files_path);
       // Write texts to disc 
       for (const auto& [path, json] : texts) {
-        if (!fs::exists(path)) {
-          const std::string file_path = game_files_path + "/" + path;
+        const std::string file_path = game_files_path + ((path !="") ? "/" + path : "");
+        if (!fs::exists(file_path)) {
           fs::create_directories(file_path);
-          util::WriteJsonToDisc(file_path + txtad::TEXT_EXTENSION, json);
         }
+        util::WriteJsonToDisc(file_path + txtad::TEXT_EXTENSION, json);
       }
 
       // Write contexts to disc
       for (const auto& [path, jsons] : contexts) {
-        if (!fs::exists(path)) {
-          const std::string file_path = game_files_path + "/" + path;
+        const std::string file_path = game_files_path + ((path !="") ? "/" + path : "");
+        if (!fs::exists(file_path)) {
           fs::create_directories(file_path);
-          for (const auto& json : jsons)
-            util::WriteJsonToDisc(file_path + "/" + json.at("id").get<std::string>() + txtad::CONTEXT_EXTENSION, json);
         }
+        for (const auto& json : jsons)
+          util::WriteJsonToDisc(file_path + "/" + json.at("id").get<std::string>() + txtad::CONTEXT_EXTENSION,
+              json);
       }
     }
     ~TestGameWrapper() {
@@ -53,6 +54,16 @@ TEST_CASE("Test Creating Game", "[game]") {
   const nlohmann::json settings = {
     {"initial_events", "#print texts.START"},
     {"initial_contexts", {"rooms/room_1"}}
+  };
+
+  const nlohmann::json ctx_general = {
+    {"id", "general"},
+    {"name", "General"},
+    {"description", "Some gegnaral handlers"},
+    {"listeners", {
+      {{"id", "L1"}, {"re_event", "#ctx replace *rooms -> (.*)"}, {"arguments", 
+        "#> You've entered {ctx.*rooms->description}"}, {"permeable", true}}
+    }},
   };
 
   const nlohmann::json ctx_room_1 = {
@@ -85,7 +96,8 @@ TEST_CASE("Test Creating Game", "[game]") {
 
   const std::string GAME_NAME = "test_game";
   const std::string GAME_PATH = txtad::GAMES_PATH + GAME_NAME;
-  TestGameWrapper test_game_wrapper(GAME_NAME, settings, {{"rooms", {ctx_room_1, ctx_room_2}}}, {{"texts/start", txt_text_1}});
+  TestGameWrapper test_game_wrapper(GAME_NAME, settings, {{"", {ctx_general}}, {"rooms", {ctx_room_1, 
+      ctx_room_2}}}, {{"texts/start", txt_text_1}});
 
   Game game(GAME_PATH, GAME_NAME);
 
@@ -101,14 +113,27 @@ TEST_CASE("Test Creating Game", "[game]") {
   auto ctx = game.contexts().at("rooms/room_1");
   REQUIRE(ctx->id() == "rooms/" + ctx_room_1["id"].get<std::string>()); 
   REQUIRE(ctx->name() == ctx_room_1["name"]); 
+  // Tests attributes
   REQUIRE(ctx->GetAttribute("gravity") == ctx_room_1["attributes"]["gravity"]); 
   REQUIRE(ctx->GetAttribute("darkness") == ctx_room_1["attributes"]["darkness"]); 
+
+  // Create user: 
+  const std::string USER_ID = "0x1234";
+  game.HandleEvent(USER_ID, "");
+
+  // Test events
   ExpressionParser parser;
+  util::Logger()->info("GO LEFT");
   REQUIRE(ctx->TakeEvent("go left", parser) == false);
+  util::Logger()->info("GO RIGHT");
   REQUIRE(ctx->TakeEvent("go right", parser) == true);
   auto ctx_2 = game.contexts().at("rooms/room_2");
+  util::Logger()->info("GO LEFT");
   REQUIRE(ctx_2->TakeEvent("go left", parser) == false);
+  util::Logger()->info("GO ROOM 1");
   REQUIRE(ctx_2->TakeEvent("go Room 1", parser) == true);
+  util::Logger()->info("done");
+
   // Test texts 
   REQUIRE(game.texts().count("texts/start") > 0);
   std::string event_queue;
@@ -119,5 +144,4 @@ TEST_CASE("Test Creating Game", "[game]") {
   // After second print, event_queue does not contain onetime events.
   REQUIRE(game.texts().at("texts/start")->print(event_queue) == txt_text_1["txt"].get<std::string>());
   REQUIRE(event_queue == txt_text_1["permanent_events"].get<std::string>());
-
 }
