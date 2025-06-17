@@ -3,7 +3,7 @@
 #include "shared/utils/utils.h"
 #include <memory>
 
-User::User(const std::string& game_id, const std::string& id, txtad::MsgFn cout,
+User::User(const std::string& game_id, const std::string& id, const txtad::MsgFn& cout,
     const std::map<std::string, std::shared_ptr<Context>>& contexts, 
     const std::map<std::string, std::shared_ptr<Text>>& texts, 
     const std::vector<std::string>& initial_contexts) 

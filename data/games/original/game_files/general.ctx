@@ -3,7 +3,7 @@
   "name": "General",
   "description": "holds general game-handlers",
   "shared": true,
-  "priority":-15,
+  "priority":15,
   "listeners": [
     {
       "id": "L1", 
@@ -12,10 +12,10 @@
       "permeable": true
     },
     {
-      "id": "Q1",
-      "re_event": ".*",
-      "arguments": "#> Don't punish me with stuff I can't do!",
-      "permeable": false
+      "id": "L1", 
+      "re_event": "^(?!#).*", 
+      "arguments": "#> {#event}", 
+      "permeable": true
     }
 
   ]

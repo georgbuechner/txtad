@@ -46,8 +46,17 @@ std::map<std::string, std::string(*)(const std::string&, const std::string&)> Ex
   {"&&", [](const std::string& a, const std::string& b) { return std::to_string(a == "1" && b == "1"); } },
 };
 
-ExpressionParser::ExpressionParser(const std::map<std::string, std::string>* substitutes) {
-  _substitutes = substitutes;
+ExpressionParser::ExpressionParser() { 
+  _substitute_fn = [](const auto& str) -> std::string { 
+    util::Logger()->debug("CALLED default substitute-fn with {}", str);
+    return ""; 
+  };
+}
+ExpressionParser::ExpressionParser(const SubstituteFN& fn) {
+  _substitute_fn = [fn](const std::string& str) {
+    util::Logger()->debug("CALLED custom substitute-fn with {}", str);
+    return fn(str);
+  };
 }
 
 std::string ExpressionParser::Evaluate(std::string input) const {
@@ -93,9 +102,15 @@ std::string ExpressionParser::StripAndSubstitute(std::string str) const {
       int closing = util::ClosingBracket(str, i+1, '{', '}');
       // Get substitute-name (string inbetween brackets) and check if it exists
       std::string subsitute = str.substr(i+1, closing-(i+1));
-      std::string replacement = (_default_subsitutes.count(subsitute) > 0) 
-        ? _default_subsitutes.at(subsitute) : (_substitutes->count(subsitute) > 0) 
-          ? _substitutes->at(subsitute) : "";
+      util::Logger()->info("FOUND SUBSTITUE: {}", subsitute);
+      std::string replacement = "";
+      if (_default_subsitutes.count(subsitute) > 0) {
+        replacement = _default_subsitutes.at(subsitute);
+        util::Logger()->info("found default subsitute: {}", replacement);
+      } else {
+        replacement = _substitute_fn(subsitute);
+        util::Logger()->info("found with subsitute-fn: {}", replacement);
+      }
       if (replacement != "") {
         // Add substituted string to replaced string and increase index
         replaced += replacement;

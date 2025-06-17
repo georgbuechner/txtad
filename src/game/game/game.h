@@ -46,6 +46,21 @@ class Game {
     std::shared_ptr<Context> _mechanics_ctx;
     std::map<std::string, std::shared_ptr<Context>> _contexts;
     std::map<std::string, std::shared_ptr<Text>> _texts;
+
+    // handlers 
+    void h_add_ctx(const std::string& event, const std::string& ctx_id);
+    void h_remove_ctx(const std::string& event, const std::string& ctx_id);
+    void h_replace_ctx(const std::string& event, const std::string& args);
+    void h_add_to_eventqueue(const std::string& event, const std::string& args);
+
+    /**
+     * Examples: 
+     * #> Hello World.
+     * #> You are here: {ctx.rooms/closet->name}.
+     * #> You are here: {ctx.rooms/closet->desc}.
+     * #> {txt.welcome}
+     */
+    void h_print(const std::string& event, const std::string& args);
 };
 
 #endif

@@ -10,6 +10,8 @@
 
 class ExpressionParser{
   public:
+    using SubstituteFN = std::function<std::string(std::string)>;
+    
     /**
      * Constructor including the possibility to substitute certain strings
      * with given values (for instance you could map room to the current player
@@ -17,7 +19,8 @@ class ExpressionParser{
      * be substituted by the value of [current_room]).
      * @param[in] substitute (map with possible substitutes)
      */
-    ExpressionParser(txtad::SubstituteFN fn);
+    ExpressionParser();
+    ExpressionParser(const SubstituteFN& fn);
 
     /**
      * return value of logical or mathematical expression
@@ -45,7 +48,7 @@ class ExpressionParser{
   private:
 
     // members 
-    const std::map<std::string, std::string>* _substitutes;  ///< map with substitutes.
+    SubstituteFN _substitute_fn;  ///< map with substitutes.
     static const std::map<std::string, std::string> _default_subsitutes;
     static std::map<std::string, std::string(*)(const std::string&, const std::string&)> _opts;
 

@@ -4,12 +4,20 @@
   "description": "Webs everywhere",
   "shared": true,
   "permeable": false,
+  "priority":-10,
   "listeners": [
     {
       "id": "L1", 
       "re_event": "go to (.*)", 
       "ctx": "rooms/freedom", 
       "arguments": "#ctx replace *rooms -> <ctx>", 
+      "permeable": false, 
+      "use_ctx_regex": 2
+    },
+    {
+      "id": "Q1", 
+      "re_event": "go to .*", 
+      "arguments": "#> I can walk. But not theerrre.", 
       "permeable": true, 
       "use_ctx_regex": 2
     }  

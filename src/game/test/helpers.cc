@@ -3,7 +3,7 @@
 #include "shared/utils/utils.h"
 #include <vector>
 
-void helpers::SetAttribute(std::map<std::string, std::string>& attributes, std::string inp) {
+void helpers::SetAttribute(std::map<std::string, std::string>& attributes, std::string inp, const ExpressionParser& parser) {
   static std::vector<std::string> opts = {"+=", "-=", "++", "--", "*=", "/=", "="}; 
   std::string opt;
   int pos = -1;
@@ -23,8 +23,6 @@ void helpers::SetAttribute(std::map<std::string, std::string>& attributes, std::
   if (attributes.count(attribute) == 0) {
     return;
   }
-
-  ExpressionParser parser(&attributes);
 
   if (opt == "=")
     attributes[attribute] = parser.Evaluate(expression);

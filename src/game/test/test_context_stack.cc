@@ -70,15 +70,17 @@ TEST_CASE("Test inserting, removing, getting and sorting", "[stack]") {
 
 TEST_CASE("Test throwing events", "[stack]") {
   std::map<std::string, std::string> attributes = {{"mana", "10"}, {"runes", "5"}};
-  ExpressionParser parser(&attributes);
+  ExpressionParser::SubstituteFN fn = [&attributes](const std::string& str) { 
+    return (attributes.count(str) > 0) ? attributes.at(str) : ""; };
+  ExpressionParser parser(fn);
   std::string event_queue = "";
 
   ContextStack stack;
   std::map<std::string, std::shared_ptr<Context>> contexts;
   
   // define basic handlers
-  Listener::Fn set_attribute = [&attributes](std::string event, std::string args) {
-    helpers::SetAttribute(attributes, args);
+  Listener::Fn set_attribute = [&attributes, &parser](std::string event, std::string args) {
+    helpers::SetAttribute(attributes, args, parser);
   };
   
   Listener::Fn add_ctx = [&contexts, &stack](std::string event, std::string ctx_id) {
@@ -180,15 +182,17 @@ TEST_CASE("Test throwing events", "[stack]") {
 
 TEST_CASE("Test throwing events (with context-listener)", "[stack]") {
   std::map<std::string, std::string> attributes = {{"mana", "10"}, {"runes", "5"}};
-  ExpressionParser parser(&attributes);
+  ExpressionParser::SubstituteFN fn = [&attributes](const std::string& str) { 
+    return (attributes.count(str) > 0) ? attributes.at(str) : ""; };
+  ExpressionParser parser(fn);
   std::string event_queue = "";
 
   ContextStack stack;
   std::map<std::string, std::shared_ptr<Context>> contexts;
   
   // difine basic handlers
-  Listener::Fn set_attribute = [&attributes](std::string event, std::string args) {
-    helpers::SetAttribute(attributes, args);
+  Listener::Fn set_attribute = [&attributes, &parser](std::string event, std::string args) {
+    helpers::SetAttribute(attributes, args, parser);
   };
   
   Listener::Fn add_ctx = [&contexts, &stack](std::string event, std::string ctx_id) {

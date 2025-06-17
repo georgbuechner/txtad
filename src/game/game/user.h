@@ -11,7 +11,7 @@
 
 class User {
   public: 
-    User(const std::string& game_id, const std::string& id, txtad::MsgFn cout,
+    User(const std::string& game_id, const std::string& id, const txtad::MsgFn& cout,
         const std::map<std::string, std::shared_ptr<Context>>& contexts, 
         const std::map<std::string, std::shared_ptr<Text>>& text, 
         const std::vector<std::string>& initial_contexts);
@@ -43,6 +43,7 @@ class User {
 
     ContextStack _context_stack;
     std::string _event_queue;
+    bool _event_handled;
 };
 
 #endif

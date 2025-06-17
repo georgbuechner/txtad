@@ -6,7 +6,6 @@
 
 namespace txtad {
   using MsgFn = std::function<void(std::string)>;
-  using SubstituteFN = std::function<std::string(std::string)>;
 
   const std::string LOGGER = "LMain";
   const std::string TEST_LOGGER = "LMainTest";
