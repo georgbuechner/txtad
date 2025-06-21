@@ -4,6 +4,7 @@
   "description": "holds general game-handlers",
   "shared": true,
   "priority":15,
+  "permeable": true,
   "listeners": [
     {
       "id": "L1", 
@@ -12,11 +13,10 @@
       "permeable": true
     },
     {
-      "id": "L1", 
-      "re_event": "^(?!#).*", 
-      "arguments": "#> {#event}", 
+      "id": "L2", 
+      "re_event": "^(?!#)(.*)", 
+      "arguments": "#> <i>#event</i>", 
       "permeable": true
     }
-
   ]
 }

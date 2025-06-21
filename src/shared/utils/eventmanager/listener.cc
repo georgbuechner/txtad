@@ -18,25 +18,45 @@ std::string LHandler::event() const { return _event.str(); }
 bool LHandler::permeable() const { return _permeable; } 
 
 // methods 
-bool LHandler::Test(const std::string& event, const ExpressionParser& parser) {
+bool LHandler::Test(const std::string& event, const ExpressionParser& parser) const {
   std::smatch base_match;
-  if (std::regex_match(event, base_match, static_cast<const std::regex&>(_event))) {
-    if (base_match.size() >= 2) {
-      util::Logger()->debug("LHandler::Test. Forwared event-match  to arguments {} -> {}", _arguments, base_match[1].str());
-      _arguments = base_match[1].str();
-    }
-    return true;
-  }
-  return false;
+  return (std::regex_match(event, base_match, static_cast<const std::regex&>(_event)));
 }
 
 void LHandler::Execute(std::string event) const {
   if (!_fn) {
     util::Logger()->error("LHandler::Execute. Function from handler: {} not initialized!", _id);
   } else {
-    _fn(event, _arguments);
+    util::Logger()->debug("LHandler::Execute. Executing {}, {}", event, _arguments);
+    _fn(event, ReplacedArguments(event));
   }
 }
+
+std::string LHandler::ReplacedArguments(const std::string& event) const {
+  static const std::string location = "#event";
+  auto pos = _arguments.find(location);
+
+  std::smatch base_match;
+  if (std::regex_match(event, base_match, static_cast<const std::regex&>(_event))) {
+    std::string match = base_match[1].str();
+    // If no arguments, ALWAYS return the match
+    if (_arguments == "") {
+      return match;
+    } 
+    // If arguments ask for event, replace "#event" with event
+    else if (pos != std::string::npos) {
+      std::string mod = _arguments;
+      mod.replace(pos, location.length(), match);
+      return mod;
+    } 
+    // Otherwise, return arguments
+    else {
+      return _arguments;
+    }
+  }
+  return "";
+}
+
 
 // ## l-forwarder
 Listener::Fn LForwarder::_overwride_fn = nullptr;
@@ -51,7 +71,7 @@ LForwarder::LForwarder(const nlohmann::json& json) : LForwarder(json.at("id"), j
     json.at("arguments"), json.at("permeable"), json.value("logic", "")) { }
 
 // methods 
-bool LForwarder::Test(const std::string& event, const ExpressionParser& parser) {
+bool LForwarder::Test(const std::string& event, const ExpressionParser& parser) const {
   if (_logic != "" && parser.Evaluate(_logic) != "1")
     return false;
   return LHandler::Test(event, parser);
@@ -79,7 +99,7 @@ LContextForwarder::LContextForwarder(const nlohmann::json& json, std::shared_ptr
   : LContextForwarder(json.at("id"), json.at("re_event"), ctx, json.at("arguments"), json.at("permeable"),
       json.at("use_ctx_regex"), json.value("logic", "")) {}
 
-bool LContextForwarder::Test(const std::string& event, const ExpressionParser& parser) { 
+bool LContextForwarder::Test(const std::string& event, const ExpressionParser& parser) const { 
   // Test logic
   if (_logic != "" && parser.Evaluate(_logic) != "1")
     return false;

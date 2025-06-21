@@ -9,7 +9,6 @@
       "id": "Q1",
       "re_event": ".*",
       "arguments": "#> Don't punish me with stuff I can't do!",
-      "logic": "{event_handled} == 0",
       "permeable": true
     }
   ]
