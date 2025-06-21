@@ -13,8 +13,8 @@
 
 Game::MsgFn Game::_cout = nullptr;
 
-Game::Game(std::string path, std::string name) 
-    : _path(path), _name(name), _cur_user(nullptr), _parser(),
+Game::Game(std::string path, std::string name) : _path(path), _name(name), _cur_user(nullptr), 
+    _parser(std::bind(&Game::t_substitue_fn, this, std::placeholders::_1)),
     _settings(*util::LoadJsonFromDisc(_path + "/" + txtad::GAME_SETTINGS)) {
   util::SetUpLogger(txtad::FILES_PATH, _name, spdlog::level::debug);
   util::LoggerContext scope(_name);
@@ -30,21 +30,14 @@ Game::Game(std::string path, std::string name)
         std::bind(&Game::h_add_ctx, this, std::placeholders::_1, std::placeholders::_2)));
   _mechanics_ctx->AddListener(std::make_shared<LHandler>("H3", "#ctx replace (.*)", 
         std::bind(&Game::h_replace_ctx, this, std::placeholders::_1, std::placeholders::_2)));
-  _mechanics_ctx->AddListener(std::make_shared<LHandler>("H6", "#> (.*)", 
+  _mechanics_ctx->AddListener(std::make_shared<LHandler>("H4", "#sa (.*)", 
+        std::bind(&Game::h_set_attribute, this, std::placeholders::_1, std::placeholders::_2)));
+  _mechanics_ctx->AddListener(std::make_shared<LHandler>("H5", "#la (.*)", 
+        std::bind(&Game::h_list_attributes, this, std::placeholders::_1, std::placeholders::_2)));
+  _mechanics_ctx->AddListener(std::make_shared<LHandler>("H6", "#laa (.*)", 
+        std::bind(&Game::h_list_all_attributes, this, std::placeholders::_1, std::placeholders::_2)));
+  _mechanics_ctx->AddListener(std::make_shared<LHandler>("H7", "#> (.*)", 
         std::bind(&Game::h_print, this, std::placeholders::_1, std::placeholders::_2)));
-
-  // Setup parser 
-  ExpressionParser::SubstituteFN substitue_fn = [&user=_cur_user](const std::string& str) -> std::string {
-    for (const auto& [key, ctx] : user->contexts()) {
-      // Check if substitue ist ctx-name 
-      if (str == key) 
-        return ctx->name();
-      // Check if substitue ist ctx-attribute
-      if (auto attribute_value = ctx->GetAttribute(str))
-        return *attribute_value;
-    }
-    return "";
-  };
 
   parser::LoadGameFiles(_path, _contexts, _texts);
 }
@@ -115,13 +108,71 @@ void Game::h_replace_ctx(const std::string& event, const std::string& args) {
   }
 }
 
+void Game::h_set_attribute(const std::string& event, const std::string& args) {
+  util::Logger()->info("Game::h_set_attribute: {}", args);
+  static std::vector<std::string> opts = {"+=", "-=", "++", "--", "*=", "/=", "="}; 
+  // Find operator
+  std::string opt;
+  int pos = -1;
+  for (const auto& it : opts) {
+    auto p = args.find(it);
+    if (p != std::string::npos) {
+      opt = it;
+      pos = p;
+      break;
+    }
+  }
+  // Split input into attribute and expression used to set attribute
+  std::string attribute = args.substr(0, pos);
+  std::string expression = args.substr(pos+opt.length()); 
+
+  util::Logger()->info("attribute: {}, opt: {}, expression: {}", attribute, opt, expression);
+
+  // Split attribute into ctx-id and attribute-id
+  pos = attribute.rfind(".");
+  if (pos == std::string::npos) {
+    util::Logger()->warn("Game::h_set_attribute. Invalid attribute id! {}", attribute);
+    return;
+  }
+  std::string ctx_id = attribute.substr(0, pos);
+  std::string attribute_id = attribute.substr(pos+1);
+
+  // Find context: 
+  if (auto ctx = _cur_user->GetContext(ctx_id)) {
+    if (auto attr = ctx->GetAttribute(attribute_id)) {
+      std::string res = "";
+      if (opt == "=")
+        res = _parser.Evaluate(expression);
+      else if (opt == "++")
+        res = std::to_string(std::stoi(*attr) + 1);
+      else if (opt == "--")
+        res = std::to_string(std::stoi(*attr) - 1);
+      else if (opt == "+=")
+        res = std::to_string(std::stoi(*attr) + std::stoi(_parser.Evaluate(expression)));
+      else if (opt == "-=")
+        res = std::to_string(std::stoi(*attr) - std::stoi(_parser.Evaluate(expression)));
+      else if (opt == "*=")
+        res = std::to_string(std::stoi(*attr) * std::stoi(_parser.Evaluate(expression)));
+      else if (opt == "/=")
+        res = std::to_string(std::stoi(*attr) / std::stoi(_parser.Evaluate(expression)));
+      util::Logger()->debug("User::PrintCtxAttribute: setting {} to {}", attribute_id, res);
+      if (!ctx->SetAttribute(attribute_id, res))
+        util::Logger()->warn("User::PrintCtxAttribute: Failed steting attribute: {} to {}", attribute_id, res);
+    } else {
+      util::Logger()->warn("User::PrintCtxAttribute: attribute {} not found in ctx {}", attribute_id, ctx->id());
+    }
+  } else {
+    util::Logger()->warn("User::PrintCtxAttribute: ctx {} not found", ctx_id);
+  }
+}
+
 void Game::h_add_to_eventqueue(const std::string& event, const std::string& args) {
   _cur_user->AddToEventQueue(args);
 }
 
 void Game::h_print(const std::string& event, const std::string& args) {
-  util::Logger()->info("Handler::cout: {} {}", event, args);
-  static const std::regex pattern(R"(^(txt)\.(.*)$|^(ctx)\.(.*)->(name|desc|description)$)");
+  util::Logger()->info("Handler::h_print: {} {}", event, args);
+  static const std::regex pattern(R"(^(txt)\.(.*)$|^(ctx)\.(.*)(->(name|desc|description|attributes|all_attributes)|\.(.*))$)");
   std::string txt = "";
   for (int i=0; i<args.length();i++) {
     if (args[i] == '{') {
@@ -136,8 +187,11 @@ void Game::h_print(const std::string& event, const std::string& args) {
           if (std::regex_match(subsitute, match, pattern)) {
             if (match[1].matched)
               txt += _cur_user->PrintTxt(match[2].str());
-            else if (match[3].matched) {
-              txt += _cur_user->PrintCtx(match[4].str(), match[5].str());
+            else if (match[4].matched && match[5].str().front() == '-') {
+              txt += _cur_user->PrintCtx(match[4].str(), match[6].str());
+            }
+            else if (match[4].matched && match[5].str().front() == '.') {
+              txt += _cur_user->PrintCtxAttribute(match[4].str(), match[7].str());
             }
           } else {
             util::Logger()->info("Handler::cout. {} did not match pattern.", subsitute);
@@ -152,4 +206,37 @@ void Game::h_print(const std::string& event, const std::string& args) {
     }
   }
   _cout(_cur_user->id(), txt);
+}
+
+void Game::h_list_attributes(const std::string& event, const std::string& ctx_id) {
+  util::Logger()->info("Handler::h_list_attributes: {} {}", event, ctx_id);
+  if (const auto& ctx = _cur_user->GetContext(ctx_id)) {
+    _cout(_cur_user->id(), "Attributes:");
+    for (const auto& [key, value] : ctx->attributes()) {
+      if (key.front() != '_') 
+        _cout(_cur_user->id(), "- " + key + ": " + value);
+    }
+  }
+}
+
+void Game::h_list_all_attributes(const std::string& event, const std::string& ctx_id) {
+  util::Logger()->info("Handler::h_list_all_attributes: {} {}", event, ctx_id);
+  if (const auto& ctx = _cur_user->GetContext(ctx_id)) {
+    _cout(_cur_user->id(), "Attributes:");
+    for (const auto& [key, value] : ctx->attributes()) {
+      _cout(_cur_user->id(), "- " + key + ": " + value);
+    }
+  }
+}
+
+std::string Game::t_substitue_fn(const std::string& str) {
+  for (const auto& [key, ctx] : _cur_user->contexts()) {
+    // Check if substitue ist ctx-name 
+    if (str == key) 
+      return ctx->name();
+    // Check if substitue ist ctx-attribute
+    if (auto attribute_value = ctx->GetAttribute(str))
+      return *attribute_value;
+  }
+  return "";
 }

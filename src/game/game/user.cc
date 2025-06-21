@@ -2,6 +2,7 @@
 #include "shared/objects/context/context.h"
 #include "shared/utils/utils.h"
 #include <memory>
+#include <nlohmann/detail/value_t.hpp>
 
 User::User(const std::string& game_id, const std::string& id, const txtad::MsgFn& cout,
     const std::map<std::string, std::shared_ptr<Context>>& contexts, 
@@ -98,12 +99,47 @@ std::string User::PrintTxt(std::string txt_id) {
 std::string User::PrintCtx(std::string ctx_id, std::string what) {
   util::Logger()->debug("User::PrintCtx. printing \"{}\"...", ctx_id);
   std::string txt;
+
   auto add_to_txt = [&txt, &what](const std::shared_ptr<Context>& ctx) {
     if (what == "name") 
       txt += ctx->name();
     else if (what == "desc" || what == "description")
       txt += ctx->description();
+    else if (what == "attributes") {
+      for (const auto& [key, value] : ctx->attributes()) {
+        if (key.front() != '_')
+          txt += ((txt != "") ? ", " : "") + key + ": " + value;
+      }
+    }
+    else if (what == "all_attributes") {
+      for (const auto& [key, value] : ctx->attributes()) {
+        txt += ((txt != "") ? ", " : "") + key + ": " + value;
+      }
+    }
   };
+
+  if (ctx_id.front() == '*') {
+    for (const auto& ctx : _context_stack.find(ctx_id.substr(1)))
+      add_to_txt(ctx);
+  } else if (_contexts.count(ctx_id) > 0) {
+    add_to_txt(_contexts.at(ctx_id));
+  } else {
+    util::Logger()->warn("User::PrintCtx. Context \"{}\" not found.", ctx_id);
+  }
+  return txt;
+}
+
+std::string User::PrintCtxAttribute(std::string ctx_id, std::string attribute) {
+  util::Logger()->debug("User::PrintCtxAttribute. printing \"{}.{}\".", ctx_id, attribute);
+  std::string txt;
+
+  auto add_to_txt = [&txt, &attribute](const std::shared_ptr<Context>& ctx) {
+    if (auto attr = ctx->GetAttribute(attribute))
+      txt += *attr;
+    else 
+      util::Logger()->warn("User::PrintCtxAttribute: attribute {} not found in ctx {}", attribute, ctx->id());
+  };
+
   if (ctx_id.front() == '*') {
     for (const auto& ctx : _context_stack.find(ctx_id.substr(1)))
       add_to_txt(ctx);
@@ -116,5 +152,12 @@ std::string User::PrintCtx(std::string ctx_id, std::string what) {
 }
 
 std::shared_ptr<Context> User::GetContext(const std::string& ctx_id) {
-  return _context_stack.get(ctx_id);
+  if (ctx_id.front() == '*') {
+    for (const auto& ctx : _context_stack.find(ctx_id.substr(1))) 
+      return _context_stack.get(ctx->id());
+  } else if (_contexts.count(ctx_id) > 0) {
+    return _contexts.at(ctx_id);
+  } else {
+    return nullptr;
+  }
 }

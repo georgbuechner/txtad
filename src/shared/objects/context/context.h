@@ -56,6 +56,7 @@ public:
   std::string name() const;
   std::string description() const;
   std::string entry_condition_pattern() const;
+  const std::map<std::string, std::string>& attributes() const;
   int priority() const;
   bool permeable() const;
   bool shared() const;

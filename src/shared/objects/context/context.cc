@@ -24,6 +24,9 @@ std::string Context::description() const {
 std::string Context::entry_condition_pattern() const {
   return _entry_condition.str();
 }
+const std::map<std::string, std::string>& Context::attributes() const {
+  return _attributes;
+}
 int Context::priority() const {
   return _priority;
 }
@@ -59,7 +62,7 @@ bool Context::CheckEntry(const std::string& test) const {
 
   // ***** ***** Attribute methods ***** ***** //
 bool Context::SetAttribute(const std::string& key, const std::string& value) {
-  if (_attributes.count(key) == 0) {
+  if (_attributes.count(key) > 0) {
     _attributes[key] = value;
     return true;
   }

@@ -33,6 +33,7 @@ class User {
     void RemoveContext(const std::string& ctx_id);
     std::string PrintTxt(std::string id);
     std::string PrintCtx(std::string id, std::string what);
+    std::string PrintCtxAttribute(std::string id, std::string what);
 
   private: 
     const std::string _game_id;
