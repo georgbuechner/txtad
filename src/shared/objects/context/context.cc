@@ -7,6 +7,7 @@
 #include "shared/utils/eventmanager/listener.h"
 #include "shared/utils/utils.h"
 
+
   // ***** ***** Getters ***** ***** //
 std::string Context::id() const {
   return _id;
@@ -23,11 +24,17 @@ std::string Context::description() const {
 std::string Context::entry_condition_pattern() const {
   return _entry_condition.str();
 }
+const std::map<std::string, std::string>& Context::attributes() const {
+  return _attributes;
+}
 int Context::priority() const {
   return _priority;
 }
 bool Context::permeable() const {
   return _permeable;
+}
+bool Context::shared() const {
+  return _shared;
 }
 
 // ***** ***** Setters ***** ***** //
@@ -55,7 +62,7 @@ bool Context::CheckEntry(const std::string& test) const {
 
   // ***** ***** Attribute methods ***** ***** //
 bool Context::SetAttribute(const std::string& key, const std::string& value) {
-  if (_attributes.count(key) == 0) {
+  if (_attributes.count(key) > 0) {
     _attributes[key] = value;
     return true;
   }
@@ -81,7 +88,7 @@ bool Context::RemoveAttribute(const std::string& key) {
 
 bool Context::AddAttribute(const std::string& key, std::string initial_value) {
   if (_attributes.count(key) > 0) {
-    util::Logger()->debug(fmt::format("Context::AddAttribute: attribute {} already exists", key));
+    util::Logger()->debug("Context::AddAttribute: attribute {} already exists", key);
     return false;
   }
   _attributes[key] = initial_value;
@@ -102,7 +109,7 @@ void Context::AddListener(std::shared_ptr<Listener> listener) {
   if (_event_manager) {
     _event_manager->AddListener(listener);
   } else {
-    util::Logger()->error(fmt::format("Context::AddListener: event_manager does not exist for listener {}", listener->id()));
+    util::Logger()->error("Context::AddListener: event_manager does not exist for listener {}", listener->id());
   }
 }
 
@@ -110,6 +117,6 @@ void Context::RemoveListener(const std::string& id) {
   if (_event_manager) {
     _event_manager->RemoveListener(id);
   } else {
-    util::Logger()->error(fmt::format("Context::RemoveListener: event_manager does not exist for id {}", id));
+    util::Logger()->error("Context::RemoveListener: event_manager does not exist for id {}", id);
   }
 }

@@ -1,4 +1,9 @@
 #include "utils.h"
+#include <exception>
+#include <fmt/core.h>
+#include <fstream>
+#include <nlohmann/json.hpp>
+#include <optional>
 #include <spdlog/spdlog.h>
 #include <spdlog/common.h>
 #include <spdlog/sinks/daily_file_sink.h>
@@ -44,4 +49,69 @@ std::string util::Strip(std::string str, char c) {
       break;
   }
   return str;
+}
+
+std::pair<int, int> util::InBrackets(const std::string& inp, int pos) {
+  return {OpeningBracket(inp, pos), ClosingBracket(inp, pos)};
+}
+
+
+int util::ClosingBracket(const std::string& inp, int pos, char open, char close) {
+  int accept = 0;
+  int end = -1;
+  for (int i=0; i<inp.length()-pos; i++) {
+    char c = inp[pos+i];
+    if (c == open) 
+      accept++;
+    else if (c == close && accept > 0) 
+      accept--;
+    else if (c == close && accept == 0) {
+      end = pos+i;
+      break;
+    }
+  }
+  return end;
+}
+
+int util::OpeningBracket(const std::string& inp, int pos, char open, char close) {
+  int accept = 0;
+  int start = -1; 
+  for (int i=0; i<=pos; i++) {
+    char c = inp[pos-i];
+    if (c == close) 
+      accept++;
+    else if (c == open && accept > 0) 
+      accept--;
+    else if (c == open && accept == 0) {
+      start = pos-i;
+      break;
+    }
+  }
+  return start;
+}
+
+std::optional<nlohmann::json> util::LoadJsonFromDisc(const std::string& path) {
+  try {
+    std::ifstream ifs(path);
+    if (!ifs.is_open()) {
+      Logger()->error("Failed loading json from disc: input file could not be opened: {}", path);
+    } else {
+      auto json = nlohmann::json::parse(ifs);
+      ifs.close();
+      return json;
+    }
+  } catch (std::exception& e) {
+    Logger()->error("Failed to load json ({}) from disc: {}", path, e.what());
+  }
+  return std::nullopt;
+}
+
+void util::WriteJsonToDisc(const std::string& path, const nlohmann::json& json) {
+  std::ofstream ofs(path);
+  if (!ofs.is_open()) {
+    Logger()->error("Failed writing json to disc: output file could not be opened!");
+  } else {
+    ofs << json;
+    ofs.close();
+  }
 }

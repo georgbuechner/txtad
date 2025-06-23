@@ -22,11 +22,13 @@ TEST_CASE("Test eventmanager basic use", "[eventmanager]") {
 
   EventManager em; 
   std::map<std::string, std::string> attributes = {{"mana", "10"}, {"runes", "5"}};
-  ExpressionParser parser(&attributes);
+  ExpressionParser::SubstituteFN fn = [&attributes](const std::string& str) { 
+    return (attributes.count(str) > 0) ? attributes.at(str) : ""; };
+  ExpressionParser parser(fn);
   std::string event_queue = "";
 
-  Listener::Fn set_attribute = [&attributes](std::string event, std::string args) {
-    helpers::SetAttribute(attributes, args);
+  Listener::Fn set_attribute = [&attributes, &parser](std::string event, std::string args) {
+    helpers::SetAttribute(attributes, args, parser);
   };
 
   Listener::Fn add_to_eventqueue = [&event_queue](std::string event, std::string args) {
@@ -60,11 +62,15 @@ TEST_CASE("Test eventmanager: SetAttribute", "[eventmanager]") {
 
   EventManager em; 
   std::map<std::string, std::string> attributes = {{"mana", "10"}, {"runes", "5"}};
-  ExpressionParser parser(&attributes);
+  ExpressionParser::SubstituteFN fn = [&attributes](const std::string& str) { 
+    util::Logger()->info("SUBSTITUTE-FN: str: {}, mana: {} runes: {}", str, attributes.at("mana"), attributes.at("runes"));
+    std::cout << "HEY!!" << std::endl;
+    return (attributes.count(str) > 0) ? attributes.at(str) : ""; };
+  ExpressionParser parser(fn);
   std::string event_queue = "";
 
-  Listener::Fn set_attribute = [&attributes](std::string event, std::string args) {
-    helpers::SetAttribute(attributes, args);
+  Listener::Fn set_attribute = [&attributes, &parser](std::string event, std::string args) {
+    helpers::SetAttribute(attributes, args, parser);
   };
 
   Listener::Fn add_to_eventqueue = [&event_queue](std::string event, std::string args) {
@@ -115,11 +121,13 @@ TEST_CASE("Test permeability", "[eventmanager]") {
 
   EventManager em; 
   std::map<std::string, std::string> attributes = {{"mana", "10"}, {"runes", "5"}};
-  ExpressionParser parser(&attributes);
+  ExpressionParser::SubstituteFN fn = [&attributes](const std::string& str) { 
+    return (attributes.count(str) > 0) ? attributes.at(str) : ""; };
+  ExpressionParser parser(fn);
   std::string event_queue = "";
 
-  Listener::Fn set_attribute = [&attributes](std::string event, std::string args) {
-    helpers::SetAttribute(attributes, args);
+  Listener::Fn set_attribute = [&attributes, &parser](std::string event, std::string args) {
+    helpers::SetAttribute(attributes, args, parser);
   };
   Listener::Fn add_to_eventqueue = [&event_queue](std::string event, std::string args) {
     event_queue += ((event_queue != "") ? ";" : "") + args;
@@ -146,11 +154,13 @@ TEST_CASE("Test logic", "[eventmanager]") {
 
   EventManager em; 
   std::map<std::string, std::string> attributes = {{"mana", "10"}, {"runes", "5"}};
-  ExpressionParser parser(&attributes);
+  ExpressionParser::SubstituteFN fn = [&attributes](const std::string& str) { 
+    return (attributes.count(str) > 0) ? attributes.at(str) : ""; };
+  ExpressionParser parser(fn);
   std::string event_queue = "";
 
-  Listener::Fn set_attribute = [&attributes](std::string event, std::string args) {
-    helpers::SetAttribute(attributes, args);
+  Listener::Fn set_attribute = [&attributes, &parser](std::string event, std::string args) {
+    helpers::SetAttribute(attributes, args, parser);
   };
   Listener::Fn add_to_eventqueue = [&event_queue](std::string event, std::string args) {
     event_queue += ((event_queue != "") ? ";" : "") + args;
@@ -236,5 +246,4 @@ TEST_CASE("Test logic", "[eventmanager]") {
     REQUIRE(attributes["mana"] == "20");
     REQUIRE(event_queue == E_SET_RUNES); 
   }
-
 }

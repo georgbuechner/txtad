@@ -37,3 +37,16 @@ Then the code can be run as:
 ``` 
 ./build/txtad.o
 ```
+
+## Concept 
+
+### Stack-Structure 
+
+- 15 to  10 -> these should all be completely permeable contexts that only catch
+  stuff and f.e. add it to log or history entries 
+- 10 to   0 -> Add custom permeable contexts here
+-     0     -> Here we can find the mechanics context from here on should be
+  non-permeable 
+-  0 to -10 -> Add custom non-permeable contexts here
+- -15       -> Add Error contexts here printing error messages.
+

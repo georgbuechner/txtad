@@ -1,0 +1,4 @@
+{
+  "initial_events": "#> {txt.start}",
+  "initial_contexts": ["general", "rooms/closet", "catch"]
+}

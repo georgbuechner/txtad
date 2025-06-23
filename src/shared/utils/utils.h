@@ -4,6 +4,9 @@
 #ifndef SHARED_UTILS_UTIL_H
 #define SHARED_UTILS_UTIL_H
 
+#include <iostream>
+#include <nlohmann/json_fwd.hpp>
+#include <optional>
 #include <regex>
 #include <spdlog/common.h>
 #include <spdlog/logger.h>
@@ -31,7 +34,18 @@ namespace util
 
   class Regex {
     public: 
-      Regex(const std::string& pattern) : _pattern(pattern), _regex(std::regex(pattern)) {}
+      Regex(const std::string& pattern) : _pattern(pattern), _regex(std::regex(pattern)) {
+        std::string new_pattern = "";
+        for (int i=0; i<pattern.length(); i++) {
+          if (pattern[i] == '*' && (i == 0 || pattern[i-1] != '.'))
+            new_pattern += "\\*";
+          else 
+            new_pattern += pattern[i];
+        }
+        _regex = std::regex(new_pattern);
+        _pattern = new_pattern;
+      }
+
       const std::string& str() const { return _pattern; } 
       operator const std::regex&() const { return _regex; } 
     private: 
@@ -48,6 +62,36 @@ namespace util
    * @return striped string
    */
   std::string Strip(std::string str, char c=' ');
+
+  /**
+   * If the char at the given position is surrounded by brackets, return their 
+   * start and end position.
+   * @param[in] inp 
+   * @param[in] pos 
+   * @return start and end positions of surrounding brackets
+   */
+  std::pair<int, int> InBrackets(const std::string& inp, int pos);
+
+  /**
+   * Find next (right side) closing bracket
+   * @param[in] inp (logical expression) 
+   * @param[in] pos (current position to search from)
+   * @return position of closing bracket (-1 if it does not exist)
+   */
+  int ClosingBracket(const std::string& inp, int pos, char open = '(', char close = ')');
+
+  /**
+   * Find previous (left side) opening bracket
+   * @param[in] inp (logical expression) 
+   * @param[in] pos (current position to search from)
+   * @return position of opening bracket (-1 if it does not exist)
+   */
+  int OpeningBracket(const std::string& inp, int pos, char open = '(', char close = ')');
+
+
+  std::optional<nlohmann::json> LoadJsonFromDisc(const std::string& path);
+
+  void WriteJsonToDisc(const std::string& path, const nlohmann::json& json);
 }
 
 #endif

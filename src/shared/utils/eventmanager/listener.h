@@ -19,7 +19,7 @@ class Listener {
     virtual std::string event() const = 0;
     virtual bool permeable() const = 0;
 
-    virtual bool Test(const std::string& event, const ExpressionParser& parser) = 0;
+    virtual bool Test(const std::string& event, const ExpressionParser& parser) const = 0;
     virtual void Execute(std::string event) const = 0;
 };
 
@@ -33,7 +33,7 @@ class LHandler : public Listener {
     bool permeable() const override;
     
     // methods 
-    bool Test(const std::string& event, const ExpressionParser& parser) override;
+    bool Test(const std::string& event, const ExpressionParser& parser) const override;
 
     void Execute(std::string event) const override;
 
@@ -43,6 +43,16 @@ class LHandler : public Listener {
     std::string _arguments;
     Fn _fn; 
     const bool _permeable;
+
+    // methods 
+
+    /** 
+     * Returns either the handlers arguments, the arguments with "#event"
+     * replaced by the event, or only the event. 
+     * @parem[in] event 
+     * @return agrument, partyly replaced by event or only event
+     */
+    std::string ReplacedArguments(const std::string& event) const;
 };
 
 class LForwarder : public LHandler {
@@ -58,8 +68,10 @@ class LForwarder : public LHandler {
      */
     LForwarder(std::string id, std::string re_event, std::string arguments, bool permeable, std::string logic="");
 
+    LForwarder(const nlohmann::json& json);
+
     // methods 
-    bool Test(const std::string& event, const ExpressionParser& parser) override;
+    bool Test(const std::string& event, const ExpressionParser& parser) const override;
 
     static void set_overwite_fn(Fn fn);
 
@@ -79,16 +91,21 @@ class LContextForwarder : public LForwarder {
      * @param[in] permeable (stop execution if not permeable)
      * @param[in] logic (additional evaluation)
      */
-    LContextForwarder(std::string id, std::string re_event, std::shared_ptr<Context> ctx, std::string arguments, 
+    LContextForwarder(std::string id, std::string re_event, std::weak_ptr<Context> ctx, std::string arguments, 
         bool permeable, UseCtx use_ctx_regex, std::string logic="");
 
+    LContextForwarder(const nlohmann::json& json, std::shared_ptr<Context> ctx);
+
     // methods 
-    bool Test(const std::string& event, const ExpressionParser& parser) override;
+    bool Test(const std::string& event, const ExpressionParser& parser) const override;
 
   private: 
     const std::string _logic;
-    std::shared_ptr<Context> _ctx;
+    std::weak_ptr<Context> _ctx;
     const UseCtx _use_ctx_regex;
+
+    static std::string GetCtxId(std::weak_ptr<Context> _ctx);
+    static std::string GetCtxName(std::weak_ptr<Context> _ctx);
 };
 
 #endif

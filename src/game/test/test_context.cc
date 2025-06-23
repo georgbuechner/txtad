@@ -2,7 +2,7 @@
 #include <catch2/catch_test_macros.hpp>
                                                                              
 
-TEST_CASE("Test simple use", "[objects, context]") {
+TEST_CASE("Test simple use", "[context]") {
   const std::string ID = "_1";
   const std::string NAME = "test";
   const std::string DESCRIPTION = "test context";
@@ -23,7 +23,7 @@ TEST_CASE("Test simple use", "[objects, context]") {
    remove attribute
    check true/false cases for 'Has Attribute'
 */
-TEST_CASE("Test attributes", "[objects, context]") {
+TEST_CASE("Test attributes", "[context]") {
 
 }
 

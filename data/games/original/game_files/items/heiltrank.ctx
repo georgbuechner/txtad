@@ -1,0 +1,18 @@
+{
+  "id": "heiltrank", 
+  "name": "Heiltrank",
+  "description": "Ein simpler Heiltrank",
+  "shared": true,
+  "permeable": false,
+  "priority": -10,
+  "listeners": [
+    {
+      "id": "L1",
+      "re_event": "use (.*)",
+      "ctx": "items/heiltrank",
+      "permeable": false,
+      "use_ctx_regex": 2,
+      "arguments":"#sa general.hp+=50;#> Hp set to {ctx.general.hp}."
+    }
+  ]
+}
