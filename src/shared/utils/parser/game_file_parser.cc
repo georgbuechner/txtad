@@ -68,10 +68,17 @@ void parser::LoadObjects(const std::string& path, std::map<std::string, std::sha
 void parser::LoadListeners(std::map<std::string, std::shared_ptr<Context>>& contexts,
     std::map<std::string, nlohmann::json> listeners) {
   for (const auto& [ctx_id, json_listeners] : listeners) {
-    for (const auto& json_listener : json_listeners.get<std::vector<nlohmann::json>>()) {
+    for (auto& json_listener : json_listeners.get<std::vector<nlohmann::json>>()) {
+      // Replace "this"-field with ctx_id
+      for (const auto* field : {"logic", "arguments"}) {
+        if (json_listener.contains(field))
+          json_listener[field] = util::ReplaceAll(json_listener[field], txtad::THIS_REPLACEMENT, ctx_id);
+      }
+
       // Add/ Create context-listener
       if (json_listener.contains("ctx")) {
-        auto it_ctx = contexts.find(json_listener["ctx"]);
+        std::string target_ctx_id = json_listener["ctx"];
+        auto it_ctx = contexts.find((target_ctx_id == txtad::THIS_REPLACEMENT) ? ctx_id : target_ctx_id);
         if (it_ctx != contexts.end()) {
           contexts.at(ctx_id)->AddListener(std::make_shared<LContextForwarder>(json_listener, it_ctx->second));
         } else {

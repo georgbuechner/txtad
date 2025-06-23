@@ -7,6 +7,7 @@
 namespace txtad {
   using MsgFn = std::function<void(std::string)>;
 
+  // Paths
   const std::string LOGGER = "LMain";
   const std::string TEST_LOGGER = "LMainTest";
   const std::string FILES_PATH = "game/";
@@ -15,10 +16,14 @@ namespace txtad {
   const std::string GAME_SETTINGS = "settings.json";
   const std::string GAME_FILES = "game_files/";
 
+  // Extentsion
   const std::string TEMPLATE_EXTENSION = ".template";
   const std::string CONTEXT_EXTENSION = ".ctx";
   const std::string TEXT_EXTENSION = ".txt";
 
+  // replacements
+  const std::string THIS_REPLACEMENT = "<_>";
+  const std::string CTX_REPLACEMENT = "<ctx>";
 };
 
 #endif

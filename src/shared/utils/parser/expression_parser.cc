@@ -61,7 +61,37 @@ ExpressionParser::ExpressionParser(const SubstituteFN& fn) {
 
 std::string ExpressionParser::Evaluate(std::string input) const {
   util::Logger()->info("EP:Evaluate. START: {}", input);
-  auto res = evaluate(EnsureExecutionOrder(input));
+
+  // Check for substitutes
+  std::string replaced = "";
+  for (int i=0; i<input.length(); i++) {
+    // If char is start of substitute, find matching closing bracket
+    if (input[i] == '{') {
+      int closing = util::ClosingBracket(input, i+1, '{', '}');
+      // Get substitute-name (string inbetween brackets) and check if it exists
+      std::string subsitute = input.substr(i+1, closing-(i+1));
+      util::Logger()->info("FOUND SUBSTITUE: {}", subsitute);
+      std::string replacement = "";
+      if (_default_subsitutes.count(subsitute) > 0) {
+        replacement = _default_subsitutes.at(subsitute);
+        util::Logger()->info("found default subsitute: {}", replacement);
+      } else {
+        replacement = _substitute_fn(subsitute);
+        if (replacement == "") {
+          util::Logger()->error("No subsitute found for: {}", subsitute);
+        } 
+      }
+      if (replacement != "") {
+        // Add substituted string to replaced string and increase index
+        replaced += replacement;
+        i = closing;
+      }
+    } else {
+      replaced += input[i]; // add current char
+    }
+  }
+
+  auto res = evaluate(EnsureExecutionOrder(replaced));
   util::Logger()->info("EP:Evaluate. =>: {}", res);
   return res;
 }
@@ -92,35 +122,7 @@ std::string ExpressionParser::evaluate(std::string input) const {
 
 std::string ExpressionParser::StripAndSubstitute(std::string str) const {
   // strip string from whitespaces and brackets
-  str = util::Strip(util::Strip(util::Strip(str), ')'), '(');
-
-  // Check for substitutes
-  std::string replaced = "";
-  for (int i=0; i<str.length(); i++) {
-    // If char is start of substitute, find matching closing bracket
-    if (str[i] == '{') {
-      int closing = util::ClosingBracket(str, i+1, '{', '}');
-      // Get substitute-name (string inbetween brackets) and check if it exists
-      std::string subsitute = str.substr(i+1, closing-(i+1));
-      util::Logger()->info("FOUND SUBSTITUE: {}", subsitute);
-      std::string replacement = "";
-      if (_default_subsitutes.count(subsitute) > 0) {
-        replacement = _default_subsitutes.at(subsitute);
-        util::Logger()->info("found default subsitute: {}", replacement);
-      } else {
-        replacement = _substitute_fn(subsitute);
-        util::Logger()->info("found with subsitute-fn: {}", replacement);
-      }
-      if (replacement != "") {
-        // Add substituted string to replaced string and increase index
-        replaced += replacement;
-        i = closing;
-      }
-    } else {
-      replaced += str[i]; // add current char
-    }
-  }
-  return replaced;
+  return util::Strip(util::Strip(util::Strip(str), ')'), '(');
 }
 
 
@@ -160,8 +162,6 @@ std::string ExpressionParser::EnsureExecutionOrder(std::string inp) {
   int last = 0;
   for (unsigned int i=0; i<inp.length(); i++) {
     const auto& c = inp[i];
-    util::Logger()->debug("EP:EnsureExecutionOrder. - {} -> {} (waiting: {}, last: {})", 
-        modified, c, waiting, last);
     
     // Handle brackets:
     if (c == '(') {

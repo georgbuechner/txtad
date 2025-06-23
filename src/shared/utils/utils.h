@@ -63,6 +63,15 @@ namespace util
    */
   std::string Strip(std::string str, char c=' ');
 
+  /** 
+   * Replace all ocurences of `from` with `to` and return modified string 
+   * @param[in] str (source string) 
+   * @param[in] from (string to find and replace) 
+   * @param[in] to (string to replace `from` with)
+   * @return modified string
+   */
+  std::string ReplaceAll(std::string str, const std::string& from, const std::string& to);
+
   /**
    * If the char at the given position is surrounded by brackets, return their 
    * start and end position.

@@ -1,8 +1,10 @@
 #include "shared/utils/eventmanager/listener.h"
+#include "game/utils/defines.h"
 #include "shared/objects/context/context.h"
 #include "shared/utils/defines.h"
 #include "shared/utils/fuzzy_search/fuzzy.h"
 #include "shared/utils/utils.h"
+#include <complex>
 #include <nlohmann/json.hpp>
 #include <memory>
 #include <string>
@@ -62,8 +64,7 @@ std::string LHandler::ReplacedArguments(const std::string& event) const {
 Listener::Fn LForwarder::_overwride_fn = nullptr;
 
 LForwarder::LForwarder(std::string id, std::string re_event, std::string arguments, bool permeable, 
-  std::string logic) : 
-    LHandler(id, re_event, _overwride_fn, permeable), _logic(logic) { 
+    std::string logic) : LHandler(id, re_event, _overwride_fn, permeable), _logic(logic) { 
   _arguments = arguments; 
 }
 
@@ -85,19 +86,13 @@ void LForwarder::set_overwite_fn(Fn fn) {
 
 LContextForwarder::LContextForwarder(std::string id, std::string re_event, std::weak_ptr<Context> ctx, 
     std::string arguments, bool permeable, UseCtx use_ctx_regex, std::string logic) 
-  : LForwarder(id, re_event, arguments, permeable, logic), _ctx(ctx), _use_ctx_regex(use_ctx_regex) {
-  static const std::string ctx_placeholder = "<ctx>";
-  auto pos = _arguments.find(ctx_placeholder);
-  const std::string ctx_id = GetCtxId(_ctx);
-  while (pos != std::string::npos) {
-    _arguments.replace(pos, ctx_placeholder.length(), ctx_id);
-    pos = _arguments.find(ctx_placeholder, pos++);
-  }
-}
+  : LForwarder(id, re_event, util::ReplaceAll(arguments, txtad::CTX_REPLACEMENT, GetCtxId(ctx)), 
+      permeable, util::ReplaceAll(logic, txtad::CTX_REPLACEMENT, GetCtxId(ctx))), _ctx(ctx), _use_ctx_regex(use_ctx_regex) {}
 
 LContextForwarder::LContextForwarder(const nlohmann::json& json, std::shared_ptr<Context> ctx) 
   : LContextForwarder(json.at("id"), json.at("re_event"), ctx, json.at("arguments"), json.at("permeable"),
-      json.at("use_ctx_regex"), json.value("logic", "")) {}
+      json.at("use_ctx_regex"), json.value("logic", "")) {
+}
 
 bool LContextForwarder::Test(const std::string& event, const ExpressionParser& parser) const { 
   // Test logic

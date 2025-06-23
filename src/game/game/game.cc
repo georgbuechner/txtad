@@ -7,7 +7,6 @@
 #include "shared/utils/utils.h"
 #include <fmt/core.h>
 #include <functional>
-#include <iostream>
 #include <memory>
 #include <mutex>
 
@@ -230,13 +229,33 @@ void Game::h_list_all_attributes(const std::string& event, const std::string& ct
 }
 
 std::string Game::t_substitue_fn(const std::string& str) {
-  for (const auto& [key, ctx] : _cur_user->contexts()) {
-    // Check if substitue ist ctx-name 
-    if (str == key) 
-      return ctx->name();
-    // Check if substitue ist ctx-attribute
-    if (auto attribute_value = ctx->GetAttribute(str))
-      return *attribute_value;
+  std::vector<std::string> parts = {};
+  // Check context attributes
+  if ((parts = util::Split(str, ".")).size() == 2) {
+    std::string ctx_id = parts[0];
+    std::string attribute_key = parts[1];
+    util::Logger()->debug("Game::t_substitue_fn. {}, {}", ctx_id, attribute_key);
+    if (_cur_user->contexts().count(ctx_id) > 0) {
+      if (auto attribute_value = _cur_user->contexts().at(ctx_id)->GetAttribute(attribute_key))
+        return *attribute_value;
+      else 
+        util::Logger()->warn("Game::t_substitue_fn. In CTX {} attribute {} not found!", ctx_id, attribute_key);
+    } else {
+      util::Logger()->warn("Game::t_substitue_fn. CTX {} not found!", ctx_id);
+    }
+  }
+  // Check context fields
+  if ((parts = util::Split(str, "->")).size() == 2) {
+    std::string ctx_id = parts[0];
+    std::string field = parts[1];
+    if (_cur_user->contexts().count(ctx_id) > 0) {
+      if (field == "name")
+        return _cur_user->contexts().at(ctx_id)->name();
+      else
+        util::Logger()->warn("Game::t_substitue_fn. FIELD {} does not exist in contexts!", field);
+    } else {
+      util::Logger()->warn("Game::t_substitue_fn. CTX {} not found!", ctx_id);
+    }
   }
   return "";
 }

@@ -22,7 +22,7 @@ class Text {
       AddEvents(_permanent_events, event_queue);
       AddEvents(_one_time_events, event_queue);
       _one_time_events = "";
-      return _txt; 
+      return _txt;
     } 
 
   private:

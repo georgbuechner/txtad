@@ -83,6 +83,7 @@ public:
   bool TakeEvent(std::string event, const ExpressionParser& parser);
 
   void AddListener(std::shared_ptr<Listener> listener);
+  void AddListener(const nlohmann::json& listener);
   void RemoveListener(const std::string& id);
 
   // ***** ***** Attributes or Data Members ***** ***** //

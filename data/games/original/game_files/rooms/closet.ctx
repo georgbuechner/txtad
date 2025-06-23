@@ -5,6 +5,9 @@
   "shared": true,
   "permeable": false,
   "priority":-10,
+  "attributes": {
+    "_num_heiltrank": "1"
+  },
   "listeners": [
     {
       "id": "L1", 
@@ -18,22 +21,23 @@
       "id": "L2", 
       "re_event": "pick up (.*)", 
       "ctx": "items/heiltrank", 
-      "arguments": "#ctx add <ctx>", 
+      "arguments": "#ctx add <ctx>;#sa <_>._num_heiltrank--", 
       "permeable": false, 
-      "use_ctx_regex": 2
+      "use_ctx_regex": 2,
+      "logic": "{<_>._num_heiltrank} > 0"
     },
     {
       "id": "Q1", 
       "re_event": "go to .*", 
       "arguments": "#> I can walk. But not theerrre.", 
-      "permeable": true, 
+      "permeable": false, 
       "use_ctx_regex": 2
     }  ,
     {
-      "id": "Q1", 
+      "id": "Q2", 
       "re_event": "pick up .*", 
       "arguments": "#> I could pick that up, but I don't wonna search. Fuck you!", 
-      "permeable": true, 
+      "permeable": false, 
       "use_ctx_regex": 2
     }  
 

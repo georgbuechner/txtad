@@ -9,10 +9,10 @@
     {
       "id": "L1",
       "re_event": "use (.*)",
-      "ctx": "items/heiltrank",
+      "ctx": "<_>",
       "permeable": false,
       "use_ctx_regex": 2,
-      "arguments":"#sa general.hp+=50;#> Hp set to {ctx.general.hp}."
+      "arguments":"#sa general.hp+=50;#ctx remove <_>;#> Hp set to {ctx.general.hp}."
     }
   ]
 }

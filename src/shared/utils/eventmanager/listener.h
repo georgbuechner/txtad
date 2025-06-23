@@ -75,7 +75,7 @@ class LForwarder : public LHandler {
 
     static void set_overwite_fn(Fn fn);
 
-  private: 
+  protected: 
     static Fn _overwride_fn;
     const std::string _logic;
 };
@@ -100,7 +100,6 @@ class LContextForwarder : public LForwarder {
     bool Test(const std::string& event, const ExpressionParser& parser) const override;
 
   private: 
-    const std::string _logic;
     std::weak_ptr<Context> _ctx;
     const UseCtx _use_ctx_regex;
 

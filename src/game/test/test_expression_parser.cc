@@ -134,7 +134,8 @@ TEST_CASE("Text expression parser", "[parser]") {
 
 
 TEST_CASE("Text replacements", "[parser]") {
-  std::map<std::string, std::string> substitutes = {{"player_name", "fux"}, {"inventory", "[book; tabako; wine]"}};
+  std::map<std::string, std::string> substitutes = {{"player_name", "fux"}, {"inventory", "[book; tabako; wine]"},
+    {"rooms/closet", "Closet"}};
   ExpressionParser::SubstituteFN fn = [&substitutes](const std::string& str) { 
     return (substitutes.count(str) > 0) ? substitutes.at(str) : ""; };
   ExpressionParser parser(fn);
@@ -144,6 +145,9 @@ TEST_CASE("Text replacements", "[parser]") {
   REQUIRE(parser.Evaluate("{player_name}=jan") == "0");
   REQUIRE(parser.Evaluate("{player_name}={player_name}") == "1");
   REQUIRE(parser.Evaluate("{player_name}=player_name") == "0");
+
+  // id reduction
+  REQUIRE(parser.Evaluate("{rooms/closet}=Closet") == "1");
 
   // list reduction
   REQUIRE(parser.Evaluate("tabako:{inventory}") == "1");
