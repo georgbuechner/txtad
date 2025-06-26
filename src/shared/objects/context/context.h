@@ -86,6 +86,8 @@ public:
   void AddListener(const nlohmann::json& listener);
   void RemoveListener(const std::string& id);
 
+  std::vector<std::weak_ptr<Context>> LinkedContexts(std::string type);
+
   // ***** ***** Attributes or Data Members ***** ***** //
 private:
   const std::string _id;

@@ -261,7 +261,7 @@ TEST_CASE("Test throwing events (with context-listener)", "[stack]") {
   
   // Add listeners to context "mindfullness"
   ctx_mindfullness->AddListener(std::make_shared<LContextForwarder>("L1", "go (.*)", ctx_scared, 
-        "#ctx replace *rooms -> <ctx>", true, UseCtx::Name));
+        "#ctx replace *rooms -> <ctx>", true, UseCtx::NAME));
 
 
   // Set initial contexts

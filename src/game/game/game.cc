@@ -9,6 +9,7 @@
 #include <functional>
 #include <memory>
 #include <mutex>
+#include <spdlog/spdlog.h>
 
 Game::MsgFn Game::_cout = nullptr;
 
@@ -41,12 +42,17 @@ Game::Game(std::string path, std::string name) : _path(path), _name(name), _cur_
   parser::LoadGameFiles(_path, _contexts, _texts);
 }
 
+Game::~Game() {
+  spdlog::drop(_name);
+}
+
 // getter 
 std::string Game::path() const { return _path; } 
 std::string Game::name() const { return _name; } 
 const std::map<std::string, std::shared_ptr<Context>>& Game::contexts() const { return _contexts; }
 const std::map<std::string, std::shared_ptr<Text>>& Game::texts() const { return _texts; }
 const Settings& Game::settings() const { return _settings; }
+const std::shared_ptr<User>& Game::cur_user() { return _cur_user; }
 
 // setter
 void Game::set_msg_fn(Game::MsgFn fn) { _cout = fn; }
@@ -171,7 +177,7 @@ void Game::h_add_to_eventqueue(const std::string& event, const std::string& args
 
 void Game::h_print(const std::string& event, const std::string& args) {
   util::Logger()->info("Handler::h_print: {} {}", event, args);
-  static const std::regex pattern(R"(^(txt)\.(.*)$|^(ctx)\.(.*)(->(name|desc|description|attributes|all_attributes)|\.(.*))$)");
+  static const std::regex pattern(txtad::RE_PRINT_CTX);
   std::string txt = "";
   for (int i=0; i<args.length();i++) {
     if (args[i] == '{') {
@@ -181,20 +187,15 @@ void Game::h_print(const std::string& event, const std::string& args) {
         util::Logger()->info("Handler::cout: found subsitute {}", subsitute);
         if (subsitute == "#event") {
           txt += event;
+        } else if (auto print_ctx = User::GetCtxPrint(subsitute)) {
+          if (print_ctx->_kind == txtad::CtxPrint::VARIABLE)
+            txt += _cur_user->PrintCtx(print_ctx->_ctx_id, print_ctx->_what);
+          else if (print_ctx->_kind == txtad::CtxPrint::ATTRIBUTE)
+            txt += _cur_user->PrintCtxAttribute(print_ctx->_ctx_id, print_ctx->_what);
+        } else if (_cur_user->texts().count(subsitute) > 0) {
+          txt += _cur_user->PrintTxt(subsitute);
         } else {
-          std::smatch match;
-          if (std::regex_match(subsitute, match, pattern)) {
-            if (match[1].matched)
-              txt += _cur_user->PrintTxt(match[2].str());
-            else if (match[4].matched && match[5].str().front() == '-') {
-              txt += _cur_user->PrintCtx(match[4].str(), match[6].str());
-            }
-            else if (match[4].matched && match[5].str().front() == '.') {
-              txt += _cur_user->PrintCtxAttribute(match[4].str(), match[7].str());
-            }
-          } else {
-            util::Logger()->info("Handler::cout. {} did not match pattern.", subsitute);
-          }
+          util::Logger()->info("Handler::cout. {} did not match pattern.", subsitute);
         }
         i = closing;
       } else {
@@ -222,8 +223,16 @@ void Game::h_list_all_attributes(const std::string& event, const std::string& ct
   util::Logger()->info("Handler::h_list_all_attributes: {} {}", event, ctx_id);
   if (const auto& ctx = _cur_user->GetContext(ctx_id)) {
     _cout(_cur_user->id(), "Attributes:");
+    std::vector<std::string> hidden;
     for (const auto& [key, value] : ctx->attributes()) {
-      _cout(_cur_user->id(), "- " + key + ": " + value);
+      std::string str = "- " + key + ": " + value;
+      if (key.front() == '_') 
+        hidden.push_back(str);
+      else
+        _cout(_cur_user->id(), str);
+    }
+    for (const auto& it : hidden) {
+      _cout(_cur_user->id(), it);
     }
   }
 }

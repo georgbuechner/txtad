@@ -6,6 +6,7 @@
 #include "shared/objects/text/text.h"
 #include "shared/utils/eventmanager/context_stack.h"
 #include <memory>
+#include <optional>
 #include <string>
 #include <vector>
 
@@ -34,6 +35,16 @@ class User {
     std::string PrintTxt(std::string id);
     std::string PrintCtx(std::string id, std::string what);
     std::string PrintCtxAttribute(std::string id, std::string what);
+
+    // helpers 
+    struct CtxPrint {
+      txtad::CtxPrint _kind; 
+      const std::string _ctx_id;
+      const std::string _what;
+    };
+    static std::optional<CtxPrint> GetCtxPrint(std::string inp);
+    static void AddVariableToText(const std::shared_ptr<Context>& ctx, const std::string& what, 
+        std::string& txt);
 
   private: 
     const std::string _game_id;

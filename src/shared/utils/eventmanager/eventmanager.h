@@ -11,6 +11,11 @@ class EventManager {
   public: 
     EventManager() {};
 
+    // getter 
+    const std::map<std::string, std::shared_ptr<Listener>>& listeners() {
+      return _listeners;
+    }
+
     // Methods 
     void AddListener(std::shared_ptr<Listener> listener) {
       _listeners[listener->id()] = listener;

@@ -24,6 +24,13 @@ namespace txtad {
   // replacements
   const std::string THIS_REPLACEMENT = "<_>";
   const std::string CTX_REPLACEMENT = "<ctx>";
+
+  // print ctx regex 
+  const std::string RE_PRINT_CTX = R"((.*?)(->|\.)(.*))";
+  enum CtxPrint {
+    VARIABLE = 0,
+    ATTRIBUTE,
+  };
 };
 
 #endif

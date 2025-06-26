@@ -18,6 +18,8 @@ class Listener {
     virtual std::string id() const = 0;
     virtual std::string event() const = 0;
     virtual bool permeable() const = 0;
+    virtual std::string ctx_id () const { return ""; }
+    virtual std::weak_ptr<Context> ctx() const { return {}; }
 
     virtual bool Test(const std::string& event, const ExpressionParser& parser) const = 0;
     virtual void Execute(std::string event) const = 0;
@@ -95,6 +97,10 @@ class LContextForwarder : public LForwarder {
         bool permeable, UseCtx use_ctx_regex, std::string logic="");
 
     LContextForwarder(const nlohmann::json& json, std::shared_ptr<Context> ctx);
+
+    // getter
+    std::string ctx_id() const;
+    std::weak_ptr<Context> ctx() const;
 
     // methods 
     bool Test(const std::string& event, const ExpressionParser& parser) const override;

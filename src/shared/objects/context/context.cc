@@ -2,6 +2,7 @@
 #include <fmt/format.h>
 #include <regex>
 #include <spdlog/spdlog.h>
+#include <unistd.h>
 #include "context.h"
 #include "shared/utils/eventmanager/eventmanager.h"
 #include "shared/utils/eventmanager/listener.h"
@@ -119,4 +120,13 @@ void Context::RemoveListener(const std::string& id) {
   } else {
     util::Logger()->error("Context::RemoveListener: event_manager does not exist for id {}", id);
   }
+}
+
+std::vector<std::weak_ptr<Context>> Context::LinkedContexts(std::string type) {
+  std::vector<std::weak_ptr<Context>> linked_contexts;
+  for (const auto& it : _event_manager->listeners()) {
+    if (type == "" || it.second->ctx_id().find(type) != std::string::npos)
+      linked_contexts.push_back(it.second->ctx());
+  }
+  return linked_contexts;
 }

@@ -1,8 +1,9 @@
 #include "game/game/user.h"
+#include "game/utils/defines.h"
 #include "shared/objects/context/context.h"
 #include "shared/utils/utils.h"
 #include <memory>
-#include <nlohmann/detail/value_t.hpp>
+#include <optional>
 
 User::User(const std::string& game_id, const std::string& id, const txtad::MsgFn& cout,
     const std::map<std::string, std::shared_ptr<Context>>& contexts, 
@@ -52,6 +53,10 @@ const std::map<std::string, std::shared_ptr<Context>>& User::contexts() {
   return _contexts;
 }
 
+const std::map<std::string, std::shared_ptr<Text>>& User::texts() {
+  return _texts;
+}
+
 std::string& User::event_queue() {
   return _event_queue;
 }
@@ -99,30 +104,11 @@ std::string User::PrintTxt(std::string txt_id) {
 std::string User::PrintCtx(std::string ctx_id, std::string what) {
   util::Logger()->debug("User::PrintCtx. printing \"{}\"...", ctx_id);
   std::string txt;
-
-  auto add_to_txt = [&txt, &what](const std::shared_ptr<Context>& ctx) {
-    if (what == "name") 
-      txt += ctx->name();
-    else if (what == "desc" || what == "description")
-      txt += ctx->description();
-    else if (what == "attributes") {
-      for (const auto& [key, value] : ctx->attributes()) {
-        if (key.front() != '_')
-          txt += ((txt != "") ? ", " : "") + key + ": " + value;
-      }
-    }
-    else if (what == "all_attributes") {
-      for (const auto& [key, value] : ctx->attributes()) {
-        txt += ((txt != "") ? ", " : "") + key + ": " + value;
-      }
-    }
-  };
-
   if (ctx_id.front() == '*') {
     for (const auto& ctx : _context_stack.find(ctx_id.substr(1)))
-      add_to_txt(ctx);
+      User::AddVariableToText(ctx, what, txt);
   } else if (_contexts.count(ctx_id) > 0) {
-    add_to_txt(_contexts.at(ctx_id));
+    User::AddVariableToText(_contexts.at(ctx_id), what, txt);
   } else {
     util::Logger()->warn("User::PrintCtx. Context \"{}\" not found.", ctx_id);
   }
@@ -149,6 +135,62 @@ std::string User::PrintCtxAttribute(std::string ctx_id, std::string attribute) {
     util::Logger()->warn("User::PrintCtx. Context \"{}\" not found.", ctx_id);
   }
   return txt;
+}
+
+std::optional<User::CtxPrint> User::GetCtxPrint(std::string inp) {
+  static const std::regex pattern(txtad::RE_PRINT_CTX);
+  std::smatch match;
+  if (std::regex_match(inp, match, pattern)) {
+    if (match[2].str() == "->") {
+      return CtxPrint({txtad::CtxPrint::VARIABLE, match[1].str(), match[3].str()});
+    }
+    else if (match[2].str() == ".") {
+      return CtxPrint({txtad::CtxPrint::ATTRIBUTE, match[1].str(), match[3].str()});
+    }   
+  }
+  return std::nullopt;
+}
+
+void User::AddVariableToText(const std::shared_ptr<Context>& ctx, const std::string& what, 
+    std::string& txt) {
+  util::Logger()->debug("User::AddVariableToText: {}, {}", ctx->id(), what);
+  // Print ctx name
+  if (what == "name") 
+    txt += ((txt.length() > 0) ? ", " : "") + ctx->name();
+  // Print ctx description
+  else if (what == "desc" || what == "description")
+    txt += ((txt.length() > 0) ? ", " : "") + ctx->description();
+  // Print ctx attributes (or all attributes)
+  else if (what == "attributes" || what == "all_attributes") {
+    std::vector<std::string> hidden;
+    for (const auto& [key, value] : ctx->attributes()) {
+      std::string str =  key + ": " + value;
+      if (key.front() != '_')
+        txt += ((txt != "") ? ", " : "") + str;
+      else 
+        hidden.push_back(str);
+    }
+    if (what == "all_attributes") {
+      for (const auto& str : hidden) {
+        txt += ((txt != "") ? ", " : "") + str;
+      }
+    }
+  }
+  // Print linked contexts
+  else if (what.front() == '*') {
+    if (auto print_ctx = User::GetCtxPrint(what)) {
+      for (const auto& it : ctx->LinkedContexts(print_ctx->_ctx_id.substr(1))) {
+        if (auto linked_ctx = it.lock()) {
+          if (print_ctx->_kind == txtad::CtxPrint::VARIABLE)
+            User::AddVariableToText(linked_ctx, print_ctx->_what, txt);
+          else if (print_ctx->_kind == txtad::CtxPrint::ATTRIBUTE) {
+            if (auto attr = linked_ctx->GetAttribute(print_ctx->_what))
+              txt += ((txt != "") ? ", " : "") + *attr;
+          }
+        }
+      }
+    }
+  }
 }
 
 std::shared_ptr<Context> User::GetContext(const std::string& ctx_id) {

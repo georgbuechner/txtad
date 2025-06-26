@@ -17,6 +17,7 @@ class Game {
     using MsgFn = std::function<void(std::string, std::string)>;
 
     Game(std::string path, std::string name);
+    ~Game();
 
     // getter 
     std::string path() const;
@@ -24,6 +25,7 @@ class Game {
     const std::map<std::string, std::shared_ptr<Context>>& contexts() const;
     const std::map<std::string, std::shared_ptr<Text>>& texts() const;
     const Settings& settings() const;
+    const std::shared_ptr<User>& cur_user();
     
     // setter 
     static void set_msg_fn(MsgFn fn);

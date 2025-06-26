@@ -12,7 +12,7 @@
       "ctx": "<_>",
       "permeable": false,
       "use_ctx_regex": 2,
-      "arguments":"#sa general.hp+=50;#ctx remove <_>;#> Hp set to {ctx.general.hp}."
+      "arguments":"#sa general.hp+=50;#ctx remove <_>;#> Hp set to {general.hp}."
     }
   ]
 }

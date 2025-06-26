@@ -94,6 +94,10 @@ LContextForwarder::LContextForwarder(const nlohmann::json& json, std::shared_ptr
       json.at("use_ctx_regex"), json.value("logic", "")) {
 }
 
+// getter 
+std::string LContextForwarder::ctx_id () const { return GetCtxId(_ctx); }
+std::weak_ptr<Context> LContextForwarder::ctx() const { return _ctx; }
+
 bool LContextForwarder::Test(const std::string& event, const ExpressionParser& parser) const { 
   // Test logic
   if (_logic != "" && parser.Evaluate(_logic) != "1")
@@ -108,13 +112,13 @@ bool LContextForwarder::Test(const std::string& event, const ExpressionParser& p
       switch(_use_ctx_regex) {
         case UseCtx::NO: 
           return true;
-        case UseCtx::Name: 
+        case UseCtx::NAME: 
           return fuzzy::fuzzy(arg, ctx_name) == fuzzy::FuzzyMatch::DIRECT;
-        case UseCtx::Name_FUZZY:
+        case UseCtx::NAME_FUZZY:
           return fuzzy::fuzzy(arg, ctx_name) == fuzzy::FuzzyMatch::FUZZY;
-        case UseCtx::Name_STARTS_WITH:
+        case UseCtx::NAME_STARTS_WITH:
           return fuzzy::fuzzy(arg, ctx_name) == fuzzy::FuzzyMatch::STARTS_WITH;
-        case UseCtx::Name_FUZZY_OR_STARTS_WITH:
+        case UseCtx::NAME_FUZZY_OR_STARTS_WITH:
           return fuzzy::fuzzy(arg, ctx_name) == fuzzy::FuzzyMatch::FUZZY 
             || fuzzy::fuzzy(arg, ctx_name) == fuzzy::FuzzyMatch::STARTS_WITH;
         case UseCtx::REGEX: 

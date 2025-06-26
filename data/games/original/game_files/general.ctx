@@ -20,7 +20,7 @@
     {
       "id": "L1", 
       "re_event": "#ctx replace *rooms -> .*", 
-      "arguments": "#> {ctx.*rooms->description}", 
+      "arguments": "#> {*rooms->description}", 
       "permeable": true
     }  
   ]
