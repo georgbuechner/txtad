@@ -280,6 +280,9 @@ TEST_CASE("Test Game handlers/mechanics", "[game]") {
         {"permeable", false}},
       {{"id", "L2"}, {"re_event", "go to (.*)"}, {"ctx", "rooms/room_3"}, 
         {"arguments", "#ctx replace *rooms -> <ctx>"}, {"use_ctx_regex", UseCtx::NAME},
+        {"permeable", false}},
+      {{"id", "L3"}, {"re_event", "pick up (.*)"}, {"ctx", "items/item_1"}, 
+        {"arguments", "#ctx add <ctx>"}, {"use_ctx_regex", UseCtx::NAME},
         {"permeable", false}}
     }},
 
@@ -298,6 +301,14 @@ TEST_CASE("Test Game handlers/mechanics", "[game]") {
     {"description", "Test room no. 3"},
     {"attributes", {{"gravity", "99"}, {"darkness", "9"}}}
   };
+
+  const nlohmann::json ctx_item_1 = {
+    {"id", "item_1"},
+    {"name", "Item 1"},
+    {"description", "Test item no. 1"},
+    {"attributes", {{"gravity", "99"}, {"darkness", "9"}}}
+  };
+
 
   const nlohmann::json txt_text_1 = {
     {"txt", "Hello World"},
@@ -319,7 +330,7 @@ TEST_CASE("Test Game handlers/mechanics", "[game]") {
     // Create game
     const std::string GAME_NAME = "test_game";
     const std::string GAME_PATH = txtad::GAMES_PATH + GAME_NAME;
-    TestGameWrapper test_game_wrapper(GAME_NAME, settings, {{"", {ctx_general}}, 
+    TestGameWrapper test_game_wrapper(GAME_NAME, settings, {{"", {ctx_general}}, {"items", {ctx_item_1}},
         {"rooms", {ctx_room_1, ctx_room_2, ctx_room_3}}}, {});
     Game game(GAME_PATH, GAME_NAME);
 
@@ -346,7 +357,7 @@ TEST_CASE("Test Game handlers/mechanics", "[game]") {
     // Create game
     const std::string GAME_NAME = "test_game";
     const std::string GAME_PATH = txtad::GAMES_PATH + GAME_NAME;
-    TestGameWrapper test_game_wrapper(GAME_NAME, settings, {{"", {ctx_general}}, 
+    TestGameWrapper test_game_wrapper(GAME_NAME, settings, {{"", {ctx_general}}, {"items", {ctx_item_1}},
         {"rooms", {ctx_room_1, ctx_room_2, ctx_room_3}}}, {});
     Game game(GAME_PATH, GAME_NAME);
 
@@ -368,11 +379,32 @@ TEST_CASE("Test Game handlers/mechanics", "[game]") {
     REQUIRE(!game.cur_user()->context_stack().exists(ROOM_2_ID));
   }
 
+  SECTION ("Test changing ctx name") {
+    util::Logger()->info("SECTION \"Test h_print\"");
+    const nlohmann::json settings = { 
+      {"initial_events", ""}, 
+      {"initial_contexts", {"general", "rooms/room_1"}}
+    };
+    const std::string GAME_NAME = "test_game";
+    const std::string GAME_PATH = txtad::GAMES_PATH + GAME_NAME;
+    TestGameWrapper test_game_wrapper(GAME_NAME, settings, {{"", {ctx_general}}, {"items", {ctx_item_1}},
+        {"rooms", {ctx_room_1, ctx_room_2, ctx_room_3}}}, {{"texts/start", txt_text_1}});
+    Game game(GAME_PATH, GAME_NAME);
+    
+    // Create users
+    const std::string USER_ID = "0x1234";
+    game.HandleEvent(USER_ID, "");
+
+    game.HandleEvent(USER_ID, "#ctx name rooms/room_1 = Shady Box");
+    game.HandleEvent(USER_ID, "#> {*rooms->name}");
+    REQUIRE(get_cout() == "Shady Box");
+  }
+
   SECTION ("Test h_set_attribute") {
     const nlohmann::json settings = { {"initial_events", ""}, {"initial_contexts", {"general"}} };
     const std::string GAME_NAME = "test_game";
     const std::string GAME_PATH = txtad::GAMES_PATH + GAME_NAME;
-    TestGameWrapper test_game_wrapper(GAME_NAME, settings, {{"", {ctx_general}}, 
+    TestGameWrapper test_game_wrapper(GAME_NAME, settings, {{"", {ctx_general}}, {"items", {ctx_item_1}},
         {"rooms", {ctx_room_1, ctx_room_2, ctx_room_3}}}, {});
     Game game(GAME_PATH, GAME_NAME);
 
@@ -423,7 +455,7 @@ TEST_CASE("Test Game handlers/mechanics", "[game]") {
     };
     const std::string GAME_NAME = "test_game";
     const std::string GAME_PATH = txtad::GAMES_PATH + GAME_NAME;
-    TestGameWrapper test_game_wrapper(GAME_NAME, settings, {{"", {ctx_general}},
+    TestGameWrapper test_game_wrapper(GAME_NAME, settings, {{"", {ctx_general}},{"items", {ctx_item_1}},
         {"rooms", {ctx_room_1, ctx_room_2, ctx_room_3}}}, {});
     Game game(GAME_PATH, GAME_NAME);
     
@@ -437,6 +469,32 @@ TEST_CASE("Test Game handlers/mechanics", "[game]") {
     REQUIRE(get_cout() == "Attributes:\n- counter: 0\n- _hidden: true");
   }
 
+  SECTION ("Test h_list_linked_contexts") {
+    util::Logger()->info("SECTION \"Test h_print\"");
+    const nlohmann::json settings = { 
+      {"initial_events", ""}, 
+      {"initial_contexts", {"general", "rooms/room_1"}}
+    };
+    const std::string GAME_NAME = "test_game";
+    const std::string GAME_PATH = txtad::GAMES_PATH + GAME_NAME;
+    TestGameWrapper test_game_wrapper(GAME_NAME, settings, {{"", {ctx_general}}, {"items", {ctx_item_1}},
+        {"rooms", {ctx_room_1, ctx_room_2, ctx_room_3}}}, {{"texts/start", txt_text_1}});
+    Game game(GAME_PATH, GAME_NAME);
+    
+    // Create users
+    const std::string USER_ID = "0x1234";
+    game.HandleEvent(USER_ID, "");
+
+    game.HandleEvent(USER_ID, "#llc rooms/room_1->*rooms->name");
+    REQUIRE(get_cout() == "rooms:\n- Room 2\n- Room 3");
+    game.HandleEvent(USER_ID, "#llc rooms/room_1->*items->name");
+    REQUIRE(get_cout() == "items:\n- Item 1");
+    game.HandleEvent(USER_ID, "#llc rooms/room_1->*->name");
+    REQUIRE(get_cout() == "linked contexts:\n- Room 2\n- Room 3\n- Item 1");
+    game.HandleEvent(USER_ID, "#llc *rooms->*rooms->name");
+    REQUIRE(get_cout() == "rooms:\n- Room 2\n- Room 3");
+  }
+
   SECTION("Test h_print") {
     util::Logger()->info("SECTION \"Test h_print\"");
     const nlohmann::json settings = { 
@@ -445,7 +503,7 @@ TEST_CASE("Test Game handlers/mechanics", "[game]") {
     };
     const std::string GAME_NAME = "test_game";
     const std::string GAME_PATH = txtad::GAMES_PATH + GAME_NAME;
-    TestGameWrapper test_game_wrapper(GAME_NAME, settings, {{"", {ctx_general}}, 
+    TestGameWrapper test_game_wrapper(GAME_NAME, settings, {{"", {ctx_general}}, {"items", {ctx_item_1}},
         {"rooms", {ctx_room_1, ctx_room_2, ctx_room_3}}}, {{"texts/start", txt_text_1}});
     Game game(GAME_PATH, GAME_NAME);
     
@@ -507,5 +565,9 @@ TEST_CASE("Test Game handlers/mechanics", "[game]") {
     // Print contexts in context
     game.HandleEvent(USER_ID, "#> You can go to {*rooms->*rooms->name}");
     REQUIRE(get_cout() == "You can go to Room 2, Room 3");
+    game.HandleEvent(USER_ID, "#> You can pick up {*room->*items->name}");
+    REQUIRE(get_cout() == "You can pick up Item 1");
+    game.HandleEvent(USER_ID, "#> linked contexts: {*room->*->name}");
+    REQUIRE(get_cout() == "linked contexts: Room 2, Room 3, Item 1");
   }
 }

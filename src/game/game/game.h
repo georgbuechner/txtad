@@ -53,21 +53,15 @@ class Game {
     void h_add_ctx(const std::string& event, const std::string& ctx_id);
     void h_remove_ctx(const std::string& event, const std::string& ctx_id);
     void h_replace_ctx(const std::string& event, const std::string& args);
+    void h_set_ctx_name(const std::string& event, const std::string& args);
     void h_set_attribute(const std::string& event, const std::string& args);
+
     void h_add_to_eventqueue(const std::string& event, const std::string& args);
 
-    /**
-     * Examples: 
-     * #> Hello World.
-     * #> You are here: {ctx.rooms/closet->name}. // prints name of ctx "rooms/closet"
-     * #> You are here: {ctx.rooms/closet->desc}. // prints description of ctx "rooms/closet"
-     * #> You are here: {ctx.*rooms->name}.       // prints name(s) of "rooms"-ctxs
-     * #> You are here: {ctx.general.hp}.         // prints attribute "hp" of ctx "general"
-     * #> {txt.welcome}                           // Prints text "txt.welcome"
-     */
     void h_print(const std::string& event, const std::string& args);
     void h_list_attributes(const std::string& event, const std::string& ctx_id);
     void h_list_all_attributes(const std::string& event, const std::string& ctx_id);
+    void h_list_linked_contexts(const std::string& event, const std::string& ctx_id);
 
     // tools
     std::string t_substitue_fn(const std::string& str);

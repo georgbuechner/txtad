@@ -30,13 +30,17 @@ Game::Game(std::string path, std::string name) : _path(path), _name(name), _cur_
         std::bind(&Game::h_add_ctx, this, std::placeholders::_1, std::placeholders::_2)));
   _mechanics_ctx->AddListener(std::make_shared<LHandler>("H3", "#ctx replace (.*)", 
         std::bind(&Game::h_replace_ctx, this, std::placeholders::_1, std::placeholders::_2)));
-  _mechanics_ctx->AddListener(std::make_shared<LHandler>("H4", "#sa (.*)", 
+  _mechanics_ctx->AddListener(std::make_shared<LHandler>("H4", "#ctx name (.*)", 
+        std::bind(&Game::h_set_ctx_name, this, std::placeholders::_1, std::placeholders::_2)));
+  _mechanics_ctx->AddListener(std::make_shared<LHandler>("H5", "#sa (.*)", 
         std::bind(&Game::h_set_attribute, this, std::placeholders::_1, std::placeholders::_2)));
-  _mechanics_ctx->AddListener(std::make_shared<LHandler>("H5", "#la (.*)", 
+  _mechanics_ctx->AddListener(std::make_shared<LHandler>("H6", "#la (.*)", 
         std::bind(&Game::h_list_attributes, this, std::placeholders::_1, std::placeholders::_2)));
-  _mechanics_ctx->AddListener(std::make_shared<LHandler>("H6", "#laa (.*)", 
+  _mechanics_ctx->AddListener(std::make_shared<LHandler>("H7", "#laa (.*)", 
         std::bind(&Game::h_list_all_attributes, this, std::placeholders::_1, std::placeholders::_2)));
-  _mechanics_ctx->AddListener(std::make_shared<LHandler>("H7", "#> (.*)", 
+  _mechanics_ctx->AddListener(std::make_shared<LHandler>("H8", "#llc (.*)", 
+        std::bind(&Game::h_list_linked_contexts, this, std::placeholders::_1, std::placeholders::_2)));
+  _mechanics_ctx->AddListener(std::make_shared<LHandler>("H9", "#> (.*)", 
         std::bind(&Game::h_print, this, std::placeholders::_1, std::placeholders::_2)));
 
   parser::LoadGameFiles(_path, _contexts, _texts);
@@ -109,6 +113,19 @@ void Game::h_replace_ctx(const std::string& event, const std::string& args) {
     if (base_match.size() == 3) {
       h_remove_ctx("", base_match[1].str());
       h_add_ctx("", base_match[2].str());
+    }
+  }
+}
+
+void Game::h_set_ctx_name(const std::string& event, const std::string& args) {
+  util::Logger()->info("Game::h_set_ctx_name. args: {}", args);
+  static const std::regex pattern("(.*) = (.*)");
+  std::smatch base_match;
+  if (std::regex_match(args, base_match, pattern)) {
+    if (base_match.size() == 3) {
+      if (auto ctx = _cur_user->GetContext(base_match[1].str())) {
+        ctx->set_name(base_match[2].str());
+      }
     }
   }
 }
@@ -235,6 +252,34 @@ void Game::h_list_all_attributes(const std::string& event, const std::string& ct
       _cout(_cur_user->id(), it);
     }
   }
+}
+
+void Game::h_list_linked_contexts(const std::string& event, const std::string& args) {
+  if (auto print_ctx = User::GetCtxPrint(args)) {
+    if (print_ctx->_kind == txtad::CtxPrint::VARIABLE) {
+      if (auto ctx = _cur_user->GetContext(print_ctx->_ctx_id)) {
+        if (auto print_ctx_2 = User::GetCtxPrint(print_ctx->_what)) {
+          if (print_ctx_2->_ctx_id == "*")
+            _cout(_cur_user->id(), "linked contexts:");
+          else
+            _cout(_cur_user->id(), print_ctx_2->_ctx_id.substr(1) + ":");
+          for (const auto& it : ctx->LinkedContexts(print_ctx_2->_ctx_id.substr(1))) {
+            if (auto linked_ctx = it.lock()) {
+              std::string str = "";
+              if (print_ctx_2->_kind == txtad::CtxPrint::VARIABLE)
+                User::AddVariableToText(linked_ctx, print_ctx_2->_what, str);
+              else if (print_ctx_2->_kind == txtad::CtxPrint::ATTRIBUTE) {
+                if (auto attr = linked_ctx->GetAttribute(print_ctx_2->_what))
+                  str = *attr;
+              }
+              _cout(_cur_user->id(), "- " + str);
+            }
+          }
+        }
+      }
+    }
+  }
+
 }
 
 std::string Game::t_substitue_fn(const std::string& str) {
