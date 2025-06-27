@@ -1,4 +1,4 @@
 {
   "txt": "hello",
-  "permanent_events": "#> {ctx.rooms/closet->desc}" 
+  "permanent_events": "#> {rooms/closet->desc}" 
 }
