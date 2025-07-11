@@ -92,6 +92,7 @@ std::string ExpressionParser::Evaluate(std::string input) const {
   }
 
   auto res = evaluate(EnsureExecutionOrder(replaced));
+
   util::Logger()->info("EP:Evaluate. =>: {}", res);
   return res;
 }

@@ -3,16 +3,22 @@
 
 #include "shared/objects/context/context.h"
 #include "shared/objects/text/text.h"
+#include "shared/utils/eventmanager/listener.h"
 #include <cstddef>
 #include <filesystem>
 #include <memory>
 
+class Listener;
+
 namespace parser {
-  void LoadGameFiles(const std::string& path, std::map<std::string, std::shared_ptr<Context>>& contexts, 
+  using ExecListeners = std::vector<std::shared_ptr<Listener>>;
+
+  ExecListeners LoadGameFiles(const std::string& path, 
+      std::map<std::string, std::shared_ptr<Context>>& contexts, 
       std::map<std::string, std::shared_ptr<Text>>& texts);
   void LoadObjects(const std::string& path, std::map<std::string, std::shared_ptr<Context>>& contexts, 
       std::map<std::string, std::shared_ptr<Text>>& texts, std::map<std::string, nlohmann::json>& listeners);
-  void LoadListeners(std::map<std::string, std::shared_ptr<Context>>& contexts,
+  ExecListeners LoadListeners(std::map<std::string, std::shared_ptr<Context>>& contexts,
     std::map<std::string, nlohmann::json> listeners);
 
   std::shared_ptr<Context> CreateContextFromPath(std::filesystem::path path, size_t id_path_offset);

@@ -239,14 +239,14 @@ TEST_CASE("Test two users and non-shared contexts", "[game]") {
     Game game(GAME_PATH, GAME_NAME);
 
     // Create users
-    const std::string USER_ID = "0x1234";
-    game.HandleEvent(USER_ID, "");
-    const std::string G2_USER_ID = "0x1235";
-    game.HandleEvent(G2_USER_ID, "");
+    const std::string USER_ID_1 = "0x1234";
+    game.HandleEvent(USER_ID_1, "");
+    const std::string USER_ID_2 = "0x1235";
+    game.HandleEvent(USER_ID_2, "");
 
-    game.HandleEvent(USER_ID, "increase-counter");
+    game.HandleEvent(USER_ID_1, "increase-counter");
     REQUIRE(game.cur_user()->contexts().at("general")->GetAttribute("counter").value_or("-1") == "1");
-    game.HandleEvent(G2_USER_ID, "increase-counter");
+    game.HandleEvent(USER_ID_2, "increase-counter");
     REQUIRE(game.cur_user()->contexts().at("general")->GetAttribute("counter").value_or("-1") == "1");
   }
 }
@@ -463,9 +463,9 @@ TEST_CASE("Test Game handlers/mechanics", "[game]") {
     const std::string USER_ID = "0x1234";
     game.HandleEvent(USER_ID, "");
 
-    game.HandleEvent(USER_ID, "#la general");
+    game.HandleEvent(USER_ID, "#lst atts general");
     REQUIRE(get_cout() == "Attributes:\n- counter: 0");
-    game.HandleEvent(USER_ID, "#laa general");
+    game.HandleEvent(USER_ID, "#lst* atts general");
     REQUIRE(get_cout() == "Attributes:\n- counter: 0\n- _hidden: true");
   }
 
@@ -485,13 +485,13 @@ TEST_CASE("Test Game handlers/mechanics", "[game]") {
     const std::string USER_ID = "0x1234";
     game.HandleEvent(USER_ID, "");
 
-    game.HandleEvent(USER_ID, "#llc rooms/room_1->*rooms->name");
+    game.HandleEvent(USER_ID, "#lst ctxs rooms/room_1->*rooms->name");
     REQUIRE(get_cout() == "rooms:\n- Room 2\n- Room 3");
-    game.HandleEvent(USER_ID, "#llc rooms/room_1->*items->name");
+    game.HandleEvent(USER_ID, "#lst ctxs rooms/room_1->*items->name");
     REQUIRE(get_cout() == "items:\n- Item 1");
-    game.HandleEvent(USER_ID, "#llc rooms/room_1->*->name");
+    game.HandleEvent(USER_ID, "#lst ctxs rooms/room_1->*->name");
     REQUIRE(get_cout() == "linked contexts:\n- Room 2\n- Room 3\n- Item 1");
-    game.HandleEvent(USER_ID, "#llc *rooms->*rooms->name");
+    game.HandleEvent(USER_ID, "#lst ctxs *rooms->*rooms->name");
     REQUIRE(get_cout() == "rooms:\n- Room 2\n- Room 3");
   }
 
@@ -569,5 +569,41 @@ TEST_CASE("Test Game handlers/mechanics", "[game]") {
     REQUIRE(get_cout() == "You can pick up Item 1");
     game.HandleEvent(USER_ID, "#> linked contexts: {*room->*->name}");
     REQUIRE(get_cout() == "linked contexts: Room 2, Room 3, Item 1");
+  }
+}
+
+TEST_CASE("Test exec listeners", "[game]") {
+  const nlohmann::json settings = {
+    {"initial_events", ""},
+    {"initial_contexts", {"general"}}
+  };
+
+  const nlohmann::json ctx_general = {
+    {"id", "general"},
+    {"name", "General"},
+    {"description", "Some general handlers"},
+    {"shared", false},
+    {"attributes", {{"counter", "0"}}},
+    {"listeners", {
+      {{"id", "L1"}, {"re_event", "increase-counter"}, {"arguments", 
+        "#sa general.counter++"}, {"permeable", true}},
+      {{"id", "L2"}, {"re_event", "increase-counter"}, {"arguments", 
+        "#sa general.counter++"}, {"exec", true}, {"permeable", true}}
+    }},
+  };
+
+  SECTION ("Test one games and two user") {
+    // Create game
+    const std::string GAME_NAME = "test_game";
+    const std::string GAME_PATH = txtad::GAMES_PATH + GAME_NAME;
+    TestGameWrapper test_game_wrapper(GAME_NAME, settings, {{"", {ctx_general}}}, {});
+    Game game(GAME_PATH, GAME_NAME);
+
+    // Create users
+    const std::string USER_ID = "0x1234";
+    game.HandleEvent(USER_ID, "");
+
+    game.HandleEvent(USER_ID, "increase-counter");
+    REQUIRE(game.cur_user()->contexts().at("general")->GetAttribute("counter").value_or("-1") == "2");
   }
 }

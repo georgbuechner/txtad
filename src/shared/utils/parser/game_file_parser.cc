@@ -9,12 +9,12 @@
 
 namespace fs = std::filesystem;
 
-void parser::LoadGameFiles(const std::string& path, std::map<std::string, std::shared_ptr<Context>>& contexts, 
+parser::ExecListeners parser::LoadGameFiles(const std::string& path, 
+    std::map<std::string, std::shared_ptr<Context>>& contexts, 
     std::map<std::string, std::shared_ptr<Text>>& texts) {
-
   std::map<std::string, nlohmann::json> listeners;
   LoadObjects(path, contexts, texts, listeners);
-  LoadListeners(contexts, std::move(listeners));
+  return LoadListeners(contexts, std::move(listeners));
 }
 
 void parser::LoadObjects(const std::string& path, std::map<std::string, std::shared_ptr<Context>>& contexts, 
@@ -65,8 +65,9 @@ void parser::LoadObjects(const std::string& path, std::map<std::string, std::sha
   }
 }
 
-void parser::LoadListeners(std::map<std::string, std::shared_ptr<Context>>& contexts,
+parser::ExecListeners parser::LoadListeners(std::map<std::string, std::shared_ptr<Context>>& contexts,
     std::map<std::string, nlohmann::json> listeners) {
+  ExecListeners exec_forwarders;
   for (const auto& [ctx_id, json_listeners] : listeners) {
     for (auto& json_listener : json_listeners.get<std::vector<nlohmann::json>>()) {
       // Replace "this"-field with ctx_id
@@ -75,23 +76,33 @@ void parser::LoadListeners(std::map<std::string, std::shared_ptr<Context>>& cont
           json_listener[field] = util::ReplaceAll(json_listener[field], txtad::THIS_REPLACEMENT, ctx_id);
       }
 
-      // Add/ Create context-listener
+      std::shared_ptr<Listener> new_listener = nullptr;
+      // Create context-listener
       if (json_listener.contains("ctx")) {
         std::string target_ctx_id = json_listener["ctx"];
         auto it_ctx = contexts.find((target_ctx_id == txtad::THIS_REPLACEMENT) ? ctx_id : target_ctx_id);
         if (it_ctx != contexts.end()) {
-          contexts.at(ctx_id)->AddListener(std::make_shared<LContextForwarder>(json_listener, it_ctx->second));
+          new_listener = std::make_shared<LContextForwarder>(json_listener, it_ctx->second);
         } else {
           util::Logger()->warn("parser::LoadListeners. For listener \"{}\", context \"{}\" not found.", 
               json_listener["id"].get<std::string>(), ctx_id);
         }
       } 
-      // Add/ Create "normal" listener
+      // Create "normal" listener
       else {
-        contexts.at(ctx_id)->AddListener(std::make_shared<LForwarder>(json_listener));
+        new_listener = std::make_shared<LForwarder>(json_listener);
+      }
+
+      // Add new listener
+      if (new_listener) {
+        contexts.at(ctx_id)->AddListener(new_listener);
+        // Add to listeners for which function must be updated 
+        if (json_listener.value("exec", false))
+          exec_forwarders.push_back(new_listener);
       }
     }
   }
+  return exec_forwarders;
 }
 
 std::shared_ptr<Context> parser::CreateContextFromPath(std::filesystem::path path, size_t id_path_offset) {

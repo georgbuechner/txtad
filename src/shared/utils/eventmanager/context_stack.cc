@@ -77,11 +77,19 @@ std::vector<std::string> ContextStack::GetOrder() {
 }
 
 void ContextStack::TakeEvents(std::string& events, const ExpressionParser& parser) {
+  // If events are empty, return
+  if (events == "") {
+    return;
+  }
+  // Otherwise Split events and handle after eachother
   auto vec_events = util::Split(events, ";");
   events = "";
-  for (const auto& event : vec_events) {
+  for (auto event : vec_events) {
+    if (event.find(" #") == 0) {
+      event = event.substr(1);
+    } 
     util::Logger()->debug("ContextStack::TakeEvents: {}", event);
-    TakeEvent(event, parser);
+    TakeEvent(event.substr(0), parser);
   }
 }
 
@@ -91,7 +99,7 @@ void ContextStack::TakeEvent(const std::string& event, const ExpressionParser& p
   for (size_t i=0; i<_sorted_contexts.size();) {
     if (auto ctx = _sorted_contexts[i]) {
       util::Logger()->info("CTX {} take_event: {}", ctx->id(), event);
-      // If event acepted by context and context is non-permeable: stop!
+      // If event accepted by context and context is non-permeable: stop!
       if (ctx->TakeEvent(event, parser) && !ctx->permeable())
         return;
       ++i;

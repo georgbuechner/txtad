@@ -3,7 +3,8 @@
 #include "shared/utils/utils.h"
 #include <vector>
 
-void helpers::SetAttribute(std::map<std::string, std::string>& attributes, std::string inp, const ExpressionParser& parser) {
+void helpers::SetAttribute(std::map<std::string, std::string>& attributes, std::string inp, 
+    const ExpressionParser& parser) {
   static std::vector<std::string> opts = {"+=", "-=", "++", "--", "*=", "/=", "="}; 
   std::string opt;
   int pos = -1;
@@ -15,6 +16,12 @@ void helpers::SetAttribute(std::map<std::string, std::string>& attributes, std::
       break;
     }
   }
+
+  if (pos == std::string::npos) {
+    util::Logger()->warn("Game::h_set_attribute: no operator found: {}", inp);
+    return;
+  }
+
   std::string attribute = inp.substr(0, pos);
   std::string expression = inp.substr(pos+opt.length()); 
 

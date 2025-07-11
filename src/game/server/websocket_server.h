@@ -61,6 +61,7 @@ class WebsocketServer {
     t_server _server;  ///< server object.
     mutable std::shared_mutex _mutex;  ///< Mutex for connections_.
     std::map<std::string, websocketpp::connection_hdl> _connections;  ///< Dictionary with all connections.
+    std::map<std::string, std::string> _user_game_mapping;   ///< maps user-id to game (for `OnClose` access)
 
     static EventHandlerFn _handle_event;
 

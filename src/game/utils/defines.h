@@ -22,8 +22,12 @@ namespace txtad {
   const std::string TEXT_EXTENSION = ".txt";
 
   // replacements
+  const std::string EVENT_REPLACEMENT = "#event";
   const std::string THIS_REPLACEMENT = "<_>";
   const std::string CTX_REPLACEMENT = "<ctx>";
+  const std::string UID_REPLACEMENT = "<uid>";
+  const std::string IS_USER_REPLACEMENT = "<user-inp>";
+  const std::string IS_USER_INP = "^(?!#)(.*)";
 
   // print ctx regex 
   const std::string RE_PRINT_CTX = R"((.*?)(->|\.)(.*))";
@@ -31,6 +35,12 @@ namespace txtad {
     VARIABLE = 0,
     ATTRIBUTE,
   };
+
+  // GUI cmds 
+  const std::string CLEAR_CONSOLE = "#clear";
+
+  // Other cmds
+  const std::string REMOVE_USER = "#remove_user";
 };
 
 #endif

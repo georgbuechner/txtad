@@ -7,13 +7,21 @@ window.onload = function() {
 
   socket.onopen = function(event) { 
     console.log("WebSocket connection open!")
-    socket.send(CreateEvent("new_connection"));
+    socket.send(CreateEvent("#new_connection"));
   };
 
   socket.onmessage = function(event) {
     console.log("Received payload: ", event.data)
-    AddInput(event.data);
+    if (event.data == "#clear")
+      ClearContent()
+    else 
+      AddInput(event.data);
   };
+};
+
+window.onbeforeunload = function() {
+  websocket.onclose = function () {}; // disable onclose handler first
+  websocket.close();
 };
 
 function SendInput(event) {
@@ -29,6 +37,10 @@ function AddInput(payload) {
   p.innerHTML = payload;
   document.getElementById("content").appendChild(p);
   document.getElementById("cmd").value = "";
+}
+
+function ClearContent() {
+  document.getElementById("content").innerHTML = "";
 }
 
 function CreateEvent(event) {

@@ -6,6 +6,7 @@
 #include <spdlog/spdlog.h>
 #include <sstream>
 #include "websocket_server.h"
+#include "game/utils/defines.h"
 #include "shared/utils/utils.h"
 
 using websocketpp::lib::placeholders::_1;
@@ -62,6 +63,11 @@ void WebsocketServer::OnClose(websocketpp::connection_hdl hdl) {
   const std::string user_id = ConnectionIDToString(hdl.lock().get());
   if (_connections.count(user_id) > 0) {
     try {
+      // Send remove user command to game
+      const auto& game_id = _user_game_mapping.at(user_id);
+      ul_connections.unlock();
+      _handle_event(user_id, game_id, txtad::REMOVE_USER + " " + user_id);
+      ul_connections.lock();
       // Delete connection.
       if (_connections.size() > 1)
         _connections.erase(user_id);
@@ -83,7 +89,12 @@ void WebsocketServer::OnMessage(t_server* srv, websocketpp::connection_hdl hdl, 
   try {
     nlohmann::json json = nlohmann::json::parse(msg->get_payload());
     if (json.contains("game") && json.contains("event")) {
-      _handle_event(ConnectionIDToString(hdl.lock().get()), json["game"], json["event"]);
+      const auto& user_id = ConnectionIDToString(hdl.lock().get());
+      const auto& game_id = json["game"];
+      // if no entry exists, add new entry to user-game-mapping
+      if (_user_game_mapping.count(user_id) == 0)
+        _user_game_mapping[user_id] = game_id;
+      _handle_event(user_id, game_id, json["event"]);
     } else {
       util::Logger()->warn("WSS::OnMessage: Missing \"game\" or \"event\"");
     }
@@ -95,7 +106,11 @@ void WebsocketServer::OnMessage(t_server* srv, websocketpp::connection_hdl hdl, 
 void WebsocketServer::SendMessage(const std::string& user_id, const std::string& payload) {
   std::shared_lock sl_connections(_mutex);
   if (_connections.count(user_id) > 0) {
+    try {
     _server.send(_connections.at(user_id), payload, websocketpp::frame::opcode::value::text);
+    } catch (std::exception& e) {
+      util::Logger()->info("WSS::OnMessage: Failed to send message (connection dead?): ", e.what());
+    }
   }
 }
 

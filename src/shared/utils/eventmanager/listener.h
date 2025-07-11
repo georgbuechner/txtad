@@ -21,6 +21,9 @@ class Listener {
     virtual std::string ctx_id () const { return ""; }
     virtual std::weak_ptr<Context> ctx() const { return {}; }
 
+    // setter
+    virtual void set_fn(Fn fn) {}
+
     virtual bool Test(const std::string& event, const ExpressionParser& parser) const = 0;
     virtual void Execute(std::string event) const = 0;
 };
@@ -33,6 +36,9 @@ class LHandler : public Listener {
     std::string id() const override;
     std::string event() const override;
     bool permeable() const override;
+
+    // setter 
+    void set_fn(Fn fn) override;
     
     // methods 
     bool Test(const std::string& event, const ExpressionParser& parser) const override;
@@ -54,7 +60,7 @@ class LHandler : public Listener {
      * @parem[in] event 
      * @return agrument, partyly replaced by event or only event
      */
-    std::string ReplacedArguments(const std::string& event) const;
+    std::string ReplacedArguments(const std::string& event, const std::string& base) const;
 };
 
 class LForwarder : public LHandler {
@@ -68,7 +74,8 @@ class LForwarder : public LHandler {
      * @param[in] permeable (stop execution if not permeable)
      * @param[in] logic (additional evaluation)
      */
-    LForwarder(std::string id, std::string re_event, std::string arguments, bool permeable, std::string logic="");
+    LForwarder(std::string id, std::string re_event, std::string arguments, bool permeable, 
+        std::string logic="");
 
     LForwarder(const nlohmann::json& json);
 

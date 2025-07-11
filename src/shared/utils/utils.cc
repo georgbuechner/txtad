@@ -124,3 +124,12 @@ void util::WriteJsonToDisc(const std::string& path, const nlohmann::json& json) 
     ofs.close();
   }
 }
+
+std::optional<std::string> util::GetUserId(std::string& inp) {
+  if (inp.find("0x7") == 0) {
+    std::string user_id = inp.substr(0, 14);
+    inp = inp.substr(14, inp.length()-14);
+    return user_id;
+  }
+  return std::nullopt;
+}

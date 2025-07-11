@@ -4,7 +4,6 @@
 #include "shared/utils/defines.h"
 #include "shared/utils/fuzzy_search/fuzzy.h"
 #include "shared/utils/utils.h"
-#include <complex>
 #include <nlohmann/json.hpp>
 #include <memory>
 #include <string>
@@ -19,6 +18,11 @@ std::string LHandler::id() const { return _id; }
 std::string LHandler::event() const { return _event.str(); }
 bool LHandler::permeable() const { return _permeable; } 
 
+// setter 
+void LHandler::set_fn(Fn fn) {
+  _fn = fn;
+}
+
 // methods 
 bool LHandler::Test(const std::string& event, const ExpressionParser& parser) const {
   std::smatch base_match;
@@ -30,42 +34,42 @@ void LHandler::Execute(std::string event) const {
     util::Logger()->error("LHandler::Execute. Function from handler: {} not initialized!", _id);
   } else {
     util::Logger()->debug("LHandler::Execute. Executing {}, {}", event, _arguments);
-    _fn(event, ReplacedArguments(event));
+    _fn(event, ReplacedArguments(event, _arguments));
   }
 }
 
-std::string LHandler::ReplacedArguments(const std::string& event) const {
-  static const std::string location = "#event";
-  auto pos = _arguments.find(location);
+std::string LHandler::ReplacedArguments(const std::string& event, const std::string& args) const {
+  auto pos = args.find(txtad::EVENT_REPLACEMENT);
 
   std::smatch base_match;
   if (std::regex_match(event, base_match, static_cast<const std::regex&>(_event))) {
     std::string match = base_match[1].str();
     // If no arguments, ALWAYS return the match
-    if (_arguments == "") {
+    if (args == "") {
       return match;
     } 
     // If arguments ask for event, replace "#event" with event
     else if (pos != std::string::npos) {
-      std::string mod = _arguments;
-      mod.replace(pos, location.length(), match);
-      return mod;
+      return util::ReplaceAll(args, txtad::EVENT_REPLACEMENT, match);
     } 
     // Otherwise, return arguments
     else {
-      return _arguments;
+      return args;
     }
   }
   return "";
 }
 
-
 // ## l-forwarder
 Listener::Fn LForwarder::_overwride_fn = nullptr;
 
 LForwarder::LForwarder(std::string id, std::string re_event, std::string arguments, bool permeable, 
-    std::string logic) : LHandler(id, re_event, _overwride_fn, permeable), _logic(logic) { 
-  _arguments = arguments; 
+    std::string logic) : LHandler(id, util::ReplaceAll(re_event, txtad::IS_USER_REPLACEMENT, 
+        txtad::IS_USER_INP), _overwride_fn, permeable), _logic(logic) { 
+    // Remove leading spaces in case of handlers (events starting with #)
+  if (_arguments.find(" #") == 0)
+    _arguments = arguments.substr(1);
+  _arguments = util::ReplaceAll(arguments, "; #", ";#"); 
 }
 
 LForwarder::LForwarder(const nlohmann::json& json) : LForwarder(json.at("id"), json.at("re_event"), 
@@ -73,7 +77,7 @@ LForwarder::LForwarder(const nlohmann::json& json) : LForwarder(json.at("id"), j
 
 // methods 
 bool LForwarder::Test(const std::string& event, const ExpressionParser& parser) const {
-  if (_logic != "" && parser.Evaluate(_logic) != "1")
+  if (_logic != "" && parser.Evaluate(LHandler::ReplacedArguments(event, _logic)) != "1")
     return false;
   return LHandler::Test(event, parser);
 }

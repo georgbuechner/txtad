@@ -32,6 +32,7 @@ class Game {
 
     // methods 
     void HandleEvent(const std::string& user_id, const std::string& event);
+    std::shared_ptr<User> CreateNewUser(std::string user_id);
 
   private: 
     static MsgFn _cout;
@@ -57,14 +58,25 @@ class Game {
     void h_set_attribute(const std::string& event, const std::string& args);
 
     void h_add_to_eventqueue(const std::string& event, const std::string& args);
+    void h_exec(const std::string& event, const std::string& args);
 
     void h_print(const std::string& event, const std::string& args);
+    void h_print_to(const std::string& event, const std::string& args);
+
     void h_list_attributes(const std::string& event, const std::string& ctx_id);
     void h_list_all_attributes(const std::string& event, const std::string& ctx_id);
     void h_list_linked_contexts(const std::string& event, const std::string& ctx_id);
 
+    void h_reset_game(const std::string& event, const std::string& ctx_id);
+    void h_reset_user(const std::string& event, const std::string& ctx_id);
+
+    void h_remove_user(const std::string& event, const std::string& ctx_id);
+
     // tools
     std::string t_substitue_fn(const std::string& str);
+
+    // helpers 
+    std::string GetText(std::string event, std::string args);
 };
 
 #endif

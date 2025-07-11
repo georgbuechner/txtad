@@ -72,6 +72,7 @@ namespace util
    */
   std::string ReplaceAll(std::string str, const std::string& from, const std::string& to);
 
+
   /**
    * If the char at the given position is surrounded by brackets, return their 
    * start and end position.
@@ -101,6 +102,14 @@ namespace util
   std::optional<nlohmann::json> LoadJsonFromDisc(const std::string& path);
 
   void WriteJsonToDisc(const std::string& path, const nlohmann::json& json);
+
+  /** 
+   * Trys to find user-id in given string. If found retruns user id and removes
+   * from original string.
+   * @param[in, out] inp 
+   * @returns user-id or nullopt
+   */
+  std::optional<std::string> GetUserId(std::string& inp);
 }
 
 #endif

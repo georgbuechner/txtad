@@ -21,7 +21,7 @@ std::map<std::string, std::shared_ptr<Game>> InitGames() {
 
 int main() {
 
-  util::SetUpLogger(txtad::FILES_PATH, txtad::LOGGER, spdlog::level::info);
+  util::SetUpLogger(txtad::FILES_PATH, txtad::LOGGER, spdlog::level::debug);
   util::LoggerContext scope(txtad::LOGGER);
 
   // Create web socket server 
@@ -32,13 +32,21 @@ int main() {
 
   Game::set_msg_fn([&wss](const std::string& id, const std::string& msg) {
     util::Logger()->debug("MAIN: SendMessage: {}, {}", id, msg);
-    wss->SendMessage(id, msg);
+    try {
+      wss->SendMessage(id, msg);
+    } catch(std::exception& e) {
+      util::Logger()->warn("MAIN: SendMessage failed: {}", e.what());
+    }
   });
 
   WebsocketServer::set_handle_event([&games](const std::string& id, const std::string& game, const std::string& event) {
     util::Logger()->debug("MAIN: Handling: {}, {}", game, event);
     if (games.count(game) > 0) {
-      games.at(game)->HandleEvent(id, event);
+      try {
+        games.at(game)->HandleEvent(id, event);
+      } catch(std::exception& e) {
+        util::Logger()->warn("MAIN: Handling: {}, {} failed: {}", game, event, e.what());
+      }
     }
   });
 

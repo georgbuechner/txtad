@@ -1,4 +1,5 @@
 #include "game/test/helpers.h"
+#include "game/utils/defines.h"
 #include "shared/utils/eventmanager/eventmanager.h"
 #include "shared/utils/eventmanager/listener.h"
 #include "shared/utils/parser/expression_parser.h"
@@ -9,7 +10,13 @@
 #include <string>
 
 void TakeEvents(std::string& events, EventManager& em, ExpressionParser& parser) {
+  util::Logger()->debug("TakeEvents: \"{}\"", events);
+  if (events == "") 
+    return;
   auto vec_events = util::Split(events, ";");
+  for (const auto& it : vec_events) {
+    util::Logger()->debug("TakeEvents: - \"{}\"", it);
+  }
   events = "";
   for (const auto& event : vec_events) {
     em.TakeEvent(event, parser);
@@ -21,7 +28,7 @@ TEST_CASE("Test eventmanager basic use", "[eventmanager]") {
   const std::string E_SET_RUNES = "#sa runes=100";
 
   EventManager em; 
-  std::map<std::string, std::string> attributes = {{"mana", "10"}, {"runes", "5"}};
+  std::map<std::string, std::string> attributes = {{"mana", "10"}, {"runes", "5"}, {"called", "0"}};
   ExpressionParser::SubstituteFN fn = [&attributes](const std::string& str) { 
     return (attributes.count(str) > 0) ? attributes.at(str) : ""; };
   ExpressionParser parser(fn);
@@ -37,19 +44,65 @@ TEST_CASE("Test eventmanager basic use", "[eventmanager]") {
 
   LForwarder::set_overwite_fn(add_to_eventqueue);
 
-  // Basic handlers
-  em.AddListener(std::make_shared<LHandler>("M1", "#sa (.*)", set_attribute));
+  SECTION ("Test re-adding events") {
+    // Basic handlers
+    em.AddListener(std::make_shared<LHandler>("M1", "#sa (.*)", set_attribute));
 
-  // Custom handlers
-  em.AddListener(std::make_shared<LForwarder>("P1", "go", E_SET_MANA, true));
-  em.AddListener(std::make_shared<LForwarder>("P2", "talk", E_SET_MANA, true));
-  em.AddListener(std::make_shared<LForwarder>("P3", "talk", E_SET_RUNES, true));
+    // Custom handlers
+    em.AddListener(std::make_shared<LForwarder>("P1", "go", E_SET_MANA, true));
+    em.AddListener(std::make_shared<LForwarder>("P2", "talk", E_SET_MANA, true));
+    em.AddListener(std::make_shared<LForwarder>("P3", "talk", E_SET_RUNES, true));
 
-  em.TakeEvent("talk", parser);
-  REQUIRE(event_queue == E_SET_MANA + ";" + E_SET_RUNES);
-  TakeEvents(event_queue, em, parser);
-  REQUIRE(attributes["mana"] == "20");
-  REQUIRE(attributes["runes"] == "100");
+    em.TakeEvent("talk", parser);
+    REQUIRE(event_queue == E_SET_MANA + ";" + E_SET_RUNES);
+    TakeEvents(event_queue, em, parser);
+    REQUIRE(attributes["mana"] == "20");
+    REQUIRE(attributes["runes"] == "100");
+  }
+
+  SECTION ("Test event forwarding") {
+    em.AddListener(std::make_shared<LHandler>("M1", "#sa (.*)", set_attribute));
+    em.AddListener(std::make_shared<LForwarder>("P1", "<user-inp>", "#sa called=1", true, 
+          "#event ~ elephant = {fuzzy}"));
+
+    // "cat" fails
+    em.TakeEvent("cat", parser);
+    TakeEvents(event_queue, em, parser);
+    REQUIRE(attributes["called"] == "0");
+    // "elefant" succeeds (fuzzy match)
+    em.TakeEvent("elefant", parser);
+    TakeEvents(event_queue, em, parser);
+    REQUIRE(attributes["called"] == "1");
+
+    // forwarding works multiple times:
+    em.AddListener(std::make_shared<LForwarder>("P1", "<user-inp>", "#sa called=0", true, 
+          "(elephant ~ #event = {fuzzy}) && (#event ~ elephant = {fuzzy})"));
+    em.TakeEvent("elefant", parser);
+    TakeEvents(event_queue, em, parser);
+    REQUIRE(attributes["called"] == "0");
+    
+    // forwarding works for arguments too:
+    em.AddListener(std::make_shared<LForwarder>("P1", "<user-inp>", "#sa called=#event", true, 
+          "elephant ~ #event = {fuzzy}"));
+    em.TakeEvent("elefant", parser);
+    TakeEvents(event_queue, em, parser);
+    REQUIRE(attributes["called"] == "elefant");
+  }
+
+  SECTION ("Test event avoiding problems with spacing") {
+    em.AddListener(std::make_shared<LHandler>("M1", "#sa (.*)", set_attribute));
+    em.AddListener(std::make_shared<LForwarder>("P1", txtad::IS_USER_REPLACEMENT, 
+          "#sa called++; #sa called++", true, "#event ~ elephant = {fuzzy}"));
+
+    // "cat" fails
+    em.TakeEvent("cat", parser);
+    TakeEvents(event_queue, em, parser);
+    REQUIRE(attributes["called"] == "0");
+    // "elefant" succeeds (fuzzy match)
+    em.TakeEvent("elefant", parser);
+    TakeEvents(event_queue, em, parser);
+    REQUIRE(attributes["called"] == "2");
+  }
 }
 
 TEST_CASE("Test eventmanager: SetAttribute", "[eventmanager]") {
@@ -64,7 +117,6 @@ TEST_CASE("Test eventmanager: SetAttribute", "[eventmanager]") {
   std::map<std::string, std::string> attributes = {{"mana", "10"}, {"runes", "5"}};
   ExpressionParser::SubstituteFN fn = [&attributes](const std::string& str) { 
     util::Logger()->info("SUBSTITUTE-FN: str: {}, mana: {} runes: {}", str, attributes.at("mana"), attributes.at("runes"));
-    std::cout << "HEY!!" << std::endl;
     return (attributes.count(str) > 0) ? attributes.at(str) : ""; };
   ExpressionParser parser(fn);
   std::string event_queue = "";

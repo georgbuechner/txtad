@@ -1,4 +1,5 @@
 #include "game/utils/defines.h"
+#include "shared/utils/fuzzy_search/fuzzy.h"
 #include "shared/utils/utils.h"
 #include <catch2/catch_test_macros.hpp>
 
@@ -32,4 +33,26 @@ TEST_CASE("Test LoggerContext", "[utils]") {
     REQUIRE(util::LOGGER == INITIAL_LOGGER);
   }
   REQUIRE(util::LOGGER == txtad::TEST_LOGGER);
+}
+
+TEST_CASE("Test fuzzy search", "[utils]") {
+  const std::string A = "elefant";
+  const std::string B = "elephant";
+
+  // In general fuzzy_cmp(A, B) != fuzzy_cmp(B, A) 
+  REQUIRE(fuzzy::fuzzy_cmp(A, B) <= 0.25);
+  REQUIRE(fuzzy::fuzzy(A, B) == fuzzy::FuzzyMatch::FUZZY);
+  REQUIRE(fuzzy::fuzzy_cmp(B, A) <= 0.3);
+  REQUIRE(fuzzy::fuzzy(B, A) == fuzzy::FuzzyMatch::FUZZY);
+}
+
+TEST_CASE("Test GetUserId" "[util]") {
+  const std::string USER_ID = "0x7f4fd40074b0";
+  const std::string INP_PART = "Fuck you!"; 
+
+  std::string full_inp = USER_ID + INP_PART;
+
+  std::string user_id = util::GetUserId(full_inp).value_or("");
+  REQUIRE(user_id == USER_ID);
+  REQUIRE(full_inp == INP_PART);
 }
