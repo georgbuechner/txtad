@@ -1,0 +1,15 @@
+{
+  "id": "catch",
+  "name": "Catch",
+  "description": "Catch f.e. error",
+  "shared": true,
+  "priority":-15,
+  "listeners": [
+    {
+      "id": "Q1",
+      "re_event": "<user-inp>",
+      "arguments": "#sa general._fails++;#> Don't punish me with stuff I can't do!",
+      "permeable": true
+    }  
+  ]
+}

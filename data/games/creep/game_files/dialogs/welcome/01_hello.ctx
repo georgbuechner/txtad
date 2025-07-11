@@ -1,0 +1,39 @@
+{
+  "id": "welcome_01",
+  "name": "Welcome 01",
+  "description": "Hello",
+  "shared": false,
+  "permeable": false,
+  "priority":-9,
+  "attributes": {
+    "_reps": "0"
+  },
+  "listeners": [
+    {
+      "id": "L1", 
+      "re_event": "hello", 
+      "arguments": "#> {<_>->desc};#sa <_>._reps++;#sa dialogs/welcome/03_hello._closed=0", 
+      "logic": "{<_>._reps} < 2", 
+      "permeable": false
+    },
+    {
+      "id": "L2", 
+      "re_event": "hello", 
+      "arguments": "#ctx replace *dialogs -> dialogs/welcome/02_hello;#sa <_>._reps++;#sa dialogs/welcome/03_hello._closed=1", 
+      "logic": "{<_>._reps} >= 2", 
+      "permeable": false
+    },
+    {
+      "id": "Q1",
+      "re_event": "go .*",
+      "arguments": "#sa general._fails++;#> You can't tell me to go anywhere! (But you might be able to go somewhere... later",
+      "permeable": false
+    },
+    {
+      "id": "Q9",
+      "re_event": "<user-inp>",
+      "arguments": "#sa general._fails++;#> Them words I can't here be pain in my ear!",
+      "permeable": false
+    }
+  ]
+}

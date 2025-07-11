@@ -1,0 +1,25 @@
+{
+  "id": "chat",
+  "name": "chat",
+  "description": "You can shat here",
+  "shared": false,
+  "priority":-1,
+  "attributes": {
+    "user": ""
+  },
+  "listeners": [
+    {
+      "id": "L2", 
+      "re_event": "<user-inp>", 
+      "arguments": "#-> {chat.user} {<uid>}: <i>#event</i>", 
+      "exec": true,
+      "permeable": false
+    },
+    {
+      "id": "L1", 
+      "re_event": "leave", 
+      "arguments": "#ctx remove *chat", 
+      "permeable": false
+    }
+  ]
+}

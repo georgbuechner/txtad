@@ -1,0 +1,10 @@
+{
+  "initial_events": "#> {dialogs/welcome/01_hello->desc}",
+  "initial_contexts": [
+    "general", 
+    "mindsets/dusty", 
+    "dialogs/welcome/01_hello", 
+    "mechanics",
+    "catch"
+  ]
+}

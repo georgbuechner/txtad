@@ -1,0 +1,45 @@
+{
+  "id": "general",
+  "name": "General",
+  "description": "holds general game-handlers",
+  "shared": true,
+  "priority":15,
+  "permeable": true,
+  "attributes": {
+    "_fails": "0"
+  },
+  "listeners": [
+    {
+      "id": "I1", 
+      "re_event": "<user-inp>", 
+      "arguments": "#> <i>#event</i>", 
+      "permeable": true
+    },
+    {
+      "id": "L1", 
+      "re_event": "#ctx replace *dialogs -> .*", 
+      "arguments": "#> {*dialogs->description}", 
+      "permeable": true
+    },
+    {
+      "id": "L2",
+      "re_event": "#sa general._fails.*",
+      "arguments": "#> You failed me!;#reset game",
+      "permeable": true,
+      "logic": "{general._fails} > 2"
+    },    
+    {
+      "id": "L3",
+      "re_event": "#new_connection (.*)",
+      "arguments": "#-> * New user, <i>#event</i>, entered the game",
+      "permeable": true
+    },
+    {
+      "id": "L4",
+      "re_event": "#remove_user (.*)",
+      "exec": true,
+      "arguments": "#-> * User #event left the game",
+      "permeable": true
+    }
+  ]
+}

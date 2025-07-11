@@ -1,0 +1,27 @@
+{
+  "id": "mechanics",
+  "name": "Mechanics",
+  "description": "Game mechanics",
+  "shared": true,
+  "priority":-8,
+  "listeners": [
+    {
+      "id": "Inp1", 
+      "re_event": "show attributes", 
+      "arguments": "#la general", 
+      "permeable": false
+    },
+    {
+      "id": "Inp2", 
+      "re_event": "show all attributes", 
+      "arguments": "#laa general", 
+      "permeable": false
+    },
+    {
+      "id": "Inp3", 
+      "re_event": "chat with (.*)", 
+      "arguments": "#sa chat.user=#event;#ctx add chat", 
+      "permeable": false
+    }
+  ]
+}
