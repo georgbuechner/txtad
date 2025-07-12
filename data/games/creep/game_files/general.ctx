@@ -12,7 +12,7 @@
     {
       "id": "I1", 
       "re_event": "<user-inp>", 
-      "arguments": "#> <i>#event</i>", 
+      "arguments": "#>> <i>#event</i>", 
       "permeable": true
     },
     {

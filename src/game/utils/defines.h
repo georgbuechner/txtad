@@ -19,7 +19,7 @@ namespace txtad {
   // Extentsion
   const std::string TEMPLATE_EXTENSION = ".template";
   const std::string CONTEXT_EXTENSION = ".ctx";
-  const std::string TEXT_EXTENSION = ".txt";
+  const std::string TEXT_EXTENSION = ".text";
 
   // replacements
   const std::string EVENT_REPLACEMENT = "#event";

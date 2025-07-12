@@ -1,5 +1,6 @@
 #include "shared/utils/parser/game_file_parser.h"
 #include "game/utils/defines.h"
+#include "shared/objects/text/text.h"
 #include "shared/utils/eventmanager/listener.h"
 #include "shared/utils/utils.h"
 #include <cstddef>
@@ -49,12 +50,13 @@ void parser::LoadObjects(const std::string& path, std::map<std::string, std::sha
       }
       // Add new Text 
       else if (dir_entry.path().extension() == txtad::TEXT_EXTENSION) {
-        if (auto txt = parser::CreateTextFromPath(dir_entry.path(), id_path_offset)) {
-          if (texts.count(txt->id()) > 0) {
-            util::Logger()->warn("Game::Game. Text \"{}\" already exists. Dublicate id?", txt->id());
+        const std::string txt_id = dir_entry.path();
+        if (auto txt = parser::CreateTextFromPath(txt_id, id_path_offset)) {
+          if (texts.count(txt_id) > 0) {
+            util::Logger()->warn("Game::Game. Text \"{}\" already exists. Dublicate id?", txt_id);
           } else {
-            texts[txt->id()] = txt;
-            util::Logger()->debug("Game::Game. Created text: \"{}\".", txt->id());
+            texts[txt_id] = txt;
+            util::Logger()->debug("Game::Game. Created text: \"{}\".", txt_id);
           }
         }
       } else {
@@ -110,7 +112,10 @@ std::shared_ptr<Context> parser::CreateContextFromPath(std::filesystem::path pat
     // std::string base_id = path.parent_path().string().substr(id_path_offset);
     path.replace_extension();
     std::string base_id = path.string().substr(id_path_offset);
-    return std::make_shared<Context>(base_id, *json);
+    if (json->at("description").is_object())
+      return std::make_shared<Context>(*json, Text(json->at("description").get<nlohmann::json>()));
+    else 
+      return std::make_shared<Context>(*json, Text(json->at("description").get<std::string>()));
   } 
   return nullptr;
 }

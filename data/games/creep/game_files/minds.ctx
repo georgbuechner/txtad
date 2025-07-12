@@ -1,0 +1,9 @@
+{
+  "id": "minds", 
+  "name": "Minds", 
+  "description":"",
+  "attributes": {
+    "uneasyness": "<a style='color: blue; margin-right: 0.5em;'>UNEASYNESS </a>",
+    "uncannyness": "<a style='color: red; margin-right: 0.5em;'>UNCANNYNESS</a>"
+  }
+}

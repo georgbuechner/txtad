@@ -19,7 +19,7 @@ std::string Context::name() const {
 }
 
 std::string Context::description() const {
-  return _description;
+  return _description.txt();
 }
 
 std::string Context::entry_condition_pattern() const {
@@ -43,8 +43,8 @@ void Context::set_name(const std::string& name) {
   _name = name;
 }
 
-void Context::set_description(const std::string& description) {
-  _description = description;
+void Context::set_description(const Text& txt) {
+  _description = txt;
 }
 
 void Context::set_entry_condition(const std::string& pattern) {
@@ -53,7 +53,10 @@ void Context::set_entry_condition(const std::string& pattern) {
 
   // ***** ***** String representation of the class ***** ***** //
 std::string Context::ToString() const {
-  return "Name: " + _name + "\n" + "Description: " + _description + "\n" + "Entry Condition (regex): " + _entry_condition.str();
+  return "Name: " + _name + "\n" + "Description: " + _description.txt() + "\n" + "Entry Condition (regex): " + _entry_condition.str();
+}
+std::string Context::PrintDescription(std::string& event_queue) {
+  
 }
   
   // ***** ***** Entry check ***** ***** //

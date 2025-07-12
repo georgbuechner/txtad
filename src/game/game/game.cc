@@ -53,6 +53,8 @@ Game::Game(std::string path, std::string name) : _path(path), _name(name), _cur_
   // Print commands
   _mechanics_ctx->AddListener(std::make_shared<LHandler>("H_PRINT01", "#> (.*)", 
         std::bind(&Game::h_print, this, std::placeholders::_1, std::placeholders::_2)));
+  _mechanics_ctx->AddListener(std::make_shared<LHandler>("H_PRINT011", "#>> (.*)", 
+        std::bind(&Game::h_print_no_prompt, this, std::placeholders::_1, std::placeholders::_2)));
    _mechanics_ctx->AddListener(std::make_shared<LHandler>("H_PRINT02", "#-> (.*)", 
          std::bind(&Game::h_print_to, this, std::placeholders::_1, std::placeholders::_2)));
 
@@ -124,6 +126,8 @@ void Game::HandleEvent(const std::string& user_id, const std::string& event) {
         user_id);
     }
   }
+  if (_cur_user) 
+    _cout(_cur_user->id(), "#remove_prompt");
 }
 
 std::shared_ptr<User> Game::CreateNewUser(std::string user_id) {
@@ -258,6 +262,13 @@ void Game::h_print(const std::string& event, const std::string& args) {
   std::string txt = GetText(event, args);
   _cout(_cur_user->id(), txt);
 }
+
+void Game::h_print_no_prompt(const std::string& event, const std::string& args) {
+  util::Logger()->info("Handler::h_print: {} {}", event, args);
+  std::string txt = GetText(event, args);
+  _cout(_cur_user->id(), "$ " + txt);
+}
+
 
 void Game::h_print_to(const std::string& event, const std::string& args) {
   util::Logger()->info("Handler::h_print_to: {}, {}", event, args);
@@ -432,11 +443,11 @@ std::string Game::GetText(std::string event, std::string args) {
           txt += _cur_user->id();
         } else if (auto print_ctx = User::GetCtxPrint(subsitute)) {
           if (print_ctx->_kind == txtad::CtxPrint::VARIABLE)
-            txt += _cur_user->PrintCtx(print_ctx->_ctx_id, print_ctx->_what);
+            txt += GetText("", _cur_user->PrintCtx(print_ctx->_ctx_id, print_ctx->_what));
           else if (print_ctx->_kind == txtad::CtxPrint::ATTRIBUTE)
             txt += _cur_user->PrintCtxAttribute(print_ctx->_ctx_id, print_ctx->_what);
         } else if (_cur_user->texts().count(subsitute) > 0) {
-          txt += _cur_user->PrintTxt(subsitute);
+          txt += GetText("", _cur_user->PrintTxt(subsitute));
         } else {
           util::Logger()->info("Handler::cout. {} did not match pattern.", subsitute);
         }

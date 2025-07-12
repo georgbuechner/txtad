@@ -1,7 +1,7 @@
 {
   "id": "welcome_01",
   "name": "Welcome 01",
-  "description": "Hello",
+  "description": "{minds.uncannyness} Hello",
   "shared": false,
   "permeable": false,
   "priority":-9,

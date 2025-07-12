@@ -1,6 +1,7 @@
 #ifndef SRC_OBJECT_CONTEXT_CONTEXT_H
 #define SRC_OBJECT_CONTEXT_CONTEXT_H
 
+#include "shared/objects/text/text.h"
 #include "shared/utils/eventmanager/eventmanager.h"
 #include "shared/utils/eventmanager/listener.h"
 #include "shared/utils/utils.h"
@@ -19,7 +20,7 @@ class ExpressionParser;
 class Context {
   
 public:
-  Context(const std::string& id, int priority, bool permeable=true) : _id(id), _name(""), _description(""), 
+  Context(const std::string& id, int priority, bool permeable=true) : _id(id), _name(""), _description(std::string("")), 
       _entry_condition(""), _priority(priority), _permeable(permeable), _shared(true),
       _event_manager(std::make_unique<EventManager>()) {
     util::Logger()->debug("Context. Context {} created", id); 
@@ -32,8 +33,8 @@ public:
     util::Logger()->debug("Context. Context \"{}\" created", _id); 
   }
 
-  Context(const std::string& id, const nlohmann::json& json) : _id(id), _name(json.at("name")), 
-      _description(json.at("description")), _entry_condition(json.value("re_entrycondition", "")),
+  Context(const std::string& id, const nlohmann::json& json, const Text& text) : _id(id), _name(json.at("name")), 
+      _description(text), _entry_condition(json.value("re_entrycondition", "")),
       _attributes(json.value("attributes", std::map<std::string, std::string>())), 
       _priority(json.value("priority", 0)), _permeable(json.value("permeable", 0) == 1), _shared(json.value("shared", true)),
       _event_manager(std::make_unique<EventManager>()) {
@@ -63,10 +64,11 @@ public:
 
   // ***** ***** Setters ***** ***** //
   void set_name(const std::string& name);
-  void set_description(const std::string& description);
+  void set_description(const Text& txt);
   void set_entry_condition(const std::string& pattern);
 
   // ***** ***** String representation of the class ***** ***** //
+  std::string PrintDescription(std::string& event_queue);
   std::string ToString() const; 
   
   // ***** ***** Entry check ***** ***** //
@@ -92,7 +94,7 @@ public:
 private:
   const std::string _id;
   std::string _name;
-  std::string _description;
+  Text _description;
   util::Regex _entry_condition;
   std::map<std::string, std::string> _attributes;
   int _priority;

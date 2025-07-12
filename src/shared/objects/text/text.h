@@ -5,17 +5,19 @@
 #include <string>
 class Text {
   public: 
-    Text(std::string id, std::string txt, std::string one_time_events, std::string permanent_events, 
-        bool shared=true) : _id(id), _shared(shared), _txt(txt), _one_time_events(one_time_events), 
+    Text(std::string txt) : Text("", txt, "", "") {}
+
+    Text(std::string txt, std::string one_time_events, std::string permanent_events, 
+        bool shared=true) : _shared(shared), _txt(txt), _one_time_events(one_time_events), 
       _permanent_events(permanent_events) {}
 
-    Text(std::string id, const nlohmann::json& json) : _id(id), _shared(json.value("shared", true)),
+    Text(const nlohmann::json& json) : _shared(json.value("shared", true)),
       _txt(json.at("txt")), _one_time_events(json.value("one_time_events", "")), 
       _permanent_events(json.value("permanent_events", "")) {}
 
     // getter 
-    std::string id() const { return _id; }
     bool shared() const { return _shared; }
+    std::string txt() const { return _txt; }
 
     // methods
     std::string print(std::string& event_queue) { 
@@ -26,11 +28,10 @@ class Text {
     } 
 
   private:
-    const std::string _id;
-    const bool _shared;
-    const std::string _txt;
-    std::string _one_time_events;
-    const std::string _permanent_events;
+    bool _shared;
+    std::string _txt;
+    std::string _one_time_events;  ///< events only thrown the first time the text is printed
+    std::string _permanent_events;   ///< events thrown every time the text is printed
 
     static void AddEvents(std::string events, std::string& event_queue) {
       if (events.length() > 0) {
