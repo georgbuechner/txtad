@@ -37,7 +37,10 @@ namespace txtad {
   };
 
   // GUI cmds 
-  const std::string CLEAR_CONSOLE = "#clear";
+  const std::string WEB_CMD_CLEAR_CONSOLE = "$clear";
+  const std::string WEB_CMD_CALL_DONE = "$done";
+  const std::string WEB_CMD_ADD_PROMPT = "$prompt";
+  const std::string WEB_COLOR = "$color_";
 
   // Other cmds
   const std::string REMOVE_USER = "#remove_user";

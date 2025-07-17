@@ -54,7 +54,7 @@ Game::Game(std::string path, std::string name) : _path(path), _name(name), _cur_
   _mechanics_ctx->AddListener(std::make_shared<LHandler>("H_PRINT01", "#> (.*)", 
         std::bind(&Game::h_print, this, std::placeholders::_1, std::placeholders::_2)));
   _mechanics_ctx->AddListener(std::make_shared<LHandler>("H_PRINT011", "#>> (.*)", 
-        std::bind(&Game::h_print_no_prompt, this, std::placeholders::_1, std::placeholders::_2)));
+        std::bind(&Game::h_print_with_prompt, this, std::placeholders::_1, std::placeholders::_2)));
    _mechanics_ctx->AddListener(std::make_shared<LHandler>("H_PRINT02", "#-> (.*)", 
          std::bind(&Game::h_print_to, this, std::placeholders::_1, std::placeholders::_2)));
 
@@ -126,8 +126,6 @@ void Game::HandleEvent(const std::string& user_id, const std::string& event) {
         user_id);
     }
   }
-  if (_cur_user) 
-    _cout(_cur_user->id(), "#remove_prompt");
 }
 
 std::shared_ptr<User> Game::CreateNewUser(std::string user_id) {
@@ -263,10 +261,10 @@ void Game::h_print(const std::string& event, const std::string& args) {
   _cout(_cur_user->id(), txt);
 }
 
-void Game::h_print_no_prompt(const std::string& event, const std::string& args) {
+void Game::h_print_with_prompt(const std::string& event, const std::string& args) {
   util::Logger()->info("Handler::h_print: {} {}", event, args);
   std::string txt = GetText(event, args);
-  _cout(_cur_user->id(), "$ " + txt);
+  _cout(_cur_user->id(), txt + txtad::WEB_CMD_ADD_PROMPT);
 }
 
 
@@ -374,7 +372,7 @@ void Game::h_reset_game(const std::string& event, const std::string& ctx_id) {
   }
   // Send clear all users and handle initial_events for all users
   for (const auto& it : _users) {
-    _cout(it.first, txtad::CLEAR_CONSOLE);
+    _cout(it.first, txtad::WEB_CMD_CLEAR_CONSOLE);
     _cur_user = it.second;
     it.second->HandleEvent(_settings.initial_events(), _parser);
   }
@@ -386,7 +384,7 @@ void Game::h_reset_user(const std::string& event, const std::string& ctx_id) {
   std::string user_id = _cur_user->id();
   _users.erase(user_id);
   _cur_user = CreateNewUser(user_id);
-  _cout(user_id, txtad::CLEAR_CONSOLE);
+  _cout(user_id, txtad::WEB_CMD_CLEAR_CONSOLE);
   _cur_user->HandleEvent(_settings.initial_events(), _parser);
 }
 

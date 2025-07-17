@@ -50,8 +50,8 @@ void parser::LoadObjects(const std::string& path, std::map<std::string, std::sha
       }
       // Add new Text 
       else if (dir_entry.path().extension() == txtad::TEXT_EXTENSION) {
-        const std::string txt_id = dir_entry.path();
-        if (auto txt = parser::CreateTextFromPath(txt_id, id_path_offset)) {
+        std::string txt_id;
+        if (auto txt = parser::CreateTextFromPath(dir_entry.path(), id_path_offset, txt_id)) {
           if (texts.count(txt_id) > 0) {
             util::Logger()->warn("Game::Game. Text \"{}\" already exists. Dublicate id?", txt_id);
           } else {
@@ -113,18 +113,18 @@ std::shared_ptr<Context> parser::CreateContextFromPath(std::filesystem::path pat
     path.replace_extension();
     std::string base_id = path.string().substr(id_path_offset);
     if (json->at("description").is_object())
-      return std::make_shared<Context>(*json, Text(json->at("description").get<nlohmann::json>()));
+      return std::make_shared<Context>(base_id, *json, Text(json->at("description").get<nlohmann::json>()));
     else 
-      return std::make_shared<Context>(*json, Text(json->at("description").get<std::string>()));
+      return std::make_shared<Context>(base_id, *json, Text(json->at("description").get<std::string>()));
   } 
   return nullptr;
 }
 
-std::shared_ptr<Text> parser::CreateTextFromPath(std::filesystem::path path, size_t id_path_offset) {
+std::shared_ptr<Text> parser::CreateTextFromPath(std::filesystem::path path, size_t id_path_offset, std::string& txt_id) {
   if (const auto& json = util::LoadJsonFromDisc(path.string())) {
     path.replace_extension();
-    std::string id = path.string().substr(id_path_offset);
-    return std::make_shared<Text>(id, *json);
+    txt_id = path.string().substr(id_path_offset);
+    return std::make_shared<Text>(*json);
   }
   return nullptr;
 }

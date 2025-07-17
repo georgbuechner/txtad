@@ -26,7 +26,7 @@ window.onload = function() {
     
     console.log("Received payload: ", event.data)
     // Wait till last promt was accepted
-    if (event.data == "#remove_prompt") {
+    if (event.data == "$done") {
       RemovePromptIfExists();
       _receiving = false;
       return;
@@ -34,7 +34,7 @@ window.onload = function() {
     while (_wait) { await delay(100); }
 
     // Print
-    if (event.data == "#clear")
+    if (event.data == "$clear")
       ClearContent()
     else {
       if (AddInput(event.data)) {
@@ -67,15 +67,88 @@ function RemovePromptIfExists() {
   }
 }
 
-function AddInput(payload) {
-  var add_prompt = true;
-  if (payload[0] === '$') {
-    payload = payload.substring(1);
-    add_prompt = false;
+function GetCmd(payload_part) {
+  let pos = -1;
+  for (let i=1; i<payload_part.length; i++) {
+    if (payload_part[i] === ' ' || payload_part[i] === '$') {
+      pos = i;
+      break;
+    }
   }
+  if (pos == -1)
+    return ["", "", 1];
+  let full_cmd = payload_part.substring(1, pos); 
+  if (full_cmd.indexOf("_") == -1)
+    return [full_cmd, "", pos];
+  const [cmd, param] = full_cmd.split("_");
+  return [cmd, param, pos];
+}
+
+function InsertAtCursor(cursor, text, cur) {
+  if (cursor == cur.length) {
+    return cur + text; 
+  } else {
+    return cur.substring(0, cursor) + text + cur.substring(cursor+1);
+  }
+}
+
+function AddInput(payload) {
+  var add_prompt = false;
+  if (payload.indexOf('$prompt') !== -1) {
+    add_prompt = true;
+    payload = payload.replace('$prompt', '');
+  }
+
+  let cursor = 0;
+  let closing = []
+  let text = "";
+  console.log("Parsing ", payload, payload.length);
+  for (let i=0; i<payload.length; i++) {
+    if (payload[i] == '$') {
+      const [cmd, param, pos] = GetCmd(payload.substring(i));
+      if (cmd === "color") {
+        const str = '<span style="color: ' + param + '";>';
+        text = InsertAtCursor(cursor, str, text);
+        closing.push("</span>");
+        cursor += str.length;
+      } else if (cmd === "italic") {
+        const str = '<i>';
+        text = InsertAtCursor(cursor, str, text);
+        closing.push("</i>");
+        cursor += str.length;
+      } else if (cmd === "mr") {
+        const str = '<span style="margin-right: 0.5em;">';
+        text = InsertAtCursor(cursor, str, text);
+        closing.push("</span>");
+        cursor += str.length;
+      } else if (cmd === "center") {
+        const str = '<div style="text-align: center;">';
+        text = InsertAtCursor(cursor, str, text);
+        closing.push("</div>");
+        cursor += str.length;
+      } else if (cmd === "" && closing.length > 0) {
+        const elem = closing.pop();
+        text = InsertAtCursor(cursor, elem, text);
+        cursor+=elem.length;
+      } 
+      i += pos-1;
+    } else {
+      text = InsertAtCursor(cursor, payload[i], text);
+      cursor++;
+    }
+  }
+  for (let i=0; i<closing.length; i++) {
+    const elem = closing.pop();
+    text = InsertAtCursor(cursor, elem, text);
+    cursor+=elem.length;
+  }
+
+  console.log("-> ", text);
+
   var p = document.createElement("p");
   p.classList.add("line");
-  p.innerHTML = payload;
+  p.innerHTML = text;
+
   _content.appendChild(p);
   _cmd.value = "";
   return add_prompt;

@@ -40,6 +40,15 @@ Then the code can be run as:
 
 ## Concept 
 
+### Blacklist: 
+
+### Events
+- beware of re-expression-characters in the listeners event field. F.e. to
+  listenen to `#sa drinks+=(.*)` you need to escape the `+` field: `#sa drinks\\+=(.*)`
+
+#### Text and prints 
+- `$` Is concidered a command, if you want to write a dollar symbol, write `\$` 
+
 ### Stack-Structure 
 
 - 15 to  10 -> these should all be completely permeable contexts that only catch

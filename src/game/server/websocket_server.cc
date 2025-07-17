@@ -95,6 +95,7 @@ void WebsocketServer::OnMessage(t_server* srv, websocketpp::connection_hdl hdl, 
       if (_user_game_mapping.count(user_id) == 0)
         _user_game_mapping[user_id] = game_id;
       _handle_event(user_id, game_id, json["event"]);
+      SendMessage(user_id, txtad::WEB_CMD_CALL_DONE);
     } else {
       util::Logger()->warn("WSS::OnMessage: Missing \"game\" or \"event\"");
     }

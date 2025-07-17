@@ -61,7 +61,7 @@ class Game {
     void h_exec(const std::string& event, const std::string& args);
 
     void h_print(const std::string& event, const std::string& args);
-    void h_print_no_prompt(const std::string& event, const std::string& args);
+    void h_print_with_prompt(const std::string& event, const std::string& args);
     void h_print_to(const std::string& event, const std::string& args);
 
     void h_list_attributes(const std::string& event, const std::string& ctx_id);

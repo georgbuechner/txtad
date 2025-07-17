@@ -103,6 +103,20 @@ TEST_CASE("Test eventmanager basic use", "[eventmanager]") {
     TakeEvents(event_queue, em, parser);
     REQUIRE(attributes["called"] == "2");
   }
+
+  SECTION("Test escaping regex chars") {
+    em.AddListener(std::make_shared<LHandler>("M1", "#sa (.*)", set_attribute));
+    em.AddListener(std::make_shared<LForwarder>("P1", "#sa drinks+=(.*)", "#sa called++", true));
+    em.AddListener(std::make_shared<LForwarder>("P1", "#sa smokes\\+=(.*)", "#sa called++", true));
+
+    em.TakeEvent("#sa drinks+=10", parser);
+    TakeEvents(event_queue, em, parser);
+    REQUIRE(attributes["called"] == "0");
+    em.TakeEvent("#sa smokes+=10", parser);
+    TakeEvents(event_queue, em, parser);
+    REQUIRE(attributes["called"] == "1");
+
+  }
 }
 
 TEST_CASE("Test eventmanager: SetAttribute", "[eventmanager]") {

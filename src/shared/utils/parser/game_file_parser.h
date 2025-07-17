@@ -22,7 +22,7 @@ namespace parser {
     std::map<std::string, nlohmann::json> listeners);
 
   std::shared_ptr<Context> CreateContextFromPath(std::filesystem::path path, size_t id_path_offset);
-  std::shared_ptr<Text> CreateTextFromPath(std::filesystem::path path, size_t id_path_offset);
+  std::shared_ptr<Text> CreateTextFromPath(std::filesystem::path path, size_t id_path_offset, std::string& txt_id);
   std::optional<nlohmann::json> GetContextListener(const std::filesystem::path& path);
 }
 

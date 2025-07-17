@@ -7,7 +7,7 @@ TEST_CASE("Test printing text", "[text]") {
   const std::string PERMANENT_EVENTS = "#sa hp=10";
 
   std::string event_queue = "";
-  Text txt("t1", TXT, ONE_TIME_EVENTS, PERMANENT_EVENTS);
+  Text txt(TXT, ONE_TIME_EVENTS, PERMANENT_EVENTS);
 
   REQUIRE(txt.print(event_queue) == TXT);
   REQUIRE(event_queue == PERMANENT_EVENTS + ";" + ONE_TIME_EVENTS);

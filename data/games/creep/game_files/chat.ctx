@@ -11,7 +11,7 @@
     {
       "id": "L2", 
       "re_event": "<user-inp>", 
-      "arguments": "#-> {chat.user} {<uid>}: <i>#event</i>", 
+      "arguments": "#-> {chat.user} {<uid>}: $italic #event", 
       "exec": true,
       "permeable": false
     },

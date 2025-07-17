@@ -12,26 +12,26 @@
     {
       "id": "I1", 
       "re_event": "<user-inp>", 
-      "arguments": "#>> <i>#event</i>", 
+      "arguments": "#> $italic #event", 
       "permeable": true
     },
     {
       "id": "L1", 
       "re_event": "#ctx replace *dialogs -> .*", 
-      "arguments": "#> {*dialogs->description}", 
+      "arguments": "#>> {*dialogs->description}", 
       "permeable": true
     },
     {
       "id": "L2",
       "re_event": "#sa general._fails.*",
-      "arguments": "#> You failed me!;#reset game",
+      "arguments": "#>> You failed me!;#reset game",
       "permeable": true,
       "logic": "{general._fails} > 2"
     },    
     {
       "id": "L3",
       "re_event": "#new_connection (.*)",
-      "arguments": "#-> * New user, <i>#event</i>, entered the game",
+      "arguments": "#-> * New user, $italic #event$, entered the game",
       "permeable": true
     },
     {

@@ -5,15 +5,13 @@
 #include <string>
 class Text {
   public: 
-    Text(std::string txt) : Text("", txt, "", "") {}
 
-    Text(std::string txt, std::string one_time_events, std::string permanent_events, 
-        bool shared=true) : _shared(shared), _txt(txt), _one_time_events(one_time_events), 
-      _permanent_events(permanent_events) {}
+    Text(std::string txt, std::string one_time_events, std::string permanent_events, bool shared=true) 
+      : _shared(shared), _txt(txt), _one_time_events(one_time_events), _permanent_events(permanent_events) {}
 
-    Text(const nlohmann::json& json) : _shared(json.value("shared", true)),
-      _txt(json.at("txt")), _one_time_events(json.value("one_time_events", "")), 
-      _permanent_events(json.value("permanent_events", "")) {}
+    Text(std::string txt) : Text(txt, "", "") {}
+    Text(const nlohmann::json& json) : Text(json.at("txt"), json.value("one_time_events", ""), 
+        json.value("permanent_events", ""), json.value("shared", true)) {}
 
     // getter 
     bool shared() const { return _shared; }

@@ -1,4 +1,4 @@
 {
-  "txt": "<div style='text-align: center;'>CREEP</div>",
-  "permanent_events": "#> {texts/start/01}" 
+  "txt": "$center CREEP",
+  "permanent_events": "#>> {texts/start/01}" 
 }
