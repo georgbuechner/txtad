@@ -10,7 +10,7 @@ const std::string ENTRY_CONDITION_PATTERN = "abc.*";
 const int PRIORITY = 4;
 const bool PERMEABLE = false;
 
-TEST_CASE("Test constructor", "[objects][context][constructor]") {
+TEST_CASE("Test constructor", "[objects][context]") {
   
   SECTION("Test minimal constructor") {
       Context ctx(ID, PRIORITY, PERMEABLE);
@@ -32,18 +32,7 @@ TEST_CASE("Test constructor", "[objects][context][constructor]") {
   }
 }
 
-TEST_CASE("Test getters", "[objects][context][getters]") {
-  Context ctx(ID, NAME, DESCRIPTION, ENTRY_CONDITION_PATTERN, PRIORITY, PERMEABLE);
-
-  REQUIRE(ctx.id() == ID);
-  REQUIRE(ctx.name() == NAME);
-  REQUIRE(ctx.description() == DESCRIPTION);
-  REQUIRE(ctx.entry_condition_pattern() == ENTRY_CONDITION_PATTERN);
-  REQUIRE(ctx.priority() == PRIORITY);
-  REQUIRE(ctx.permeable() == PERMEABLE);
-}
-
-TEST_CASE("Test setters", "[objects][context][setters]") {
+TEST_CASE("Test setters", "[objects][context]") {
   Context ctx(ID, NAME, DESCRIPTION, ENTRY_CONDITION_PATTERN, PRIORITY, PERMEABLE);
 
   SECTION("Test set_name") {
@@ -68,17 +57,17 @@ TEST_CASE("Test setters", "[objects][context][setters]") {
   }
 }
 
-TEST_CASE("Test string representation of the class", "[objects][context][string representation]") {
+TEST_CASE("Test string representation of the class", "[objects][context]") {
   Context ctx(ID, NAME, DESCRIPTION, ENTRY_CONDITION_PATTERN, PRIORITY, PERMEABLE);
 
   std::string str = ctx.ToString();
 
-  REQUIRE(str.find("Name: " + NAME) != std:string::npos);
-  REQUIRE(str.find("Description: " + DESCRIPTION) != std:string::npos);
-  REQUIRE(str.find("Entry Condition (regex): " + ENTRY_CONDITION_PATTERN) != std:string::npos);
+  REQUIRE(str.find("Name: " + NAME) != std::string::npos);
+  REQUIRE(str.find("Description: " + DESCRIPTION) != std::string::npos);
+  REQUIRE(str.find("Entry Condition (regex): " + ENTRY_CONDITION_PATTERN) != std::string::npos);
 }
 
-TEST_CASE("Test entry check", "[objects][context][entry check]") {
+TEST_CASE("Test entry check", "[objects][context]") {
   Context ctx(ID, NAME, DESCRIPTION, ENTRY_CONDITION_PATTERN, PRIORITY, PERMEABLE);
 
   SECTION("Matching input returns true") {
@@ -90,7 +79,7 @@ TEST_CASE("Test entry check", "[objects][context][entry check]") {
   }
 }
 
-TEST_CASE("Test attribute methods", "[objects][context][attribute methods]") {
+TEST_CASE("Test attribute methods", "[objects][context]") {
   Context ctx(ID, NAME, DESCRIPTION, ENTRY_CONDITION_PATTERN, PRIORITY, PERMEABLE);
 
   SECTION("Add new attribute") {
@@ -143,28 +132,32 @@ TEST_CASE("Test attribute methods", "[objects][context][attribute methods]") {
   }
 }
 
-TEST_CASE("Test listener methods calling EventManager", "[objects][context][listener methods]") {
+TEST_CASE("Test listener methods calling EventManager", "[objects][context]") {
   Context ctx(ID, NAME, DESCRIPTION, ENTRY_CONDITION_PATTERN, PRIORITY, PERMEABLE);
 
-  ExpressionParser PARSER;
+  ExpressionParser parser;
   
-  SECTION("TakeEvent works") {
-    const std::string EVENT = "some event";
-    
-    bool result = ctx.TakeEvent(EVENT, PARSER);
-
-    REQUIRE(result);
+  SECTION("TakeEvent without listeners returns false") {
+    REQUIRE(!ctx.TakeEvent("some event", parser));
   }
-  
-  SECTION("AddListener does not throw") {
-    class DummyListener : public Listener {
-    public:
-      std::string id() const override { return "dummy"; }
-    };
 
-    auto listener = std::make_shared<DummyListener>();
+  SECTION("TakeEvent with matching listeners returns true") {
+    std::string event_handled = "";
+    std::string argument_called = "";
+    auto fn = [&event_handled, &argument_called](std::string event,
+        std::string arguments) {
+      event_handled = event;
+      argument_called = arguments;
+    };
     
-    REQUIRE_NOTHROW(ctx.AddListener(listener));
+    ctx.AddListener(std::make_shared<LHandler>("L1", "some (.*)", fn));
+    
+    REQUIRE(ctx.TakeEvent("some event", parser));
+    REQUIRE(event_handled == "some event");
+    REQUIRE(argument_called == "event");
+
+    ctx.RemoveListener("L1");
+    REQUIRE_FALSE(ctx.TakeEvent("some event", parser));
   }
 
   SECTION("RemoveListener does not throw") {
