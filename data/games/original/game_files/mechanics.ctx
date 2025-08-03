@@ -18,6 +18,19 @@
       "arguments": "#> No Items in inventory.", 
       "logic": "{*items->name} = ''", 
       "permeable": false
+    },
+    {
+      "id": "Inp3", 
+      "re_event": "show items", 
+      "arguments": "#> Items lying around: {*rooms->*items->name}", 
+      "permeable": false
+    },
+    {
+      "id": "Inp4", 
+      "re_event": "show exits", 
+      "arguments": "#> You can go to {*rooms->*rooms->name}", 
+      "permeable": false
     }
+
   ]
 }

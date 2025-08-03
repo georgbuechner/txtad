@@ -154,14 +154,13 @@ std::optional<User::CtxPrint> User::GetCtxPrint(std::string inp) {
 void User::AddVariableToText(const std::shared_ptr<Context>& ctx, const std::string& what, 
     std::string& txt) {
   util::Logger()->debug("User::AddVariableToText: {}, {}", ctx->id(), what);
-  // Print ctx name
-  if (what == "name") 
+  if (what == "name") {
     txt += ((txt.length() > 0) ? ", " : "") + ctx->name();
   // Print ctx description
-  else if (what == "desc" || what == "description")
+  } else if (what == "desc" || what == "description") {
     txt += ((txt.length() > 0) ? ", " : "") + ctx->description();
   // Print ctx attributes (or all attributes)
-  else if (what == "attributes" || what == "all_attributes") {
+  } else if (what == "attributes" || what == "all_attributes") {
     std::vector<std::string> hidden;
     for (const auto& [key, value] : ctx->attributes()) {
       std::string str =  key + ": " + value;
@@ -175,9 +174,8 @@ void User::AddVariableToText(const std::shared_ptr<Context>& ctx, const std::str
         txt += ((txt != "") ? ", " : "") + str;
       }
     }
-  }
   // Print linked contexts
-  else if (what.front() == '*') {
+  } else if (what.front() == '*') {
     if (auto print_ctx = User::GetCtxPrint(what)) {
       for (const auto& it : ctx->LinkedContexts(print_ctx->_ctx_id.substr(1))) {
         if (auto linked_ctx = it.lock()) {
