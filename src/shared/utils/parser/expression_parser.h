@@ -1,16 +1,17 @@
 /**
  * @author fux
  */
-#ifndef SRC_TEXTADVENTURE_TOOLS_LOGICPARSER_H_
-#define SRC_TEXTADVENTURE_TOOLS_LOGICPARSER_H_
+#ifndef SHARED_UTILS_PARSER_EXPRESSIONPARSER_H_
+#define SHARED_UTILS_PARSER_EXPRESSIONPARSER_H_
 
+#include "game/utils/defines.h"
 #include <map>
-#include <memory>
 #include <string>
-#include <vector>
 
 class ExpressionParser{
   public:
+    using SubstituteFN = std::function<std::string(std::string)>;
+    
     /**
      * Constructor including the possibility to substitute certain strings
      * with given values (for instance you could map room to the current player
@@ -18,7 +19,8 @@ class ExpressionParser{
      * be substituted by the value of [current_room]).
      * @param[in] substitute (map with possible substitutes)
      */
-    ExpressionParser(const std::map<std::string, std::string>* substitute = {});
+    ExpressionParser();
+    ExpressionParser(const SubstituteFN& fn);
 
     /**
      * return value of logical or mathematical expression
@@ -46,7 +48,7 @@ class ExpressionParser{
   private:
 
     // members 
-    const std::map<std::string, std::string>* _substitutes;  ///< map with substitutes.
+    SubstituteFN _substitute_fn;  ///< map with substitutes.
     static const std::map<std::string, std::string> _default_subsitutes;
     static std::map<std::string, std::string(*)(const std::string&, const std::string&)> _opts;
 
@@ -70,31 +72,6 @@ class ExpressionParser{
      * @return operand and it's position in the given expression.
      */
     static std::pair<int, std::string> LastOpt(const std::string& inp);
-
-    /**
-     * If the current operand is surrounded by brackets, return there start
-     * and end position 
-     * @param[in] inp (logical expression)
-     * @param[in] pos (position of current operand)
-     * @return start and end positions of surrounding brackets
-     */
-    static std::pair<int, int> InBrackets(const std::string& inp, int pos);
-
-    /**
-     * Find next (right side) closing bracket
-     * @param[in] inp (logical expression) 
-     * @param[in] pos (current position to search from)
-     * @return position of closing bracket (-1 if it does not exist)
-     */
-    static int ClosingBracket(const std::string& inp, int pos, char open = '(', char close = ')');
-
-    /**
-     * Find previous (left side) opening bracket
-     * @param[in] inp (logical expression) 
-     * @param[in] pos (current position to search from)
-     * @return position of opening bracket (-1 if it does not exist)
-     */
-    static int OpeningBracket(const std::string& inp, int pos, char open = '(', char close = ')');
 };
 
 #endif

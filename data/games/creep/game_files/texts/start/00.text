@@ -1,0 +1,4 @@
+{
+  "txt": "$center CREEP",
+  "permanent_events": "#>> {texts/start/01}" 
+}

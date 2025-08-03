@@ -6,10 +6,15 @@
 
 ContextStack::ContextStack() {};
 
+// getter
+std::string ContextStack::cur_event() const {
+  return _cur_event;
+}
+
 // methods
 bool ContextStack::insert(std::shared_ptr<Context> context) {
   if (_contexts.count(context->id()) > 0) {
-    util::Logger()->warn(fmt::format("ContextStack::Add. Context {} already exists.", context->id()));
+    util::Logger()->warn("ContextStack::Add. Context {} already exists.", context->id());
     return false;
   }
   _contexts.emplace(context->id(), context);
@@ -33,7 +38,7 @@ bool ContextStack::insert(std::shared_ptr<Context> context) {
 
 bool ContextStack::erase(const std::string& id) {
   if (_contexts.count(id) == 0) {
-    util::Logger()->warn(fmt::format("ContextStack::Remove. Context {} not found.", id));
+    util::Logger()->warn("ContextStack::Remove. Context {} not found.", id);
     return false;
   }
   _contexts.erase(id);
@@ -42,12 +47,12 @@ bool ContextStack::erase(const std::string& id) {
   if (it != _sorted_contexts.end()) {
     _sorted_contexts.erase(it);
   } else {
-    util::Logger()->error(fmt::format("ContextStack::Remove. Context {} removed from map but was not found in vector.", id));
+    util::Logger()->error("ContextStack::Remove. Context {} removed from map but was not found in vector.", id);
   }
   return true;
 }
 
-bool ContextStack::exists(const std::string& id) {
+bool ContextStack::exists(const std::string& id) const {
   return _contexts.count(id) > 0;
 }
 
@@ -55,7 +60,7 @@ std::shared_ptr<Context> ContextStack::get(const std::string& id) {
   const auto& it = _contexts.find(id);
   if (it != _contexts.end())
     return it->second;
-  util::Logger()->warn(fmt::format("ContextStack::Get. Context {} not found.", id));
+  util::Logger()->warn("ContextStack::Get. Context {} not found.", id);
   return nullptr;
 }
 
@@ -77,20 +82,31 @@ std::vector<std::string> ContextStack::GetOrder() {
 }
 
 void ContextStack::TakeEvents(std::string& events, const ExpressionParser& parser) {
+  // If events are empty, return
+  if (events == "") {
+    return;
+  }
+  // Otherwise Split events and handle after eachother
   auto vec_events = util::Split(events, ";");
   events = "";
-  for (const auto& event : vec_events) {
-    TakeEvent(event, parser);
+  for (auto event : vec_events) {
+    if (event.find(" #") == 0) {
+      event = event.substr(1);
+    } 
+    util::Logger()->debug("ContextStack::TakeEvents: {}", event);
+    TakeEvent(event.substr(0), parser);
   }
+  _cur_event = "";
 }
 
 void ContextStack::TakeEvent(const std::string& event, const ExpressionParser& parser) {
+  _cur_event = event;
   // (using index-based iteration, since container might be modified during
   // iteration
   for (size_t i=0; i<_sorted_contexts.size();) {
     if (auto ctx = _sorted_contexts[i]) {
       util::Logger()->info("CTX {} take_event: {}", ctx->id(), event);
-      // If event acepted by context and context is non-permeable: stop!
+      // If event accepted by context and context is non-permeable: stop!
       if (ctx->TakeEvent(event, parser) && !ctx->permeable())
         return;
       ++i;
@@ -99,4 +115,3 @@ void ContextStack::TakeEvent(const std::string& event, const ExpressionParser& p
     }
   }
 }
-

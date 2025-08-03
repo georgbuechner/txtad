@@ -1,5 +1,6 @@
 //#include "utils/parser/expression_parser.h"
 #include "expression_parser.h"
+#include "game/utils/defines.h"
 #include "shared/utils/fuzzy_search/fuzzy.h"
 #include "shared/utils/utils.h"
 #include <algorithm>
@@ -15,6 +16,7 @@ std::map<std::string, std::string(*)(const std::string&, const std::string&)> Ex
   {">=", [](const std::string& a, const std::string& b) { return std::to_string(std::stoi(a) >= std::stoi(b)); } },
   {"<=", [](const std::string& a, const std::string& b) { return std::to_string(std::stoi(a) <= std::stoi(b)); } },
   {"=", [](const std::string& a, const std::string& b) { return std::to_string(a == b); } },
+  {"!=", [](const std::string& a, const std::string& b) { return std::to_string(a != b); } },
   {"~", [](const std::string& a, const std::string& b) { return std::to_string(fuzzy::fuzzy(b, a)); } },
   {":", [](const std::string& a, const std::string& b) -> std::string { 
           util::Logger()->debug("EP:InList. {} in {}", a, b);
@@ -46,19 +48,60 @@ std::map<std::string, std::string(*)(const std::string&, const std::string&)> Ex
   {"&&", [](const std::string& a, const std::string& b) { return std::to_string(a == "1" && b == "1"); } },
 };
 
-ExpressionParser::ExpressionParser(const std::map<std::string, std::string>* substitutes) {
-  _substitutes = substitutes;
+ExpressionParser::ExpressionParser() { 
+  _substitute_fn = [](const auto& str) -> std::string { 
+    util::Logger()->debug("CALLED default substitute-fn with {}", str);
+    return ""; 
+  };
+}
+ExpressionParser::ExpressionParser(const SubstituteFN& fn) {
+  _substitute_fn = [fn](const std::string& str) {
+    util::Logger()->debug("CALLED custom substitute-fn with {}", str);
+    return fn(str);
+  };
 }
 
 std::string ExpressionParser::Evaluate(std::string input) const {
-  util::Logger()->info(fmt::format("EP:Evaluate. START: {}", input));
-  auto res = evaluate(EnsureExecutionOrder(input));
-  util::Logger()->info(fmt::format("EP:Evaluate. =>: {}", res));
+  util::Logger()->info("EP:Evaluate. START: {}", input);
+
+  // Check for substitutes
+  std::string replaced = "";
+  for (int i=0; i<input.length(); i++) {
+    // If char is start of substitute, find matching closing bracket
+    if (input[i] == '{') {
+      int closing = util::ClosingBracket(input, i+1, '{', '}');
+      // Get substitute-name (string inbetween brackets) and check if it exists
+      std::string subsitute = input.substr(i+1, closing-(i+1));
+      util::Logger()->info("FOUND SUBSTITUE: {}", subsitute);
+      std::string replacement = "";
+      if (_default_subsitutes.count(subsitute) > 0) {
+        replacement = _default_subsitutes.at(subsitute);
+      } else {
+        replacement = _substitute_fn(subsitute);
+        if (replacement == "") {
+          replacement = "''";
+        } else if (replacement == txtad::NO_REPLACEMENT) {
+          util::Logger()->error("No subsitute found for: {}", subsitute);
+        }       
+      } 
+      if (replacement != "") {
+        // Add substituted string to replaced string and increase index
+        replaced += replacement;
+        i = closing;
+      }
+    } else {
+      replaced += input[i]; // add current char
+    }
+  }
+
+  auto res = evaluate(EnsureExecutionOrder(replaced));
+
+  util::Logger()->info("EP:Evaluate. =>: {}", res);
   return res;
 }
 
 std::string ExpressionParser::evaluate(std::string input) const {
-  util::Logger()->debug(fmt::format("EP:Evaluate. {}", input));
+  util::Logger()->debug("EP:Evaluate. {}", input);
   auto [pos, opt] = LastOpt(input); 
 
   // If no operand was found, simply return string with whitespaces removed.
@@ -66,7 +109,7 @@ std::string ExpressionParser::evaluate(std::string input) const {
     return StripAndSubstitute(input);
 
   // Check whether current operand is surrounded by brackets
-  auto [start, end] = InBrackets(input, pos);
+  auto [start, end] = util::InBrackets(input, pos);
   // If yes, evaluate brackets first.
   if (start != -1 && end != -1) {
     return evaluate(input.substr(0, start) + evaluate(input.substr(start+1, end-start-1)) 
@@ -77,35 +120,13 @@ std::string ExpressionParser::evaluate(std::string input) const {
   std::string a = evaluate(input.substr(0, pos));
   std::string b = util::Strip(input.substr(pos+opt.length(), input.length()-(pos + opt.length()-1)));
 
-  util::Logger()->debug(fmt::format(" - '{}', '{}', {}", a, opt, b));
+  util::Logger()->debug(" - '{}', '{}', {}", a, opt, b);
   return (*_opts[opt])(StripAndSubstitute(a), StripAndSubstitute(b)); 
 }
 
 std::string ExpressionParser::StripAndSubstitute(std::string str) const {
   // strip string from whitespaces and brackets
-  str = util::Strip(util::Strip(util::Strip(str), ')'), '(');
-
-  // Check for substitutes
-  std::string replaced = "";
-  for (int i=0; i<str.length(); i++) {
-    // If char is start of substitute, find matching closing bracket
-    if (str[i] == '{') {
-      int closing = ClosingBracket(str, i+1, '{', '}');
-      // Get substitute-name (string inbetween brackets) and check if it exists
-      std::string subsitute = str.substr(i+1, closing-(i+1));
-      std::string replacement = (_default_subsitutes.count(subsitute) > 0) 
-        ? _default_subsitutes.at(subsitute) : (_substitutes->count(subsitute) > 0) 
-          ? _substitutes->at(subsitute) : "";
-      if (replacement != "") {
-        // Add substituted string to replaced string and increase index
-        replaced += replacement;
-        i = closing;
-      }
-    } else {
-      replaced += str[i]; // add current char
-    }
-  }
-  return replaced;
+  return util::Strip(util::Strip(util::Strip(str), ')'), '(');
 }
 
 
@@ -127,46 +148,6 @@ std::pair<int, std::string> ExpressionParser::LastOpt(const std::string& inp) {
   return {pos, opt};
 }
 
-std::pair<int, int> ExpressionParser::InBrackets(const std::string& inp, int pos) {
-  return {OpeningBracket(inp, pos), ClosingBracket(inp, pos)};
-}
-
-
-int ExpressionParser::ClosingBracket(const std::string& inp, int pos, char open, char close) {
-  int accept = 0;
-  int end = -1;
-  for (int i=0; i<inp.length()-pos; i++) {
-    char c = inp[pos+i];
-    if (c == open) 
-      accept++;
-    else if (c == close && accept > 0) 
-      accept--;
-    else if (c == close && accept == 0) {
-      end = pos+i;
-      break;
-    }
-  }
-  return end;
-}
-
-int ExpressionParser::OpeningBracket(const std::string& inp, int pos, char open, char close) {
-  int accept = 0;
-  int start = -1; 
-  for (int i=0; i<=pos; i++) {
-    char c = inp[pos-i];
-    if (c == close) 
-      accept++;
-    else if (c == open && accept > 0) 
-      accept--;
-    else if (c == open && accept == 0) {
-      start = pos-i;
-      break;
-    }
-  }
-  return start;
-}
-
-
 std::string ExpressionParser::EnsureExecutionOrder(std::string inp) {
   util::Logger()->debug("EP:EnsureExecutionOrder. {}", inp);
   const std::vector<char> priority_operands = {'/', '*'};
@@ -185,12 +166,10 @@ std::string ExpressionParser::EnsureExecutionOrder(std::string inp) {
   int last = 0;
   for (unsigned int i=0; i<inp.length(); i++) {
     const auto& c = inp[i];
-    util::Logger()->debug("EP:EnsureExecutionOrder. - {} -> {} (waiting: {}, last: {})", 
-        modified, c, waiting, last);
     
     // Handle brackets:
     if (c == '(') {
-      auto pos = ClosingBracket(inp, i+1); // get closing bracket
+      auto pos = util::ClosingBracket(inp, i+1); // get closing bracket
       if (pos != -1) {
         // Recursive call for inside of bracket and add complete content to modified/waiting:
         std::string inside_bracket = "(" + EnsureExecutionOrder(inp.substr(i+1, pos-i-1)) + ")";
@@ -207,7 +186,7 @@ std::string ExpressionParser::EnsureExecutionOrder(std::string inp) {
         if (pos != std::string::npos) {
           // If waiting is not empty added waiting to modified, surrounded by brackets
           if (waiting != "") {
-            util::Logger()->debug(fmt::format("EP:EnsureExecutionOrder. -> {} (adding: {})", modified, waiting));
+            util::Logger()->debug("EP:EnsureExecutionOrder. -> {} (adding: {})", modified, waiting);
             modified += "(" + waiting + ")";
             waiting = "";
           } 
@@ -221,15 +200,15 @@ std::string ExpressionParser::EnsureExecutionOrder(std::string inp) {
     else {
       // If waiting already set, surround with brackets 
       if (waiting != "") {
-        util::Logger()->debug(fmt::format("EP:EnsureExecutionOrder. -> {} (adding: {})", modified, waiting));
+        util::Logger()->debug("EP:EnsureExecutionOrder. -> {} (adding: {})", modified, waiting);
         waiting = "(" + waiting + ")"; // evaluate(waiting, true);
-        util::Logger()->debug(fmt::format("EP:EnsureExecutionOrder. -> {} (new waiting: {})", modified, waiting));
+        util::Logger()->debug("EP:EnsureExecutionOrder. -> {} (new waiting: {})", modified, waiting);
       } 
       // Otherwise, set new waiting (last -> current pos)
       else {
-        util::Logger()->debug(fmt::format("EP:EnsureExecutionOrder. -> {} (last: {})", modified, last));
+        util::Logger()->debug("EP:EnsureExecutionOrder. -> {} (last: {})", modified, last);
         waiting = modified.substr(last, modified.length()-last);
-        util::Logger()->debug(fmt::format("EP:EnsureExecutionOrder. => {} (new waiting: {})", modified, waiting));
+        util::Logger()->debug("EP:EnsureExecutionOrder. => {} (new waiting: {})", modified, waiting);
         modified.erase(modified.begin()+last, modified.end());
       }
     }
@@ -239,10 +218,10 @@ std::string ExpressionParser::EnsureExecutionOrder(std::string inp) {
   }
   // If waiting is not empty add to modified surrounded by brackets
   if (waiting != "") {
-    util::Logger()->debug(fmt::format("EP:EnsureExecutionOrder. -> {} (adding: {})", modified, waiting));
+    util::Logger()->debug("EP:EnsureExecutionOrder. -> {} (adding: {})", modified, waiting);
     modified += "(" + waiting + ")";
   }
 
-  util::Logger()->debug(fmt::format("EP:EnsureExecutionOrder. => {}", modified));
+  util::Logger()->debug("EP:EnsureExecutionOrder. => {}", modified);
   return modified;
 }

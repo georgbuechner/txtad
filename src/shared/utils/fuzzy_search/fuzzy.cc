@@ -61,8 +61,6 @@ double fuzzy::fast_search(const char* chS, const char* chIn, size_t lenS, size_t
   return 1;
 }
 
-
-
 /**
 * @brief compare to words with fuzzy search and case insensetive, AND modify id
 * @parameter sWord1 (searched word)
@@ -113,7 +111,7 @@ fuzzy::FuzzyMatch fuzzy::fuzzy(std::string str1, std::string str2) {
     return FuzzyMatch::STARTS_WITH;
   if (fuzzy_res == 0.19) 
     return FuzzyMatch::CONTAINS;
-  else if (fuzzy_res < 0.2)
+  else if ((str1.length() <= 4 && fuzzy_res < 0.2) || (str1.length() > 4 && fuzzy_res <= 0.3))
     return FuzzyMatch::FUZZY;
   return FuzzyMatch::NO_MATCH;
 }

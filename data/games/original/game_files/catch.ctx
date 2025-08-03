@@ -1,0 +1,27 @@
+{
+  "id": "catch",
+  "name": "Catch",
+  "description": "Catch f.e. error",
+  "shared": true,
+  "priority":-15,
+  "listeners": [
+    {
+      "id": "Inp1", 
+      "re_event": "show attributes", 
+      "arguments": "#la general", 
+      "permeable": false
+    },
+    {
+      "id": "Inp2", 
+      "re_event": "show all attributes", 
+      "arguments": "#laa general", 
+      "permeable": false
+    },
+    {
+      "id": "Q1",
+      "re_event": ".*",
+      "arguments": "#sa general._fails++;#> Don't punish me with stuff I can't do!",
+      "permeable": true
+    }
+  ]
+}

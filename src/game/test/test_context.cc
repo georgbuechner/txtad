@@ -2,16 +2,15 @@
 #include <catch2/catch_test_macros.hpp>
 #include <map>
 
-// constants used across different tests
-const std::string ID = "_1";
-const std::string NAME = "some name";
-const std::string DESCRIPTION = "some description";
-const std::string ENTRY_CONDITION_PATTERN = "abc.*";
-const int PRIORITY = 4;
-const bool PERMEABLE = false;
-
 TEST_CASE("Test constructor", "[objects][context]") {
-  
+  // constants used across different tests
+  const std::string ID = "_1";
+  const std::string NAME = "some name";
+  const std::string DESCRIPTION = "some description";
+  const std::string ENTRY_CONDITION_PATTERN = "abc.*";
+  const int PRIORITY = 4;
+  const bool PERMEABLE = false;
+ 
   SECTION("Test minimal constructor") {
       Context ctx(ID, PRIORITY, PERMEABLE);
 
@@ -32,7 +31,25 @@ TEST_CASE("Test constructor", "[objects][context]") {
   }
 }
 
+// test Attribute Methods
+/* add a new attribute
+   add a duplicate
+   set existing attribute
+   set non-existing attribute
+   get known key
+   get unknown key
+   remove attribute
+   check true/false cases for 'Has Attribute'
+*/
 TEST_CASE("Test setters", "[objects][context]") {
+  // constants used across different tests
+  const std::string ID = "_1";
+  const std::string NAME = "some name";
+  const std::string DESCRIPTION = "some description";
+  const std::string ENTRY_CONDITION_PATTERN = "abc.*";
+  const int PRIORITY = 4;
+  const bool PERMEABLE = false;
+
   Context ctx(ID, NAME, DESCRIPTION, ENTRY_CONDITION_PATTERN, PRIORITY, PERMEABLE);
 
   SECTION("Test set_name") {
@@ -58,6 +75,14 @@ TEST_CASE("Test setters", "[objects][context]") {
 }
 
 TEST_CASE("Test string representation of the class", "[objects][context]") {
+  // constants used across different tests
+  const std::string ID = "_1";
+  const std::string NAME = "some name";
+  const std::string DESCRIPTION = "some description";
+  const std::string ENTRY_CONDITION_PATTERN = "abc.*";
+  const int PRIORITY = 4;
+  const bool PERMEABLE = false;
+
   Context ctx(ID, NAME, DESCRIPTION, ENTRY_CONDITION_PATTERN, PRIORITY, PERMEABLE);
 
   std::string str = ctx.ToString();
@@ -68,6 +93,14 @@ TEST_CASE("Test string representation of the class", "[objects][context]") {
 }
 
 TEST_CASE("Test entry check", "[objects][context]") {
+  // constants used across different tests
+  const std::string ID = "_1";
+  const std::string NAME = "some name";
+  const std::string DESCRIPTION = "some description";
+  const std::string ENTRY_CONDITION_PATTERN = "abc.*";
+  const int PRIORITY = 4;
+  const bool PERMEABLE = false;
+
   Context ctx(ID, NAME, DESCRIPTION, ENTRY_CONDITION_PATTERN, PRIORITY, PERMEABLE);
 
   SECTION("Matching input returns true") {
@@ -80,6 +113,14 @@ TEST_CASE("Test entry check", "[objects][context]") {
 }
 
 TEST_CASE("Test attribute methods", "[objects][context]") {
+  // constants used across different tests
+  const std::string ID = "_1";
+  const std::string NAME = "some name";
+  const std::string DESCRIPTION = "some description";
+  const std::string ENTRY_CONDITION_PATTERN = "abc.*";
+  const int PRIORITY = 4;
+  const bool PERMEABLE = false;
+
   Context ctx(ID, NAME, DESCRIPTION, ENTRY_CONDITION_PATTERN, PRIORITY, PERMEABLE);
 
   SECTION("Add new attribute") {
@@ -92,14 +133,15 @@ TEST_CASE("Test attribute methods", "[objects][context]") {
   }
 
   SECTION("Set new attribute") {
+    ctx.AddAttribute("key2", "value1");
+    REQUIRE(ctx.GetAttribute("key2").value_or("") == "value1");
     REQUIRE(ctx.SetAttribute("key2", "value2") == true);
     REQUIRE(ctx.GetAttribute("key2").value_or("") == "value2");
   }
 
-  SECTION("Setting an existing attribute fails") {
-    ctx.AddAttribute("key1", "value1");
+  SECTION("Setting an non existing attribute fails") {
     REQUIRE(ctx.SetAttribute("key1", "new_value") == false);
-    REQUIRE(ctx.GetAttribute("key1").value_or("") == "value1");
+    REQUIRE(ctx.GetAttribute("key1").value_or("") == "");
   }
 
   SECTION("Get known key") {
@@ -133,6 +175,14 @@ TEST_CASE("Test attribute methods", "[objects][context]") {
 }
 
 TEST_CASE("Test listener methods calling EventManager", "[objects][context]") {
+  // constants used across different tests
+  const std::string ID = "_1";
+  const std::string NAME = "some name";
+  const std::string DESCRIPTION = "some description";
+  const std::string ENTRY_CONDITION_PATTERN = "abc.*";
+  const int PRIORITY = 4;
+  const bool PERMEABLE = false;
+
   Context ctx(ID, NAME, DESCRIPTION, ENTRY_CONDITION_PATTERN, PRIORITY, PERMEABLE);
 
   ExpressionParser parser;

@@ -1,0 +1,37 @@
+{
+  "id": "welcome_02",
+  "name": "Welcome 02",
+  "description": "Hi...",
+  "shared": true,
+  "permeable": false,
+  "priority":-9,
+  "listeners": [
+    {
+      "id": "L1", 
+      "re_event": "hi", 
+      "arguments": "#ctx replace *dialogs -> dialogs/welcome/03_hello", 
+      "logic": "{dialogs/welcome/03_hello._closed} = 0", 
+      "permeable": false
+    },
+    {
+      "id": "Q0", 
+      "re_event": "hi", 
+      "arguments": "#> This door is still blocked. At least for <i>you</i>.", 
+      "logic": "{dialogs/welcome/03_hello._closed} = 1", 
+      "permeable": false
+    },
+    {
+      "id": "Q1",
+      "re_event": "go .*",
+      "arguments": "#sa general._fails++;#> You can't tell me to go anywhere! (But you might be able to go somewhere... later",
+      "permeable": false
+    },
+    {
+      "id": "Q9",
+      "re_event": "<user-inp>",
+      "arguments": "#sa general._fails++;#> Them words I can't here be pain in my ear!",
+      "permeable": false
+    }
+
+  ]
+}

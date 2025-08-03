@@ -1,0 +1,9 @@
+{
+  "id": "minds", 
+  "name": "Minds", 
+  "description":"",
+  "attributes": {
+    "uneasyness": "$color_blue$mr UNEASYNESS $$",
+    "uncannyness": "$color_red$mr UNCANNYNESS $$"
+  }
+}

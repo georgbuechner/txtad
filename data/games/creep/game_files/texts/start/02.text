@@ -1,0 +1,4 @@
+{
+  "txt": "{minds.uneasyness} Sorry, I meant...",
+  "permanent_events": "#> {dialogs/welcome/01_hello->desc}" 
+}

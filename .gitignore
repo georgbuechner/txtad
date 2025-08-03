@@ -19,3 +19,6 @@ data/games/*
 !data/games/test
 !data/games/original
 .dir-locals.el
+build/*
+vgcore.*
+.cache/*

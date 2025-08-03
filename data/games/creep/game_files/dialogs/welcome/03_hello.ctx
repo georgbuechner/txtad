@@ -1,0 +1,11 @@
+{
+  "id": "welcome_02",
+  "name": "Welcome 02",
+  "description": "And what kind of bird are <i>you</i>?",
+  "shared": true,
+  "permeable": false,
+  "priority":-9,
+  "attributes": {
+    "_closed": "1"
+  }
+}

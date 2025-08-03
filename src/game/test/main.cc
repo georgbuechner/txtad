@@ -1,5 +1,6 @@
 #include "game/utils/defines.h"
 #include "shared/utils/utils.h"
+#include <spdlog/common.h>
 #define CATCH_CONFIG_RUNNER
 #include <catch2/catch_test_macros.hpp>
 #include <catch2/catch_session.hpp>
