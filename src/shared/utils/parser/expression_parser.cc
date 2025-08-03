@@ -76,14 +76,14 @@ std::string ExpressionParser::Evaluate(std::string input) const {
       std::string replacement = "";
       if (_default_subsitutes.count(subsitute) > 0) {
         replacement = _default_subsitutes.at(subsitute);
-        util::Logger()->info("found default subsitute: {}", replacement);
       } else {
         replacement = _substitute_fn(subsitute);
         if (replacement == "") {
           replacement = "''";
         } else if (replacement == txtad::NO_REPLACEMENT) {
           util::Logger()->error("No subsitute found for: {}", subsitute);
-        }       }
+        }       
+      } 
       if (replacement != "") {
         // Add substituted string to replaced string and increase index
         replaced += replacement;

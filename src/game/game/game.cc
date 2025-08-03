@@ -5,7 +5,6 @@
 #include "shared/utils/parser/expression_parser.h"
 #include "shared/utils/parser/game_file_parser.h"
 #include "shared/utils/utils.h"
-#include <cinttypes>
 #include <fmt/core.h>
 #include <functional>
 #include <memory>
@@ -18,7 +17,7 @@ Game::MsgFn Game::_cout = nullptr;
 Game::Game(std::string path, std::string name) : _path(path), _name(name), _cur_user(nullptr), 
     _parser(std::bind(&Game::t_substitue_fn, this, std::placeholders::_1)),
     _settings(*util::LoadJsonFromDisc(_path + "/" + txtad::GAME_SETTINGS)) {
-  util::SetUpLogger(txtad::FILES_PATH, _name, spdlog::level::debug);
+  util::SetUpLogger(txtad::FILES_PATH, _name, util::Logger()->level());
   util::LoggerContext scope(_name);
 
   // Create baisc handlers
