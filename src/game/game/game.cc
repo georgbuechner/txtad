@@ -394,36 +394,22 @@ void Game::h_remove_user(const std::string& event, const std::string& ctx_id) {
   _cur_user = nullptr;
 }
 
-std::string Game::t_substitue_fn(const std::string& str) {
-  std::vector<std::string> parts = {};
-  // Check context attributes
-  if ((parts = util::Split(str, ".")).size() == 2) {
-    std::string ctx_id = parts[0];
-    std::string attribute_key = parts[1];
-    util::Logger()->debug("Game::t_substitue_fn. {}, {}", ctx_id, attribute_key);
-    if (_cur_user->contexts().count(ctx_id) > 0) {
-      if (auto attribute_value = _cur_user->contexts().at(ctx_id)->GetAttribute(attribute_key))
-        return *attribute_value;
-      else 
-        util::Logger()->warn("Game::t_substitue_fn. In CTX {} attribute {} not found!", ctx_id, attribute_key);
-    } else {
-      util::Logger()->warn("Game::t_substitue_fn. CTX {} not found!", ctx_id);
-    }
+std::string Game::t_substitue_fn(const std::string& subsitute) {
+  if (subsitute == txtad::EVENT_REPLACEMENT) {
+    return _cur_user->context_stack().cur_event();
+  } else if (subsitute == txtad::UID_REPLACEMENT) {
+    return _cur_user->id();
+  } else if (auto print_ctx = User::GetCtxPrint(subsitute)) {
+    if (print_ctx->_kind == txtad::CtxPrint::VARIABLE)
+      return GetText("", _cur_user->PrintCtx(print_ctx->_ctx_id, print_ctx->_what));
+    else if (print_ctx->_kind == txtad::CtxPrint::ATTRIBUTE)
+      return _cur_user->PrintCtxAttribute(print_ctx->_ctx_id, print_ctx->_what);
+  } else if (_cur_user->texts().count(subsitute) > 0) {
+    return GetText("", _cur_user->PrintTxt(subsitute));
+  } else {
+    util::Logger()->info("Handler::cout. {} did not match pattern.", subsitute);
   }
-  // Check context fields
-  if ((parts = util::Split(str, "->")).size() == 2) {
-    std::string ctx_id = parts[0];
-    std::string field = parts[1];
-    if (_cur_user->contexts().count(ctx_id) > 0) {
-      if (field == "name")
-        return _cur_user->contexts().at(ctx_id)->name();
-      else
-        util::Logger()->warn("Game::t_substitue_fn. FIELD {} does not exist in contexts!", field);
-    } else {
-      util::Logger()->warn("Game::t_substitue_fn. CTX {} not found!", ctx_id);
-    }
-  }
-  return "";
+  return txtad::NO_REPLACEMENT;
 }
 
 std::string Game::GetText(std::string event, std::string args) {
@@ -435,20 +421,7 @@ std::string Game::GetText(std::string event, std::string args) {
       if (closing != -1) {
         std::string subsitute = args.substr(i+1, closing-(i+1));
         util::Logger()->info("Handler::cout: found subsitute {}", subsitute);
-        if (subsitute == txtad::EVENT_REPLACEMENT) {
-          txt += event;
-        } else if (subsitute == txtad::UID_REPLACEMENT) {
-          txt += _cur_user->id();
-        } else if (auto print_ctx = User::GetCtxPrint(subsitute)) {
-          if (print_ctx->_kind == txtad::CtxPrint::VARIABLE)
-            txt += GetText("", _cur_user->PrintCtx(print_ctx->_ctx_id, print_ctx->_what));
-          else if (print_ctx->_kind == txtad::CtxPrint::ATTRIBUTE)
-            txt += _cur_user->PrintCtxAttribute(print_ctx->_ctx_id, print_ctx->_what);
-        } else if (_cur_user->texts().count(subsitute) > 0) {
-          txt += GetText("", _cur_user->PrintTxt(subsitute));
-        } else {
-          util::Logger()->info("Handler::cout. {} did not match pattern.", subsitute);
-        }
+        txt += t_substitue_fn(subsitute);
         i = closing;
       } else {
         txt += args[i];

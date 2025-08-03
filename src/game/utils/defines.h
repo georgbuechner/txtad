@@ -28,6 +28,7 @@ namespace txtad {
   const std::string UID_REPLACEMENT = "<uid>";
   const std::string IS_USER_REPLACEMENT = "<user-inp>";
   const std::string IS_USER_INP = "^(?!#)(.*)";
+  const std::string NO_REPLACEMENT = "#no_subsitute";
 
   // print ctx regex 
   const std::string RE_PRINT_CTX = R"((.*?)(->|\.)(.*))";

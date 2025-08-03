@@ -77,6 +77,7 @@ LForwarder::LForwarder(const nlohmann::json& json) : LForwarder(json.at("id"), j
 
 // methods 
 bool LForwarder::Test(const std::string& event, const ExpressionParser& parser) const {
+  util::Logger()->info(fmt::format("LForwarder::Test: {}, {}, {}", _id, _event.str(), _logic));
   if (_logic != "" && parser.Evaluate(LHandler::ReplacedArguments(event, _logic)) != "1")
     return false;
   return LHandler::Test(event, parser);

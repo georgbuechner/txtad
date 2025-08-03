@@ -12,6 +12,9 @@ class ContextStack {
   public: 
     ContextStack();
 
+    // getter 
+    std::string cur_event() const;
+
     // methods
     bool exists(const std::string& id) const;
     bool insert(std::shared_ptr<Context> context);
@@ -25,6 +28,7 @@ class ContextStack {
   private: 
     std::map<std::string, std::shared_ptr<Context>> _contexts;
     std::vector<std::shared_ptr<Context>> _sorted_contexts;
+    std::string _cur_event;
 
     void TakeEvent(const std::string& event, const ExpressionParser& parser);
 };

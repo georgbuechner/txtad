@@ -9,15 +9,15 @@
       "id": "Inp1", 
       "re_event": "show inventory", 
       "arguments": "#> Items in inventory: {*items->name}", 
+      "logic": "{*items->name} != ''", 
       "permeable": false
     },
     {
       "id": "Inp2", 
-      "re_event": "show items", 
+      "re_event": "show inventory", 
       "arguments": "#> No Items in inventory.", 
-      "logic": "{*items->name} = ", 
+      "logic": "{*items->name} = ''", 
       "permeable": false
     }
-
   ]
 }

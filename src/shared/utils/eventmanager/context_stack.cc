@@ -6,6 +6,11 @@
 
 ContextStack::ContextStack() {};
 
+// getter
+std::string ContextStack::cur_event() const {
+  return _cur_event;
+}
+
 // methods
 bool ContextStack::insert(std::shared_ptr<Context> context) {
   if (_contexts.count(context->id()) > 0) {
@@ -91,9 +96,11 @@ void ContextStack::TakeEvents(std::string& events, const ExpressionParser& parse
     util::Logger()->debug("ContextStack::TakeEvents: {}", event);
     TakeEvent(event.substr(0), parser);
   }
+  _cur_event = "";
 }
 
 void ContextStack::TakeEvent(const std::string& event, const ExpressionParser& parser) {
+  _cur_event = event;
   // (using index-based iteration, since container might be modified during
   // iteration
   for (size_t i=0; i<_sorted_contexts.size();) {

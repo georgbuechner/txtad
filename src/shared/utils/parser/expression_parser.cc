@@ -1,5 +1,6 @@
 //#include "utils/parser/expression_parser.h"
 #include "expression_parser.h"
+#include "game/utils/defines.h"
 #include "shared/utils/fuzzy_search/fuzzy.h"
 #include "shared/utils/utils.h"
 #include <algorithm>
@@ -15,6 +16,7 @@ std::map<std::string, std::string(*)(const std::string&, const std::string&)> Ex
   {">=", [](const std::string& a, const std::string& b) { return std::to_string(std::stoi(a) >= std::stoi(b)); } },
   {"<=", [](const std::string& a, const std::string& b) { return std::to_string(std::stoi(a) <= std::stoi(b)); } },
   {"=", [](const std::string& a, const std::string& b) { return std::to_string(a == b); } },
+  {"!=", [](const std::string& a, const std::string& b) { return std::to_string(a != b); } },
   {"~", [](const std::string& a, const std::string& b) { return std::to_string(fuzzy::fuzzy(b, a)); } },
   {":", [](const std::string& a, const std::string& b) -> std::string { 
           util::Logger()->debug("EP:InList. {} in {}", a, b);
@@ -78,9 +80,10 @@ std::string ExpressionParser::Evaluate(std::string input) const {
       } else {
         replacement = _substitute_fn(subsitute);
         if (replacement == "") {
+          replacement = "''";
+        } else if (replacement == txtad::NO_REPLACEMENT) {
           util::Logger()->error("No subsitute found for: {}", subsitute);
-        } 
-      }
+        }       }
       if (replacement != "") {
         // Add substituted string to replaced string and increase index
         replaced += replacement;
