@@ -1,6 +1,7 @@
 #include "game/game/user.h"
 #include "game/utils/defines.h"
 #include "shared/objects/context/context.h"
+#include "shared/utils/parser/expression_parser.h"
 #include "shared/utils/utils.h"
 #include <memory>
 #include <optional>
@@ -95,9 +96,9 @@ void User::RemoveContext(const std::string& ctx_id) {
   }
 }
 
-std::string User::PrintTxt(std::string txt_id) {
+std::string User::PrintTxt(std::string txt_id, const ExpressionParser& parser) {
   if (_texts.count(txt_id) > 0)
-    return _texts.at(txt_id)->print(_event_queue);
+    return util::Join(_texts.at(txt_id)->print(_event_queue, parser), txtad::WEB_CMD_ADD_PROMPT);
   util::Logger()->warn("User::PrintText. Text {} not found", txt_id);
 }
 

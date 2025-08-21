@@ -8,6 +8,7 @@
 #include <spdlog/common.h>
 #include <spdlog/sinks/daily_file_sink.h>
 #include <spdlog/sinks/stdout_color_sinks.h>
+#include <sstream>
 
 std::string util::LOGGER = "---";
 
@@ -25,6 +26,34 @@ void util::SetUpLogger(const std::string& main_path, const std::string& name, sp
 
 std::shared_ptr<spdlog::logger> util::Logger() {
   return spdlog::get(LOGGER);
+}
+
+struct CommaIterator : public std::iterator<std::output_iterator_tag, void, void, void, void> {
+  std::ostream *os;
+  std::string comma;
+  bool first;
+
+  CommaIterator(std::ostream& os, const std::string& comma) : os(&os), comma(comma), first(true) { }
+
+  CommaIterator& operator++() { return *this; }
+  CommaIterator& operator++(int) { return *this; }
+  CommaIterator& operator*() { return *this; }
+  template <class T>
+  CommaIterator& operator=(const T& t) {
+    if (first) {
+      first = false;
+    } else {
+      *os << comma;
+    }
+    *os << t;
+    return *this;
+  }
+};
+
+std::string util::Join(const std::vector<std::string>& vec, const std::string& separator) {
+  std::ostringstream oss; 
+  std::copy(vec.begin(), vec.end(), CommaIterator(oss, separator)); 
+  return oss.str();
 }
 
 std::vector<std::string> util::Split(std::string str, std::string delimiter) {

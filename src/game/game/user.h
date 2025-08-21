@@ -32,7 +32,7 @@ class User {
     void AddToEventQueue(std::string events);
     void LinkContextToStack(std::shared_ptr<Context> ctx);
     void RemoveContext(const std::string& ctx_id);
-    std::string PrintTxt(std::string id);
+    std::string PrintTxt(std::string id, const ExpressionParser& parser);
     std::string PrintCtx(std::string id, std::string what);
     std::string PrintCtxAttribute(std::string id, std::string what);
 

@@ -56,3 +56,9 @@ TEST_CASE("Test GetUserId" "[util]") {
   REQUIRE(user_id == USER_ID);
   REQUIRE(full_inp == INP_PART);
 }
+
+TEST_CASE("Test join(str)", "[util]") {
+  REQUIRE(util::Join({"jan"}, ", ") == "jan");
+  REQUIRE(util::Join({"jan, alex"}, ", ") == "jan, alex");
+  REQUIRE(util::Join({}, ", ") == "");
+}

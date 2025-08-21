@@ -404,7 +404,7 @@ std::string Game::t_substitue_fn(const std::string& subsitute) {
     else if (print_ctx->_kind == txtad::CtxPrint::ATTRIBUTE)
       return _cur_user->PrintCtxAttribute(print_ctx->_ctx_id, print_ctx->_what);
   } else if (_cur_user->texts().count(subsitute) > 0) {
-    return GetText("", _cur_user->PrintTxt(subsitute));
+    return GetText("", _cur_user->PrintTxt(subsitute, _parser));
   } else {
     util::Logger()->info("Handler::cout. {} did not match pattern.", subsitute);
   }
