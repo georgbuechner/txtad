@@ -4,7 +4,15 @@ let _receiving = false;
 let _content = null;
 let _cmd = null;
 
+let _bg_sound_file = ''
+let _bg_sound = ''
+let _bg_sound_play = null;
 const delay = ms => new Promise(res => setTimeout(res, ms));
+
+const PROMPT = '$prompt';
+const BGSOUND_SET = '$bgsset_';
+const BGSOUND_PLAY = '$bgsplay';
+const BGSOUND_PAUSE = '$bgspause';
 
 window.onload = function() {
   document.getElementById("cmd").focus();
@@ -37,13 +45,35 @@ window.onload = function() {
     if (event.data == "$clear")
       ClearContent()
     else {
-      if (AddInput(event.data)) {
-        AddInput("Press enter to continue...");
-        _wait = true
+      const payload = event.data; 
+      if (payload.indexOf(PROMPT) !== -1) {
+        for (let part of payload.split(PROMPT)) {
+          AddInput(part);
+          AddInput("Press enter to continue...");
+          _wait = true;
+          while (_wait) { await delay(100); }
+        }
+      } else {
+        AddInput(event.data)
       }
     }
     _receiving = false;
   };
+
+  // Audio handling: 
+  const unlockAndPlay = () => {
+    // If WebAudio is suspended (common on first page load), resume it.
+    if (Howler.ctx && Howler.ctx.state === 'suspended') {
+      Howler.ctx.resume().catch(e => console.error('resume failed', e));
+    }
+    if (_bg_sound_file !== "")
+      _bg_sound_play = _bg_sound.play();
+    console.log('play() called, id=', _bg_sound_play, 'ctx=', Howler.ctx?.state);
+  };
+  // Optional: auto-unlock on first pointer/keydown anywhere on the page
+  const autoUnlock = () => { unlockAndPlay(); window.removeEventListener('pointerdown', autoUnlock); window.removeEventListener('keydown', autoUnlock); };
+  window.addEventListener('pointerdown', autoUnlock, { once: true });
+  window.addEventListener('keydown', autoUnlock, { once: true });
 };
 
 window.onbeforeunload = function() {
@@ -92,11 +122,45 @@ function InsertAtCursor(cursor, text, cur) {
   }
 }
 
+function ParseParam(in_cmd, payload) {
+  let pos = payload.indexOf(in_cmd);
+  let audio_cmd_end_pos = (payload.indexOf(' ', pos) !== -1) 
+    ? payload.indexOf(' ', pos)
+    : (payload.indexOf('$', pos+1) !== -1) 
+        ? payload.indexOf('$', pos+1)
+        : payload.length;
+  const cmd = payload.substring(pos, audio_cmd_end_pos);
+  return [cmd.substring(cmd.indexOf('_')+1), payload.replace(cmd, '')];
+}
+
+function SetBackgroundSound(audio_file) {
+  _bg_sound_file = audio_file;
+  _bg_sound = new Howl({ src: ['media/' + _bg_sound_file ] });
+}
+
+function PlayBackgroundAudio() {
+  _bg_sound_play = _bg_sound.play();
+}
+function PauseBackgroundAudio() {
+  _bg_sound_play = _bg_sound.pause();
+}
+
 function AddInput(payload) {
-  var add_prompt = false;
-  if (payload.indexOf('$prompt') !== -1) {
-    add_prompt = true;
-    payload = payload.replace('$prompt', '');
+  if (payload.indexOf(BGSOUND_SET) !== -1) {
+    console.log("AddInput1: ", payload);
+    const [audio_file, modified_payload] = ParseParam(BGSOUND_SET, payload);
+    console.log("rtn: ", audio_file, modified_payload);
+    SetBackgroundSound(audio_file);
+    payload = modified_payload;
+    console.log("AddInput2: ", payload);
+  }
+  if (payload.indexOf(BGSOUND_PLAY) !== -1) {
+    PlayBackgroundAudio();
+    payload = payload.replace(BGSOUND_PLAY, '');
+  }
+  if (payload.indexOf(BGSOUND_PAUSE) !== -1) {
+    PauseBackgroundAudio();
+    payload = payload.replace(BGSOUND_PAUSE, '');
   }
 
   let cursor = 0;
@@ -151,7 +215,6 @@ function AddInput(payload) {
 
   _content.appendChild(p);
   _cmd.value = "";
-  return add_prompt;
 }
 
 function ClearContent() {
