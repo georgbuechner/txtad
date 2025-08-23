@@ -13,6 +13,7 @@ const PROMPT = '$prompt';
 const BGSOUND_SET = '$bgsset_';
 const BGSOUND_PLAY = '$bgsplay';
 const BGSOUND_PAUSE = '$bgspause';
+const FGSOUND_PLAY = '$fgsplay_';
 
 window.onload = function() {
   document.getElementById("cmd").focus();
@@ -141,18 +142,57 @@ function SetBackgroundSound(audio_file) {
 function PlayBackgroundAudio() {
   _bg_sound_play = _bg_sound.play();
 }
+
 function PauseBackgroundAudio() {
   _bg_sound_play = _bg_sound.pause();
 }
 
+function PlayForegroundMusik(audio_file, {duckTo=0.5, fadeMS = 200 } = {}) {
+  return new Promise((resolve, reject) => {
+    // Duck background (if present) 
+    const preVol = (_bg_sound) ? _bg_sound.volume() : null; 
+    if (_bg_sound && preVol !== null) {
+      _bg_sound.fade(_bg_sound.volume(), duckTo, fadeMS); 
+    }
+
+    const duckBack = () => {
+      if (_bg_sound&& preVol !== null) {
+        _bg_sound.fade(_bg_sound.volume(), preVol, fadeMS);
+      }
+    };
+
+    const audio = new Howl({
+      src: ['media/' + audio_file],
+      volume: 1.0,
+      onloadererror: (_, err) => {
+        duckBack();
+        reject(err);
+      },
+      onplayerror: (_, err) => {
+        duckBack();
+        reject(err);
+      }
+    }); 
+
+    audio.once('end', () => {
+      duckBack(); 
+      resolve();
+    });
+
+    audio.once('stop', () => {
+      duckBack(); 
+      resolve();
+    });
+
+    audio.play();
+  });
+}
+
 function AddInput(payload) {
   if (payload.indexOf(BGSOUND_SET) !== -1) {
-    console.log("AddInput1: ", payload);
     const [audio_file, modified_payload] = ParseParam(BGSOUND_SET, payload);
-    console.log("rtn: ", audio_file, modified_payload);
     SetBackgroundSound(audio_file);
     payload = modified_payload;
-    console.log("AddInput2: ", payload);
   }
   if (payload.indexOf(BGSOUND_PLAY) !== -1) {
     PlayBackgroundAudio();
@@ -162,6 +202,13 @@ function AddInput(payload) {
     PauseBackgroundAudio();
     payload = payload.replace(BGSOUND_PAUSE, '');
   }
+  if (payload.indexOf(FGSOUND_PLAY) !== -1) {
+    const [audio_file, modified_payload] = ParseParam(FGSOUND_PLAY, payload);
+    console.log("FG: ", audio_file);
+    PlayForegroundMusik(audio_file);
+    payload = modified_payload;
+  }
+
 
   let cursor = 0;
   let closing = []
