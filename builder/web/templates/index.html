@@ -1,0 +1,17 @@
+{% extends "layout/layout.html" %}
+
+{% block content %}
+  <h4>All games:</h4>
+  {% if creatorname != "" %}
+    Logged in as: <i>{{ creatorname }}</i>
+  {% else %}
+    <a href="/login">login</a>
+  {% endif %}
+
+  <ul>
+    {% for id in games %}
+      <li>{{ id }} </li>
+    {% endfor %}
+  </ul>
+
+{% endblock %}

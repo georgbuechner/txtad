@@ -7,6 +7,7 @@
 
 class Settings {
   public: 
+    Settings() {}
     Settings(const nlohmann::json& json) : _initial_events(json.at("initial_events")), 
         _initial_ctx_ids(json.at("initial_contexts").get<std::vector<std::string>>()) {}
 

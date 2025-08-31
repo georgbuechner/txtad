@@ -1,0 +1,17 @@
+{% extends "layout/layout.html" %}
+
+{% block content %}
+  <h4>Login<h4>
+  <form action="/api/creator/login" method="post">
+    <div class="mb-3">
+      <label for="creator_name" class="form-label">Creator Name: </label>
+      <input type="text" class="form-control" id="username" name="username" aria-describedby="emailHelp">
+    </div>
+    <div class="mb-3">
+      <label for="password" class="form-label">Password: </label>
+      <input type="password" class="form-control" id="password" name="password">
+    </div>
+    <p>{{ msg }}</p>
+    <input type="submit" class="btn btn-primary"></input>
+  </form>
+{% endblock %}

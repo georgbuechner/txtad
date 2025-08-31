@@ -1,5 +1,5 @@
-#ifndef SRC_UTILS_DEFINES_H
-#define SRC_UTILS_DEFINES_H 
+#ifndef SRC_GAME_UTILS_DEFINES_H
+#define SRC_GAME_UTILS_DEFINES_H 
 
 #include <functional>
 #include <string>

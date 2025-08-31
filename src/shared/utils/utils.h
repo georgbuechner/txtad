@@ -53,6 +53,15 @@ namespace util
       std::regex _regex;
   };
 
+  template< typename tPair >
+  struct second_t {
+      typename tPair::second_type operator()( const tPair& p ) const { return p.second; }
+  };
+
+  template< typename tMap > 
+  second_t< typename tMap::value_type > second( const tMap& m ) { 
+    return second_t< typename tMap::value_type >(); }
+
 
   std::string Join(const std::vector<std::string>& vec, const std::string& separator);
 
@@ -113,6 +122,32 @@ namespace util
    * @returns user-id or nullopt
    */
   std::optional<std::string> GetUserId(std::string& inp);
+
+  /** 
+   * Simple validation, that can only handled json's which are objects and top
+   * level.
+   */
+  std::optional<std::map<std::string, nlohmann::json>> ValidateSimpleJson(std::string json_string, std::vector<std::string> keys);
+
+  /**
+   * Creates a random string (chars: 0-9, a-z, A-Z) from given length
+   * @param[in] len 
+   * @return random string (chars: 0-9, a-z, A-Z)
+   */
+  std::string CreateRandomString(int len);
+
+  /**
+   * @brief Implements a cryptographic hash function, uses the slower but better
+   * SHA3 algorithm also named Keccak
+   * @param input The string to hash, for example password email whatever.
+   * @return The hashed string is returned, the input remains unchanged
+   */
+  std::string HashSha3512(const std::string& input);
+
+  std::string generate_random_hex_string (size_t length);
+
+  std::string GetPage(const std::string& path);
+
 }
 
 #endif

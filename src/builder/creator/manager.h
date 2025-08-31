@@ -1,0 +1,186 @@
+#ifndef SRC_BUILDER_CREATOR_MANAGER_H
+#define SRC_BUILDER_CREATOR_MANAGER_H 
+
+#include "builder/creator/creator.h"
+#include "builder/utils/defines.h"
+#include "shared/utils/utils.h"
+#include <catch2/internal/catch_clara.hpp>
+#include <filesystem>
+#include <fmt/core.h>
+#include <httplib.h>
+#include <map>
+#include <memory>
+#include <mutex>
+#include <optional>
+#include <shared_mutex>
+#include <string>
+
+
+class CreatorManager { 
+
+  public:
+    CreatorManager() {
+      for (const auto& dir : std::filesystem::directory_iterator(builder::FILES_PATH + builder::CREATORS_PATH)) {
+        if (auto json = util::LoadJsonFromDisc(dir.path())) {
+          std::shared_ptr<Creator> creator = std::make_shared<Creator>(*json);
+          _creators[creator->username()] = creator;
+        } else {
+          util::Logger()->warn(fmt::format("CreatorManager: Invalid user-json at: ", dir.path().string()));
+        }
+      }
+    }
+
+    class AccessGuard {
+      public: 
+        AccessGuard(std::shared_ptr<Creator> instance, std::mutex& mtx) 
+        : _instance(instance), _lock(mtx) {} 
+
+        std::shared_ptr<Creator> operator->() { return _instance; } 
+
+      private: 
+        std::shared_ptr<Creator> _instance; 
+        std::unique_lock<std::mutex> _lock;
+    };
+
+    // methods 
+    std::optional<AccessGuard> CreatorFromCookie(const httplib::Request& req, httplib::Response& resp) {
+      std::string cookie = req.get_header_value("cookie");
+      std::shared_lock sl(_smtx);
+      if (_cookies.count(GetSessionIdFromCookie(cookie)) > 0) {
+        std::string username = _cookies.at(cookie);
+        if (_creators.count(username) > 0 && _creators.at(username))
+          return AccessGuard(_creators.at(username), _mtx);
+      }      
+      resp.status = 404; 
+      resp.set_content("Username not found or invalid cookie", "text/txt");
+      return std::nullopt;
+    }
+
+    std::optional<AccessGuard> CreatorFromUsername(const std::string& username) {
+      if (_creators.count(username) > 0) {
+        return AccessGuard(_creators.at(username), _mtx);
+      } else {
+        return std::nullopt;
+      }
+    }
+
+    void Register(const httplib::Request& req, httplib::Response& resp) {
+      if (auto json = util::ValidateSimpleJson(req.body, {"username", "password", "password_repeat"})) {
+        std::string username = json->at("username");
+        std::string password = json->at("password");
+        std::shared_lock sl(_smtx);
+        if (auto creator = CreatorFromUsername(username)) {
+          resp.status = 401; 
+          resp.set_content("Creator name already exists", "text/txt");
+        } else if (password != json->at("password_repeat")) {
+          resp.status = 401; 
+          resp.set_content("Passwords don't match", "text/txt");
+        } else if (!CheckPasswordStrength(password)) {
+          resp.status = 401; 
+          resp.set_content("Password strength insuficient", "text/txt");
+        } else {
+          std::shared_ptr<Creator> creator = std::make_shared<Creator>(username, password);
+          _creators[creator->username()] = creator;
+          resp.set_header("Set-Cookie", GenerateCookie(creator->username()).c_str());
+          resp.status = 200; 
+        }
+      } else {
+        resp.status = 401; 
+        resp.set_content("Invalid JSON or missing fields.", "text/txt");
+      }
+    }
+
+    std::string Login(const httplib::Request& req, httplib::Response& resp) {
+      util::Logger()->info("DO LOGIN");
+      if (req.get_param_value_count("username") == 0 || req.get_param_value_count("password") == 0) {
+        resp.status = 401; 
+        return "Invalid JSON or missing fields.";
+      } else {
+        const std::string username = req.get_param_value("username");
+        const std::string password = req.get_param_value("password");
+
+        std::shared_lock sl(_smtx);
+        if (auto creator = CreatorFromUsername(username)) {
+          if ((*creator)->password() == "password") {
+            resp.set_header("Set-Cookie", GenerateCookie((*creator)->username()).c_str());
+            resp.status = 200; 
+          } else {
+            resp.status = 401; 
+            return "Passwords don't match";
+          }
+        } else {
+          resp.status = 404; 
+          return "Username not found.";
+        }
+      } 
+      return "";
+    }
+
+    void Logout(const httplib::Request& req, httplib::Response& resp) {
+      if (auto creator = CreatorFromCookie(req, resp)) {
+        std::shared_lock ul(_smtx);
+        _cookies.erase(GetSessionIdFromCookie(req.get_header_value("cookie")));
+        resp.status = 200; 
+      } 
+    }
+
+  private: 
+    std::shared_mutex _smtx;
+    std::mutex _mtx;
+    std::map<std::string, std::shared_ptr<Creator>> _creators;
+    std::map<std::string, std::string> _cookies;
+
+   /**
+     * Creates random 32 characters to generates cookie. And maps cookie and given
+     * user.
+     * @param[in] username (username which is mapped on cookie)
+     * @return returns cookie as string.
+     */
+    std::string GenerateCookie(const std::string& username) {
+      // Get session-id.
+      std::string sessid = util::CreateRandomString(32);
+      // Add cookie for user.
+      std::unique_lock ul(_smtx);
+      _cookies[sessid] = username; 
+      return builder::COOKIE_NAME + "=" + sessid + "; Path=/; SameSite=Strict";
+    }
+
+    std::string GetSessionIdFromCookie(std::string cookie) const {
+      // Parse user-cookie-id from cookie and check if this user exists.
+      size_t start = cookie.find(builder::COOKIE_NAME + "=") + builder::COOKIE_NAME_LEN + 1;
+      size_t end = cookie.find(";");
+      if (cookie.find(builder::COOKIE_NAME + "=") == std::string::npos) {
+        return "";
+      }
+      if (end == std::string::npos)
+        end = cookie.length();
+      std::string session_id = cookie.substr(start, end-start);
+      return session_id;
+    }
+
+    
+    /**
+     * Checks password strength.
+     * Either 15 characters long, or 8 characters + 1 lowercase + 1 digit.
+     * @param[in] password (given password to check)
+     * @return whether strength is sufficient.
+     */
+    bool CheckPasswordStrength(const std::string& password) const {
+      if (password.length() >= 15) return true;
+      if (password.length() < 8) return false;
+      bool digit = false, letter = false;
+      for (size_t i=0; i<password.length(); i++) {
+        if (std::isdigit(password[i]) != 0) {
+          digit = true;
+        } else if (std::islower(password[i]) != 0) {
+          letter = true;
+        } if (letter == true && digit == true) {
+          return true;
+        }
+      }
+      return false;
+    }
+
+};
+
+#endif

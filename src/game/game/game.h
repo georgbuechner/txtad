@@ -16,6 +16,7 @@ class Game {
   public: 
     using MsgFn = std::function<void(std::string, std::string)>;
 
+    Game() {};
     Game(std::string path, std::string name);
     ~Game();
 
