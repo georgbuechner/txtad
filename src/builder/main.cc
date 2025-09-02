@@ -69,16 +69,34 @@ int main() {
       }
     };
 
+    auto create_params = [&](const httplib::Request& req, httplib::Response& resp) -> jinja2::ValuesMap {
+      util::Logger()->info(fmt::format("Builder::create_params"));
+      jinja2::ValuesMap params;
+      params.emplace("games", jhelp::Map(games));
+      util::Logger()->info(fmt::format("Builder::create_params. checking user"));
+      if (auto creator = manager.CreatorFromCookie(req, resp)) {
+        params.emplace("creatorname", (*creator)->username());
+      } else {
+        params.emplace("creatorname", "");
+      }
+      util::Logger()->info(fmt::format("Builder::create_params. checking user done"));
+      if (req.get_param_value_count("msg") > 0)
+        params.emplace("msg", req.get_param_value("msg"));
+      util::Logger()->info(fmt::format("Builder::create_params. done"));
+      return params;
+    };
 
-    // User 
+
+    // API
     http_server.Post("/api/creator/register", [&](const httplib::Request& req, httplib::Response& resp) {
-      manager.Register(req, resp);
+      const std::string msg = manager.Register(req, resp);
+      util::Logger()->info(fmt::format("Builder::Register: redirecting to {}", (msg != "") ? "/register?msg=" + msg : "/"));
+      resp.set_redirect((msg != "") ? "/register?msg=" + msg : "/", 303);
     });
 
     http_server.Post("/api/creator/login", [&](const httplib::Request& req, httplib::Response& resp) {
-      util::Logger()->info("LOGIN ::/api/creator/login");
-      std::string msg = manager.Login(req, resp);
-      resp.set_redirect("/login?msg='" + msg + "'");
+      const std::string msg = manager.Login(req, resp);
+      resp.set_redirect((msg != "") ? "/login?msg=" + msg : "/", 303);
     });
 
     http_server.Post("/api/creator/logout", [&](const httplib::Request& req, httplib::Response& resp) {
@@ -105,22 +123,18 @@ int main() {
       } 
     });
 
+    // PAGES
     http_server.Get("/", [&](const httplib::Request& req, httplib::Response& resp) {
-      jinja2::ValuesMap params;
-      params.emplace("games", jhelp::Map(games));
-      if (auto creator = manager.CreatorFromCookie(req, resp)) {
-        params.emplace("creatorname", (*creator)->username());
-      } else {
-        params.emplace("creatorname", "");
-      }
-      load_template(resp, "index.html", params);
+      util::Logger()->info(fmt::format("Builder::Root"));
+      load_template(resp, "index.html", create_params(req, resp));
     });
 
     http_server.Get("/login", [&](const httplib::Request& req, httplib::Response& resp) {
-      jinja2::ValuesMap params;
-      if (req.get_param_value_count("msg") > 0)
-        params.emplace("msg", req.get_param_value("msg"));
-      load_template(resp, "login.html", params);
+      load_template(resp, "login.html", create_params(req, resp));
+    });
+
+    http_server.Get("/register", [&](const httplib::Request& req, httplib::Response& resp) {
+      load_template(resp, "register.html", create_params(req, resp));
     });
 
     util::Logger()->info("MAIN: Successfully started http-server on port 4081");

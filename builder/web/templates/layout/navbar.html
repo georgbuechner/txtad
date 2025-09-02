@@ -1,0 +1,61 @@
+<nav class="navbar navbar-expand-lg navbar-light bg-light">
+  <div class="container-fluid">
+    <a class="navbar-brand" href="/">TXT</a>
+    <button 
+      class="navbar-toggler" 
+      type="button" 
+      data-bs-toggle="collapse" 
+      data-bs-target="#navbarSupportedContent" 
+      aria-controls="navbarSupportedContent" 
+      aria-expanded="false" aria-label="Toggle navigation"
+    >
+      <span class="navbar-toggler-icon"></span>
+    </button>
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+        {% if creatorname != "" %}
+          <li class="nav-item dropdown">
+            <a 
+              class="nav-link dropdown-toggle {% if 'data' in request.path %} active {% endif %}" 
+              href="#" id="navbarDropdown" 
+              role="button" 
+              data-bs-toggle="dropdown" 
+              aria-expanded="false"
+            >
+              Account
+            </a>
+            <ul class="dropdown-menu" aria-labelledby="navbarDropdown">
+              <li><a class="dropdown-item" href="/api/creator/logout">logout</a></li>
+              <li><a class="dropdown-item" href="/api/creator/delete">delete account</a></li>
+              <li><a class="dropdown-item {% if 'creator/requests' in request.path %} active {% endif %}" href="/creator/requests">Requests</a></li>
+            </ul>
+          </li>
+          <li class="nav-item dropdown">
+            <a 
+              class="nav-link dropdown-toggle {% if 'data' in request.path %} active {% endif %}" 
+              href="#" id="navbarDropdown" 
+              role="button" 
+              data-bs-toggle="dropdown" 
+              aria-expanded="false"
+            >
+              Worlds
+            </a>
+            <ul class="dropdown-menu" aria-labelledby="navbarDropdown">
+              {% for id in games %}
+              <li><a class="dropdown-item" href="/api/worlds/{{id}}">{{id}}</a></li>
+              {% endfor %}
+            </ul>
+          </li>
+        {% else %}
+          <li class="nav-item">
+            <a class="nav-link {% if 'login' in request.path %} active {% endif %}" aria-current="page" href="/login">Login</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link {% if 'logout' in request.path %} active {% endif %}" aria-current="page" href="/register">Register</a>
+          </li>
+        {% endif %}
+      </ul>
+    </div>
+  </div>
+</nav>
+

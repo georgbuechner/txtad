@@ -16,7 +16,8 @@ Game::MsgFn Game::_cout = nullptr;
 
 Game::Game(std::string path, std::string name) : _path(path), _name(name), _cur_user(nullptr), 
     _parser(std::bind(&Game::t_substitue_fn, this, std::placeholders::_1)),
-    _settings(*util::LoadJsonFromDisc(_path + "/" + txtad::GAME_SETTINGS)) {
+    _settings(*util::LoadJsonFromDisc(_path + "/" + txtad::GAME_SETTINGS)),
+    _builder_settings(util::LoadJsonFromDisc(_path + "/" + txtad::BUILDER_EXTENSION).value_or({})) {
   util::SetUpLogger(txtad::FILES_PATH, _name, util::Logger()->level());
   util::LoggerContext scope(_name);
 
@@ -71,6 +72,7 @@ Game::Game(std::string path, std::string name) : _path(path), _name(name), _cur_
   for (auto it : exec_listeners) {
     it->set_fn(std::bind(&Game::h_exec, this, std::placeholders::_1, std::placeholders::_2));
   }
+  util::Logger()->info(fmt::format("Game::Game. Created game with desc: {}", _builder_settings._description));
 }
 
 Game::~Game() {
@@ -83,6 +85,7 @@ std::string Game::name() const { return _name; }
 const std::map<std::string, std::shared_ptr<Context>>& Game::contexts() const { return _contexts; }
 const std::map<std::string, std::shared_ptr<Text>>& Game::texts() const { return _texts; }
 const Settings& Game::settings() const { return _settings; }
+const builder::Settings& Game::builder_settings() const { return _builder_settings; }
 const std::shared_ptr<User>& Game::cur_user() { return _cur_user; }
 
 // setter

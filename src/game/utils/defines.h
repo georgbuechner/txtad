@@ -17,6 +17,7 @@ namespace txtad {
   const std::string GAME_FILES = "game_files/";
 
   // Extentsion
+  const std::string BUILDER_EXTENSION = ".builder";
   const std::string TEMPLATE_EXTENSION = ".template";
   const std::string CONTEXT_EXTENSION = ".ctx";
   const std::string TEXT_EXTENSION = ".text";

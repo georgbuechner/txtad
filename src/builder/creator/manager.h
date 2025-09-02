@@ -5,14 +5,12 @@
 #include "builder/utils/defines.h"
 #include "shared/utils/utils.h"
 #include <catch2/internal/catch_clara.hpp>
-#include <filesystem>
 #include <fmt/core.h>
 #include <httplib.h>
 #include <map>
 #include <memory>
 #include <mutex>
 #include <optional>
-#include <shared_mutex>
 #include <string>
 
 
@@ -45,11 +43,14 @@ class CreatorManager {
     // methods 
     std::optional<AccessGuard> CreatorFromCookie(const httplib::Request& req, httplib::Response& resp) {
       std::string cookie = req.get_header_value("cookie");
-      std::shared_lock sl(_smtx);
+      std::unique_lock ul(_mtx);
       if (_cookies.count(GetSessionIdFromCookie(cookie)) > 0) {
-        std::string username = _cookies.at(cookie);
-        if (_creators.count(username) > 0 && _creators.at(username))
+        std::string username = _cookies.at(GetSessionIdFromCookie(cookie));
+        if (_creators.count(username) > 0 && _creators.at(username)) {
+          ul.unlock();
+          util::Logger()->info("Manager::CreatorFromCookie. returning");
           return AccessGuard(_creators.at(username), _mtx);
+        }
       }      
       resp.status = 404; 
       resp.set_content("Username not found or invalid cookie", "text/txt");
@@ -57,56 +58,62 @@ class CreatorManager {
     }
 
     std::optional<AccessGuard> CreatorFromUsername(const std::string& username) {
+      std::unique_lock ul(_mtx);
       if (_creators.count(username) > 0) {
+        ul.unlock();
         return AccessGuard(_creators.at(username), _mtx);
       } else {
         return std::nullopt;
       }
     }
 
-    void Register(const httplib::Request& req, httplib::Response& resp) {
-      if (auto json = util::ValidateSimpleJson(req.body, {"username", "password", "password_repeat"})) {
-        std::string username = json->at("username");
-        std::string password = json->at("password");
-        std::shared_lock sl(_smtx);
-        if (auto creator = CreatorFromUsername(username)) {
-          resp.status = 401; 
-          resp.set_content("Creator name already exists", "text/txt");
-        } else if (password != json->at("password_repeat")) {
-          resp.status = 401; 
-          resp.set_content("Passwords don't match", "text/txt");
-        } else if (!CheckPasswordStrength(password)) {
-          resp.status = 401; 
-          resp.set_content("Password strength insuficient", "text/txt");
-        } else {
-          std::shared_ptr<Creator> creator = std::make_shared<Creator>(username, password);
-          _creators[creator->username()] = creator;
-          resp.set_header("Set-Cookie", GenerateCookie(creator->username()).c_str());
-          resp.status = 200; 
-        }
-      } else {
+    std::string Register(const httplib::Request& req, httplib::Response& resp) {
+      if (req.get_param_value_count("username") == 0 || req.get_param_value_count("password") == 0 
+          || req.get_param_value_count("password_repeat") == 0 ) {
         resp.status = 401; 
-        resp.set_content("Invalid JSON or missing fields.", "text/txt");
+        return "Invalid JSON or missing fields.";
+      }
+      const std::string username = req.get_param_value("username");
+      const std::string password = req.get_param_value("password");
+      const std::string password_repeat = req.get_param_value("password_repeat");
+
+      if (auto creator = CreatorFromUsername(username)) {
+        resp.status = 401; 
+        return "Creator name already exists";
+      } else if (password != password_repeat) {
+        resp.status = 401; 
+        return "Passwords don't match";
+      } else if (!CheckPasswordStrength(password)) {
+        resp.status = 401; 
+        return "Password strength insuficient: " + password;
+      } else {
+        std::shared_ptr<Creator> creator = std::make_shared<Creator>(username, util::HashSha3512(password));
+        std::unique_lock ul(_mtx);
+        _creators[creator->username()] = creator;
+        util::Logger()->info(fmt::format("Manager::Register. successfully created: {}", creator->username()));
+        ul.unlock();
+        resp.set_header("Set-Cookie", GenerateCookie(creator->username()).c_str());
+        resp.status = 200; 
+        return "";
       }
     }
 
     std::string Login(const httplib::Request& req, httplib::Response& resp) {
-      util::Logger()->info("DO LOGIN");
       if (req.get_param_value_count("username") == 0 || req.get_param_value_count("password") == 0) {
         resp.status = 401; 
         return "Invalid JSON or missing fields.";
       } else {
         const std::string username = req.get_param_value("username");
-        const std::string password = req.get_param_value("password");
+        const std::string password = util::HashSha3512(req.get_param_value("password"));
 
-        std::shared_lock sl(_smtx);
         if (auto creator = CreatorFromUsername(username)) {
-          if ((*creator)->password() == "password") {
+          if ((*creator)->password() == password) {
+            _mtx.unlock();
             resp.set_header("Set-Cookie", GenerateCookie((*creator)->username()).c_str());
             resp.status = 200; 
           } else {
             resp.status = 401; 
-            return "Passwords don't match";
+            return "Password incorrect";
           }
         } else {
           resp.status = 404; 
@@ -118,14 +125,13 @@ class CreatorManager {
 
     void Logout(const httplib::Request& req, httplib::Response& resp) {
       if (auto creator = CreatorFromCookie(req, resp)) {
-        std::shared_lock ul(_smtx);
+        std::unique_lock ul(_mtx);
         _cookies.erase(GetSessionIdFromCookie(req.get_header_value("cookie")));
         resp.status = 200; 
       } 
     }
 
   private: 
-    std::shared_mutex _smtx;
     std::mutex _mtx;
     std::map<std::string, std::shared_ptr<Creator>> _creators;
     std::map<std::string, std::string> _cookies;
@@ -140,7 +146,7 @@ class CreatorManager {
       // Get session-id.
       std::string sessid = util::CreateRandomString(32);
       // Add cookie for user.
-      std::unique_lock ul(_smtx);
+      std::unique_lock ul(_mtx);
       _cookies[sessid] = username; 
       return builder::COOKIE_NAME + "=" + sessid + "; Path=/; SameSite=Strict";
     }
@@ -180,7 +186,6 @@ class CreatorManager {
       }
       return false;
     }
-
 };
 
 #endif

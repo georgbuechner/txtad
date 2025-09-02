@@ -152,7 +152,7 @@ std::optional<nlohmann::json> util::LoadJsonFromDisc(const std::string& path) {
 void util::WriteJsonToDisc(const std::string& path, const nlohmann::json& json) {
   std::ofstream ofs(path);
   if (!ofs.is_open()) {
-    Logger()->error("Failed writing json to disc: output file could not be opened!");
+    Logger()->error(fmt::format("Failed writing json to disc: output file could not be opened: {}", path));
   } else {
     ofs << json;
     ofs.close();

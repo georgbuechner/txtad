@@ -17,9 +17,12 @@
 
   <body>
       
+    {% include "layout/navbar.html" %}
     <div class="container-md main">
       <h1>TXTAD * BUILDER</h1>
-      {% block content scoped %}{% endblock %}
+      <div class="container-md sub">
+        {% block content scoped %}{% endblock %}
+      </div>
     </div>
 
   </body>

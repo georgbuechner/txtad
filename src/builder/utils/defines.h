@@ -1,6 +1,7 @@
 #ifndef SRC_BUILDER_UTILS_DEFINES_H
 #define SRC_BUILDER_UTILS_DEFINES_H 
 
+#include <nlohmann/json.hpp>
 #include <string>
 
 namespace builder {
@@ -16,6 +17,12 @@ namespace builder {
 
   const std::string COOKIE_NAME = "SESSID";
   const int COOKIE_NAME_LEN = 6;
+
+  struct Settings {
+    const std::string _description;
+    Settings() : _description("") {}
+    Settings(nlohmann::json j) : _description(j.value("description", "")) {}
+  };
 };
 
 #endif

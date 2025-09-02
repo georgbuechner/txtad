@@ -16,6 +16,7 @@ namespace jinja2 {
       static std::unordered_map<std::string, FieldAccessor> acc = {
         {"name", [](const PtrView& v){ return (v.p) ? v.p->name() : Value{}; }},
         {"path", [](const PtrView& v){ return (v.p) ? v.p->path() : Value{}; }},
+        {"description", [](const PtrView& v){ return (v.p) ? v.p->builder_settings()._description : Value{}; }},
       };
       return acc;
     }

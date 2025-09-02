@@ -1,6 +1,7 @@
 #ifndef SRC_GAME_GAME_H
 #define SRC_GAME_GAME_H 
 
+#include "builder/utils/defines.h"
 #include "game/game/user.h"
 #include "shared/objects/context/context.h"
 #include "shared/objects/settings/settings.h"
@@ -26,6 +27,7 @@ class Game {
     const std::map<std::string, std::shared_ptr<Context>>& contexts() const;
     const std::map<std::string, std::shared_ptr<Text>>& texts() const;
     const Settings& settings() const;
+    const builder::Settings& builder_settings() const;
     const std::shared_ptr<User>& cur_user();
     
     // setter 
@@ -47,6 +49,7 @@ class Game {
     ExpressionParser _parser;
 
     Settings _settings;
+    builder::Settings _builder_settings;
     std::shared_ptr<Context> _mechanics_ctx;
     std::map<std::string, std::shared_ptr<Context>> _contexts;
     std::map<std::string, std::shared_ptr<Text>> _texts;

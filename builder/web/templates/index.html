@@ -1,17 +1,36 @@
 {% extends "layout/layout.html" %}
 
 {% block content %}
-  <h4>All games:</h4>
-  {% if creatorname != "" %}
-    Logged in as: <i>{{ creatorname }}</i>
-  {% else %}
-    <a href="/login">login</a>
-  {% endif %}
+  <h4>All Worlds:</h4>
+  <br>
 
-  <ul>
+  <div class="accordion" id="worldsAccordion">
     {% for id in games %}
-      <li>{{ id }} </li>
+      <div class="accordion-item">
+        <h2 class="accordion-header" id="worldsHeading{{loop.index}}">
+        <button 
+          class="accordion-button collapsed" 
+          type="button" 
+          data-bs-toggle="collapse" 
+          data-bs-target="#worldsCollapse{{loop.index}}" 
+          aria-expanded="false" 
+          aria-controls="#worldsCollapse{{loop.index}}"
+        >
+          {{id}}
+        </button>
+      </h2>
+      <div 
+        id="worldsCollapse{{loop.index}}" 
+        class="accordion-collapse collapse" 
+        aria-labelledby="worldsHeading{{loop.index}}" 
+        data-bs-parent="#worldsAccordion"
+      >
+        <div class="accordion-body">
+          {{games[id].description}}
+        </div>
+      </div>
+    </div>
     {% endfor %}
-  </ul>
+  </div>
 
 {% endblock %}

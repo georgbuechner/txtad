@@ -1,6 +1,8 @@
 #ifndef SRC_BUILDER_USER_CREATOR_H
 #define SRC_BUILDER_USER_CREATOR_H 
 
+#include "builder/utils/defines.h"
+#include "shared/utils/utils.h"
 #include <nlohmann/json.hpp>
 #include <string>
 #include <set>
@@ -8,7 +10,9 @@
 
 class Creator { 
   public: 
-    Creator(std::string username, std::string password) : _username(username), _password(password) {}
+    Creator(std::string username, std::string password) : _username(username), _password(password) {
+      Store();
+    }
     Creator(nlohmann::json json) : _username(json.at("username")), _password(json.at("password")) {
       for (const auto& game : json.value("games", std::vector<std::string>())) 
         _games.insert(game);
@@ -21,6 +25,10 @@ class Creator {
     std::string password() { return _password; } 
 
     // Methods 
+    void Store() {
+      nlohmann::json creator_json = { {"username", _username}, {"password", _password} };
+      util::WriteJsonToDisc(builder::FILES_PATH + builder::CREATORS_PATH + _username + ".json", creator_json);
+    }
     bool HasAccessToGame(const std::string& game_id) {
       return _games.count(game_id) > 0 || _shared.count(game_id);
     }
