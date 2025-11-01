@@ -47,6 +47,7 @@ set(GAME_TEST_FILES
 
 set(BUILDER_SRC_FILES 
   src/builder/main.cc 
+  src/builder/utils/http_helpers.cc
   src/game/game/game.cc 
   src/game/game/user.cc 
   src/shared/objects/context/context.cc

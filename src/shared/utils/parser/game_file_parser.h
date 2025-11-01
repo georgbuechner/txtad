@@ -9,9 +9,12 @@
 #include <memory>
 
 class Listener;
+class Game;
 
 namespace parser {
   using ExecListeners = std::vector<std::shared_ptr<Listener>>;
+
+  std::map<std::string, std::shared_ptr<Game>> InitGames(const std::string& path);
 
   ExecListeners LoadGameFiles(const std::string& path, 
       std::map<std::string, std::shared_ptr<Context>>& contexts, 

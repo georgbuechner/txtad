@@ -22,3 +22,14 @@ data/games/*
 build/*
 vgcore.*
 .cache/*
+builder/node_modules/
+builder/web/static/css/*.css.map
+builder/vcpkg/*
+builder/build/*
+builder/logs/*
+builder/.cache/*
+builder/builder.o
+builder/builder_test.o
+builder/creators
+builder/package-lock.json
+builder/package.json

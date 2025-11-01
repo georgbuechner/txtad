@@ -1,4 +1,5 @@
 #include "shared/utils/parser/game_file_parser.h"
+#include "game/game/game.h"
 #include "game/utils/defines.h"
 #include "shared/objects/text/text.h"
 #include "shared/utils/eventmanager/listener.h"
@@ -9,6 +10,19 @@
 #include <vector>
 
 namespace fs = std::filesystem;
+
+std::map<std::string, std::shared_ptr<Game>> parser::InitGames(const std::string& path) {
+  std::map<std::string, std::shared_ptr<Game>> games;
+  for (const auto& dir : std::filesystem::directory_iterator(path)) {
+    const std::string filename = dir.path().filename();
+    if (filename.front() == '.')
+      continue;
+    games[filename] = std::make_shared<Game>(dir.path(), filename);
+    util::Logger()->info("MAIN:InitGames: Created game *{}* @{}", filename, dir.path().string());
+  }
+  return games;
+}
+
 
 parser::ExecListeners parser::LoadGameFiles(const std::string& path, 
     std::map<std::string, std::shared_ptr<Context>>& contexts, 

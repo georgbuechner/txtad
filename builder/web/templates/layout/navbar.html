@@ -1,4 +1,4 @@
-<nav class="navbar navbar-expand-lg navbar-light bg-light">
+<nav class="navbar navbar-expand-lg navbar-light bg-primary">
   <div class="container-fluid">
     <a class="navbar-brand" href="/">TXT</a>
     <button 
@@ -27,7 +27,14 @@
             <ul class="dropdown-menu" aria-labelledby="navbarDropdown">
               <li><a class="dropdown-item" href="/api/creator/logout">logout</a></li>
               <li><a class="dropdown-item" href="/api/creator/delete">delete account</a></li>
-              <li><a class="dropdown-item {% if 'creator/requests' in request.path %} active {% endif %}" href="/creator/requests">Requests</a></li>
+              <li>
+                  <button type="button" 
+                  class="dropdown-item" 
+                  data-bs-toggle="modal" 
+                  data-bs-target="#shareRequestsModal">
+                    Requests
+                </button>
+              </li>
             </ul>
           </li>
           <li class="nav-item dropdown">
@@ -41,8 +48,11 @@
               Worlds
             </a>
             <ul class="dropdown-menu" aria-labelledby="navbarDropdown">
-              {% for id in games %}
-              <li><a class="dropdown-item" href="/api/worlds/{{id}}">{{id}}</a></li>
+              {% for id in worlds %}
+                <li><a class="dropdown-item" href="/api/worlds/{{id}}">{{id}}</a></li>
+              {% endfor %}
+              {% for id in shared %}
+                <li><a class="dropdown-item" href="/api/worlds/{{id}}">{{id}}</a></li>
               {% endfor %}
             </ul>
           </li>
@@ -51,10 +61,11 @@
             <a class="nav-link {% if 'login' in request.path %} active {% endif %}" aria-current="page" href="/login">Login</a>
           </li>
           <li class="nav-item">
-            <a class="nav-link {% if 'logout' in request.path %} active {% endif %}" aria-current="page" href="/register">Register</a>
+            <a class="nav-link {% if 'register' in request.path %} active {% endif %}" aria-current="page" href="/register">Register</a>
           </li>
         {% endif %}
       </ul>
+        {{creatorname}}
     </div>
   </div>
 </nav>

@@ -3,6 +3,7 @@
 
 #include "builder/creator/creator.h"
 #include "builder/utils/defines.h"
+#include "builder/utils/http_helpers.h"
 #include "shared/utils/utils.h"
 #include <catch2/internal/catch_clara.hpp>
 #include <fmt/core.h>
@@ -30,38 +31,41 @@ class CreatorManager {
 
     class AccessGuard {
       public: 
-        AccessGuard(std::shared_ptr<Creator> instance, std::mutex& mtx) 
-        : _instance(instance), _lock(mtx) {} 
+        AccessGuard(std::shared_ptr<Creator> instance) 
+        : _instance(instance) {
+          instance->lock();
+        } 
 
-        std::shared_ptr<Creator> operator->() { return _instance; } 
+        ~AccessGuard() {
+          _instance->unlock();
+        }
+
+        std::shared_ptr<Creator> operator->() { 
+          return _instance; 
+        } 
 
       private: 
         std::shared_ptr<Creator> _instance; 
-        std::unique_lock<std::mutex> _lock;
     };
 
     // methods 
-    std::optional<AccessGuard> CreatorFromCookie(const httplib::Request& req, httplib::Response& resp) {
+    AccessGuard CreatorFromCookie(const httplib::Request& req, httplib::Response& resp) {
       std::string cookie = req.get_header_value("cookie");
       std::unique_lock ul(_mtx);
       if (_cookies.count(GetSessionIdFromCookie(cookie)) > 0) {
         std::string username = _cookies.at(GetSessionIdFromCookie(cookie));
         if (_creators.count(username) > 0 && _creators.at(username)) {
-          ul.unlock();
           util::Logger()->info("Manager::CreatorFromCookie. returning");
-          return AccessGuard(_creators.at(username), _mtx);
+          return AccessGuard(_creators.at(username));
         }
       }      
-      resp.status = 404; 
-      resp.set_content("Username not found or invalid cookie", "text/txt");
-      return std::nullopt;
+      throw _http::_t_exception({404, "Username not found or invalid cookie"});
     }
 
     std::optional<AccessGuard> CreatorFromUsername(const std::string& username) {
       std::unique_lock ul(_mtx);
       if (_creators.count(username) > 0) {
-        ul.unlock();
-        return AccessGuard(_creators.at(username), _mtx);
+        return AccessGuard(_creators.at(username));
       } else {
         return std::nullopt;
       }
@@ -124,11 +128,23 @@ class CreatorManager {
     }
 
     void Logout(const httplib::Request& req, httplib::Response& resp) {
-      if (auto creator = CreatorFromCookie(req, resp)) {
-        std::unique_lock ul(_mtx);
+      try {
+        auto creator = CreatorFromCookie(req, resp);
         _cookies.erase(GetSessionIdFromCookie(req.get_header_value("cookie")));
         resp.status = 200; 
-      } 
+        resp.set_redirect("/login", 303);
+      } catch (_http::_t_exception) {
+        resp.set_redirect(_http::Referer(req) + "?msg=Logout failed: Invalid cookie or username not found!", 303);
+      }
+    }
+
+    std::string GetUserForGame(const std::string& game_id) {
+      std::unique_lock ul(_mtx);
+      for (const auto& it : _creators) {
+        if (it.second->OwnsGame(game_id)) 
+          return it.first;
+      }
+      return "";
     }
 
   private: 

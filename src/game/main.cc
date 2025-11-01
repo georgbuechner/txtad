@@ -1,6 +1,7 @@
 #include "game/game/game.h"
 #include "game/server/websocket_server.h"
 #include "game/utils/defines.h"
+#include "shared/utils/parser/game_file_parser.h"
 #include "shared/utils/utils.h"
 #include <filesystem>
 #include <httplib.h> 
@@ -8,16 +9,6 @@
 #include <spdlog/spdlog.h>
 #include <string>
 #include <thread>
-
-std::map<std::string, std::shared_ptr<Game>> InitGames() {
-  std::map<std::string, std::shared_ptr<Game>> games;
-  for (const auto& dir : std::filesystem::directory_iterator(txtad::GAMES_PATH)) {
-    const std::string filename = dir.path().filename();
-    games[filename] = std::make_shared<Game>(dir.path(), filename);
-    util::Logger()->info("MAIN:InitGames: Created game *{}* @{}", filename, dir.path().string());
-  }
-  return games;
-}
 
 int main() {
 
@@ -28,7 +19,7 @@ int main() {
   std::shared_ptr<WebsocketServer> wss = std::make_shared<WebsocketServer>();
 
   // Create games
-  auto games = InitGames();
+  auto games = parser::InitGames(txtad::GAMES_PATH);
 
   Game::set_msg_fn([&wss](const std::string& id, const std::string& msg) {
     util::Logger()->debug("MAIN: SendMessage: {}, {}", id, msg);

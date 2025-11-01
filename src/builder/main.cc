@@ -3,12 +3,16 @@
 #include "builder/creator/manager.h"
 #include "builder/utils/defines.h"
 #include "builder/utils/jinja_helpers.h"
+#include "builder/utils/http_helpers.h"
 #include "game/game/game.h"
 #include "builder/utils/defines.h"
+#include "game/utils/defines.h"
 #include "jinja2cpp/filesystem_handler.h"
 #include "jinja2cpp/value.h"
+#include "shared/utils/parser/game_file_parser.h"
 #include "shared/utils/utils.h"
 #include <algorithm>
+#include <exception>
 #include <filesystem>
 #include <httplib.h> 
 #include <memory>
@@ -19,23 +23,13 @@
 #include <jinja2cpp/template_env.h>
 #include <jinja2cpp/filesystem_handler.h>
 
-std::map<std::string, std::shared_ptr<Game>> InitGames() {
-  std::map<std::string, std::shared_ptr<Game>> games;
-  for (const auto& dir : std::filesystem::directory_iterator(txtad::GAMES_PATH)) {
-    const std::string filename = dir.path().filename();
-    games[filename] = std::make_shared<Game>(dir.path(), filename);
-    util::Logger()->info("MAIN:InitGames: Created game *{}* @{}", filename, dir.path().string());
-  }
-  return games;
-}
-
 int main() {
 
   util::SetUpLogger(builder::FILES_PATH, builder::LOGGER, spdlog::level::debug);
   util::LoggerContext scope(builder::LOGGER);
 
   // Create games
-  auto games = InitGames();
+  auto games = parser::InitGames(txtad::GAMES_PATH);
 
   // Creators
   CreatorManager manager;
@@ -72,11 +66,16 @@ int main() {
     auto create_params = [&](const httplib::Request& req, httplib::Response& resp) -> jinja2::ValuesMap {
       util::Logger()->info(fmt::format("Builder::create_params"));
       jinja2::ValuesMap params;
-      params.emplace("games", jhelp::Map(games));
+      params.emplace("games", _jinja::Map(games));
+      params.emplace("game_ids", _jinja::MapKeys(games));
       util::Logger()->info(fmt::format("Builder::create_params. checking user"));
-      if (auto creator = manager.CreatorFromCookie(req, resp)) {
-        params.emplace("creatorname", (*creator)->username());
-      } else {
+      try {
+        auto creator = manager.CreatorFromCookie(req, resp);
+        params.emplace("creatorname", creator->username());
+        params.emplace("worlds", _jinja::SetToVec(creator->worlds()));
+        params.emplace("shared", _jinja::SetToVec(creator->shared()));
+        params.emplace("pending", _jinja::SetToVec(creator->pending()));
+      } catch (_http::_t_exception e) {
         params.emplace("creatorname", "");
       }
       util::Logger()->info(fmt::format("Builder::create_params. checking user done"));
@@ -99,28 +98,52 @@ int main() {
       resp.set_redirect((msg != "") ? "/login?msg=" + msg : "/", 303);
     });
 
-    http_server.Post("/api/creator/logout", [&](const httplib::Request& req, httplib::Response& resp) {
+    http_server.Get("/api/creator/logout", [&](const httplib::Request& req, httplib::Response& resp) {
       manager.Logout(req, resp);
     });
 
     http_server.Post("/api/creator/requests/add", [&](const httplib::Request& req, httplib::Response& resp) {
-      if (auto creator = manager.CreatorFromCookie(req, resp)) {
-        if (auto json = util::ValidateSimpleJson(req.body, {"username", "game"})) {
-          (*creator)->AddRequest(json->at("username"), json->at("game"));
+      try{
+        const std::string game_id = _http::Get(req, "game_id");
+        auto creator = manager.CreatorFromCookie(req, resp);
+        if (auto owner = manager.CreatorFromUsername(manager.GetUserForGame(game_id))) {
+          if ((*owner)->username() == creator->username()) {
+            resp.set_redirect("/?msg=You are the owner of this game.", 303);
+          } else {
+            (*owner)->AddRequest(creator->username(), game_id);
+            resp.set_redirect("/?msg=Successfully requested access.", 303);
+          }
+        } else {
+          resp.set_redirect("/?msg=Owner of game not found!", 303);
         }
-      } 
+      } catch (_http::_t_exception e) {
+        resp.set_redirect("/?msg=" + e.second, 303);
+      }
     });
 
     http_server.Post("/api/creator/requests/accept", [&](const httplib::Request& req, httplib::Response& resp) {
-      if (auto creator = manager.CreatorFromCookie(req, resp)) {
-        if (auto json = util::ValidateSimpleJson(req.body, {"username", "game"})) {
-          (*creator)->AcceptRequest(json->at("username"), json->at("game"));
-          if (auto creator_rec = manager.CreatorFromUsername(json->at("username"))) {
-            (*creator_rec)->AddShared(json->at("game"));
-            resp.status = 200;
-          }
-        }
-      } 
+      try {
+        auto creator = manager.CreatorFromCookie(req, resp);
+        creator->RemoveRequest(_http::Get(req, "username"), _http::Get(req, "game_id"));
+        if (auto creator_rec = manager.CreatorFromUsername(_http::Get(req, "username"))) {
+          (*creator_rec)->AddShared(_http::Get(req, "game_id"));
+          resp.set_redirect(_http::Referer(req) + "?msg=Request accepted.", 303);
+          return;
+        } 
+        resp.set_redirect(_http::Referer(req) + "?msg=Accepting request failed.", 303);
+      } catch (_http::_t_exception e) {
+        resp.set_redirect(_http::Referer(req) + "?msg=" + e.second, 303);
+      }
+    });
+
+    http_server.Post("/api/creator/requests/deny", [&](const httplib::Request& req, httplib::Response& resp) {
+      try {
+        auto creator = manager.CreatorFromCookie(req, resp);
+        creator->RemoveRequest(_http::Get(req, "username"), _http::Get(req, "game_id"));
+        resp.set_redirect(_http::Referer(req) + "?msg=Request denied.", 303);
+      } catch (_http::_t_exception e) {
+        resp.set_redirect(_http::Referer(req) + "?msg=" + e.second, 303);
+      }
     });
 
     // PAGES

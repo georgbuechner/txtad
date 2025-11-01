@@ -1,0 +1,39 @@
+@use "sass:color";
+
+// 1) Your palette tokens
+$brand-primary:   #906e55;
+$brand-secondary: #80868c;
+$brand-danger:    #4b3022;
+$brand-light:     #96999a;
+$brand-dark:      #160c08;
+
+// 2) Load & configure Bootstrap in one go
+@use "bootstrap/scss/bootstrap" with (
+  // Theme tokens Bootstrap reads
+  $primary:   $brand-primary,
+  $secondary: $brand-secondary,
+  $danger:    $brand-danger,
+  $light:     $brand-light,
+  $dark:      $brand-dark,
+
+  // Theme color map (drives .bg-*, .text-*, .btn-*)
+  $theme-colors: (
+    "primary":   $brand-primary,
+    "secondary": $brand-secondary,
+    "danger":    $brand-danger,
+    "light":     $brand-light,
+    "dark":      $brand-dark
+  ),
+
+  // Component backgrounds (default is white; set to your $brand-light)
+  $body-bg:       $brand-light,
+  $card-bg:       $brand-light,
+  $dropdown-bg:   $brand-light,
+  $accordion-bg:  $brand-light,
+  $list-group-bg: $brand-light,
+);
+
+// 3) Your own extras (can come after)
+.bg-light-80 {
+  background-color: color.scale($brand-light, $alpha: -40%) !important;
+}

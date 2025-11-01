@@ -7,7 +7,31 @@
 #include <map>
 #include <memory>
 
-namespace jhelp {
+namespace _jinja {
+
+  template<typename T1>
+  jinja2::ValuesList SetToVec(const std::set<T1>& set) {
+    jinja2::ValuesList vl;
+    vl.reserve(set.size());
+    for (const auto& it : set) {
+      vl.emplace_back(it);
+    }
+    return vl;
+  }
+
+  template<>
+  jinja2::ValuesList SetToVec(const std::set<std::pair<std::string, std::string>>& set) {
+    jinja2::ValuesList vl;
+    vl.reserve(set.size());
+    for (const auto& it : set) {
+      jinja2::ValuesMap vm;
+      vm["first"] = it.first;
+      vm["second"] = it.second;
+      vl.emplace_back(vm);
+    }
+    return vl;
+  }
+
 
   template<typename T1, typename T2>
   jinja2::ValuesList MapKeys(const std::map<T1, T2>& map) {
