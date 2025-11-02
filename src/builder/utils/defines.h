@@ -23,6 +23,20 @@ namespace builder {
     Settings() : _description("") {}
     Settings(nlohmann::json j) : _description(j.value("description", "")) {}
   };
+
+  enum FileType {
+    DIR=0,
+    CTX,
+    TXT,
+    TEM
+  };
+  const std::map<FileType, std::string> FILE_TYPE_MAP = {
+    {DIR, "DIR"}, {CTX, "CTX"}, {TXT, "TXT"}, {TEM, "TEM"}
+  };
+  const std::map<std::string, FileType> REVERSE_FILE_TYPE_MAP = {
+    {"DIR", DIR}, {"CTX", CTX}, {"TXT", TXT}, {"TEM", TEM}
+  };
+
 };
 
 #endif

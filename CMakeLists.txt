@@ -3,7 +3,7 @@ cmake_minimum_required(VERSION 3.23)
 project(txtad)
 
 # specify the C++ standard
-set(CMAKE_CXX_STANDARD 17)                                                                          
+set(CMAKE_CXX_STANDARD 20)                                                                          
 set(CMAKE_CXX_STANDARD_REQUIRED True)
 SET(CMAKE_CXX_FLAGS "-Wall -pthread -lcurl -O3")
 add_compile_options (-fdiagnostics-color=always)
@@ -31,6 +31,7 @@ set(GAME_TEST_FILES
   src/game/test/test_eventmanager.cc
   src/game/test/test_expression_parser.cc
   src/game/test/test_game.cc
+  src/game/test/test_game_file_parser.cc
   src/game/test/test_text.cc
   src/game/test/test_utils.cc
   src/game/test/helpers.cc

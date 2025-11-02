@@ -1,0 +1,24 @@
+{% extends "layout/layout.html" %}
+
+{% block content %}
+<h1>{{game.name}}</h1>
+<p>{{game.description}}</p>
+
+{% for s in selections %} 
+  {% if selections[s] == "DIR" %}
+    <a 
+      class="dir" 
+      href="/{{game.name}}?path={{path}}/{{s}}&type={{selections[s]}}"
+    >{{s}}</a>
+    <span class="dir small">[{{selections[s]}}]: </span> 
+  {% else %}
+    <a 
+      class="obj"
+      href="/{{game.name}}?path={{path}}/{{s}}&type={{selections[s]}}"
+    >{{s}}</a>
+    <span class="obj small">[{{selections[s]}}] </span> 
+  {% endif %}
+  <br>
+{% endfor %}
+
+{% endblock %}

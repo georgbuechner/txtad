@@ -49,12 +49,12 @@ class CreatorManager {
     };
 
     // methods 
-    AccessGuard CreatorFromCookie(const httplib::Request& req, httplib::Response& resp) {
+    AccessGuard CreatorFromCookie(const httplib::Request& req) {
       std::string cookie = req.get_header_value("cookie");
       std::unique_lock ul(_mtx);
-      if (_cookies.count(GetSessionIdFromCookie(cookie)) > 0) {
+      if (_cookies.contains(GetSessionIdFromCookie(cookie))) {
         std::string username = _cookies.at(GetSessionIdFromCookie(cookie));
-        if (_creators.count(username) > 0 && _creators.at(username)) {
+        if (_creators.contains(username) && _creators.at(username)) {
           util::Logger()->info("Manager::CreatorFromCookie. returning");
           return AccessGuard(_creators.at(username));
         }
@@ -129,7 +129,7 @@ class CreatorManager {
 
     void Logout(const httplib::Request& req, httplib::Response& resp) {
       try {
-        auto creator = CreatorFromCookie(req, resp);
+        auto creator = CreatorFromCookie(req);
         _cookies.erase(GetSessionIdFromCookie(req.get_header_value("cookie")));
         resp.status = 200; 
         resp.set_redirect("/login", 303);

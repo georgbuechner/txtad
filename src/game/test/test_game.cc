@@ -105,17 +105,17 @@ TEST_CASE("Test Creating Game", "[game]") {
   REQUIRE(game.name() == GAME_NAME);
   REQUIRE(game.path() == GAME_PATH); 
   // Test settings created successfully
-  REQUIRE(game.settings().initial_events() == settings["initial_events"]);
+  REQUIRE(game.settings().initial_events() == settings["initial_events"].get<std::string>());
   REQUIRE(game.settings().initial_ctx_ids().size() == settings["initial_contexts"].size());
   REQUIRE(game.settings().initial_ctx_ids().front() == "rooms/room_1");
   // Test contexts created successfully
   REQUIRE(game.contexts().count("rooms/room_1") > 0); 
   auto ctx = game.contexts().at("rooms/room_1");
   REQUIRE(ctx->id() == "rooms/" + ctx_room_1["id"].get<std::string>()); 
-  REQUIRE(ctx->name() == ctx_room_1["name"]); 
+  REQUIRE(ctx->name() == ctx_room_1["name"].get<std::string>()); 
   // Tests attributes
-  REQUIRE(ctx->GetAttribute("gravity") == ctx_room_1["attributes"]["gravity"]); 
-  REQUIRE(ctx->GetAttribute("darkness") == ctx_room_1["attributes"]["darkness"]); 
+  REQUIRE(ctx->GetAttribute("gravity") == ctx_room_1["attributes"]["gravity"].get<std::string>()); 
+  REQUIRE(ctx->GetAttribute("darkness") == ctx_room_1["attributes"]["darkness"].get<std::string>()); 
 
   // Create user: 
   const std::string USER_ID = "0x1234";

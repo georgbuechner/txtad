@@ -1,6 +1,7 @@
 #ifndef SHARED_UTILS_PARSER_GAME_FILE_PARSER_H_
 #define SHARED_UTILS_PARSER_GAME_FILE_PARSER_H_
 
+#include "builder/utils/defines.h"
 #include "shared/objects/context/context.h"
 #include "shared/objects/text/text.h"
 #include "shared/utils/eventmanager/listener.h"
@@ -14,6 +15,8 @@ class Game;
 namespace parser {
   using ExecListeners = std::vector<std::shared_ptr<Listener>>;
 
+  std::map<std::string, builder::FileType> GetPaths(const std::string& game_path);
+  std::map<std::string, builder::FileType> GetPaths(const std::string& game_path, const std::string path);
   std::map<std::string, std::shared_ptr<Game>> InitGames(const std::string& path);
 
   ExecListeners LoadGameFiles(const std::string& path, 
@@ -23,6 +26,8 @@ namespace parser {
       std::map<std::string, std::shared_ptr<Text>>& texts, std::map<std::string, nlohmann::json>& listeners);
   ExecListeners LoadListeners(std::map<std::string, std::shared_ptr<Context>>& contexts,
     std::map<std::string, nlohmann::json> listeners);
+
+  
 
   std::shared_ptr<Context> CreateContextFromPath(std::filesystem::path path, size_t id_path_offset);
   std::shared_ptr<Text> CreateTextFromPath(std::filesystem::path path, size_t id_path_offset, std::string& txt_id);

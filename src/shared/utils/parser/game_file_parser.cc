@@ -1,12 +1,15 @@
 #include "shared/utils/parser/game_file_parser.h"
+#include "builder/utils/defines.h"
 #include "game/game/game.h"
 #include "game/utils/defines.h"
 #include "shared/objects/text/text.h"
 #include "shared/utils/eventmanager/listener.h"
 #include "shared/utils/utils.h"
 #include <cstddef>
+#include <filesystem>
 #include <memory>
 #include <optional>
+#include <string>
 #include <vector>
 
 namespace fs = std::filesystem;
@@ -23,6 +26,52 @@ std::map<std::string, std::shared_ptr<Game>> parser::InitGames(const std::string
   return games;
 }
 
+std::map<std::string, builder::FileType> parser::GetPaths(const std::string& game_path) {
+  const std::string game_files_path = game_path + "/" + txtad::GAME_FILES;
+  const size_t id_path_offset = game_files_path.length();
+  std::map<std::string, builder::FileType> paths;
+  for (const auto& dir_entry : fs::recursive_directory_iterator(game_files_path)) {
+    std::string p_name = dir_entry.path().string();
+    if (id_path_offset < p_name.length())
+      p_name = p_name.substr(id_path_offset);
+    if (dir_entry.is_directory()) {
+      paths.emplace(p_name, builder::FileType::DIR);
+    } else if (dir_entry.path().extension() == txtad::CONTEXT_EXTENSION) {
+      paths.emplace(fs::path(p_name).replace_extension(), builder::FileType::CTX);
+    } else if (dir_entry.path().extension() == txtad::TEXT_EXTENSION) {
+      paths.emplace(fs::path(p_name).replace_extension(), builder::FileType::TXT);
+    } else if (dir_entry.path().extension() == txtad::TEMPLATE_EXTENSION) {
+      paths.emplace(fs::path(p_name).replace_extension(), builder::FileType::TEM);
+    }
+  }
+  return paths;
+
+}
+
+std::map<std::string, builder::FileType> parser::GetPaths(const std::string& game_path, const std::string path) {
+  const std::string game_files_path = game_path + "/" + txtad::GAME_FILES;
+  const size_t id_path_offset = game_files_path.length();
+  std::map<std::string, builder::FileType> paths;
+  for (const auto& dir_entry : fs::recursive_directory_iterator(game_files_path)) {
+    std::string p_name = dir_entry.path().string();
+    if (id_path_offset < p_name.length())
+      p_name = p_name.substr(id_path_offset);
+    if (path != "<use-all>" && ((path == "" && p_name.find("/") != std::string::npos) 
+          || (path != "" && fs::path(p_name).remove_filename() != path + "/"))) {
+      continue;
+    }
+    if (dir_entry.is_directory()) {
+      paths.emplace(fs::path(p_name).filename(), builder::FileType::DIR);
+    } else if (dir_entry.path().extension() == txtad::CONTEXT_EXTENSION) {
+      paths.emplace(fs::path(p_name).filename().replace_extension(), builder::FileType::CTX);
+    } else if (dir_entry.path().extension() == txtad::TEXT_EXTENSION) {
+      paths.emplace(fs::path(p_name).filename().replace_extension(), builder::FileType::TXT);
+    } else if (dir_entry.path().extension() == txtad::TEMPLATE_EXTENSION) {
+      paths.emplace(fs::path(p_name).filename().replace_extension(), builder::FileType::TEM);
+    }
+  }
+  return paths;
+}
 
 parser::ExecListeners parser::LoadGameFiles(const std::string& path, 
     std::map<std::string, std::shared_ptr<Context>>& contexts, 

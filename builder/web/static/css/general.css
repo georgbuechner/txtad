@@ -27,3 +27,14 @@ h1 {
   bottom: 0;
   margin-left: 2rem;
 }
+
+.dir {
+  color: #282d31;
+}
+.obj {
+  color: #693a1e;
+}
+
+.small {
+  font-size: small;
+}
