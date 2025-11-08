@@ -28,7 +28,7 @@
               <li><a class="dropdown-item" href="/api/creator/logout">logout</a></li>
               <li><a class="dropdown-item" href="/api/creator/delete">delete account</a></li>
               <li>
-                  <button type="button" 
+                <button type="button" 
                   class="dropdown-item" 
                   data-bs-toggle="modal" 
                   data-bs-target="#shareRequestsModal">
@@ -49,10 +49,10 @@
             </a>
             <ul class="dropdown-menu" aria-labelledby="navbarDropdown">
               {% for id in worlds %}
-                <li><a class="dropdown-item" href="/api/worlds/{{id}}">{{id}}</a></li>
+                <li><a class="dropdown-item" href="/{{id}}">{{id}}</a></li>
               {% endfor %}
               {% for id in shared %}
-                <li><a class="dropdown-item" href="/api/worlds/{{id}}">{{id}}</a></li>
+                <li><a class="dropdown-item" href="/{{id}}">{{id}}</a></li>
               {% endfor %}
             </ul>
           </li>

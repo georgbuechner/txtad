@@ -7,18 +7,16 @@
 #include "game/game/game.h"
 #include "jinja2cpp/reflected_value.h"
 #include "shared/objects/context/context.h"
+#include "shared/utils/eventmanager/listener.h"
 #include <unordered_map>
 
 #include <map>
 #include <memory>
 
-struct GamePtrView {
-  const Game* p; // non-owning
+template<typename T1>
+struct PtrView {
+  const T1* ptr;
 };
-struct CtxPtrView {
-  const Context* p; // non-owning
-};
-
 
 namespace _jinja {
   template<typename T1>
@@ -61,19 +59,29 @@ namespace _jinja {
     m.reserve(map.size());
     for (const auto& [id, val] : map) {
       if (val) {
-        m.emplace(id, jinja2::Reflect(GamePtrView{val.get()}));
+        m.emplace(id, jinja2::Reflect(PtrView<T2>{val.get()}));
       } else {
         m.emplace(id, jinja2::Value());
       }
     }
     return m;
   }
+
+  template<typename T1, typename T2>
+  jinja2::ValuesMap Map(const std::map<T1, T2>& map) {
+    jinja2::ValuesMap m;
+    m.reserve(map.size());
+    for (const auto& [id, val] : map) {
+      m.emplace(id, val);
+    }
+    return m;
+  }
+
   template<typename T1>
   jinja2::ValuesMap Map(const std::map<T1, builder::FileType>& map) {
     jinja2::ValuesMap m;
     m.reserve(map.size());
     for (const auto& [id, val] : map) {
-      std::cout << id << ", " << val <<std::endl;
       m.emplace(id, builder::FILE_TYPE_MAP.at(val));
     }
     return m;
@@ -81,30 +89,83 @@ namespace _jinja {
 }
 
 namespace jinja2 {
-  template<> struct TypeReflection<GamePtrView> : TypeReflected<GamePtrView> {
-    static auto& GetAccessors() {
-      static std::unordered_map<std::string, FieldAccessor> acc = {
-        {"name", [](const GamePtrView& v){ return (v.p) ? v.p->name() : Value{}; }},
-        {"path", [](const GamePtrView& v){ return (v.p) ? v.p->path() : Value{}; }},
-        {"contexts", [](const GamePtrView& v){ return (v.p) ? _jinja::MapKeys(v.p->contexts()) : Value{}; }},
-        {"description", [](const GamePtrView& v){ return (v.p) ? v.p->builder_settings()._description : Value{}; }},
-      };
-      return acc;
-    }
-  };
+  namespace detail {
+    template<>
+    struct Reflector<PtrView<Text>, void> {
+      static Value Create(const PtrView<Text>& v) {
+        jinja2::ValuesList list;
+        if (v.ptr) {
+          auto* t = v.ptr;
+          while (t) {
+            list.emplace_back(jinja2::Reflect(*t));  // Text stays element-like
+            t = t->next();
+          }
+        }
+        return jinja2::Value{std::move(list)};
+      }
+    };
+  }
 }
 
 namespace jinja2 {
-  template<> struct TypeReflection<CtxPtrView> : TypeReflected<CtxPtrView> {
+  template<> struct TypeReflection<PtrView<Game>> : TypeReflected<PtrView<Game>> {
     static auto& GetAccessors() {
       static std::unordered_map<std::string, FieldAccessor> acc = {
-        {"id", [](const CtxPtrView& v){ return (v.p) ? v.p->id() : Value{}; }},
-        {"name", [](const CtxPtrView& v){ return (v.p) ? v.p->name() : Value{}; }},
-        {"description", [](const CtxPtrView& v){ return (v.p) ? v.p->description() : Value{}; }},
+        {"name", [](const PtrView<Game>& v){ return (v.ptr) ? v.ptr->name() : Value{}; }},
+        {"path", [](const PtrView<Game>& v){ return (v.ptr) ? v.ptr->path() : Value{}; }},
+        {"contexts", [](const PtrView<Game>& v){ return (v.ptr) ? _jinja::Map(v.ptr->contexts()) : Value{}; }},
+        {"texts", [](const PtrView<Game>& v){ return (v.ptr) ? _jinja::Map(v.ptr->texts()) : Value{}; }},
+        {"description", [](const PtrView<Game>& v){ return (v.ptr) ? v.ptr->builder_settings()._description : Value{}; }},
       };
       return acc;
     }
   };
+
+  template<> struct TypeReflection<Text> : TypeReflected<Text> {
+    static auto& GetAccessors() {
+      static std::unordered_map<std::string, FieldAccessor> acc = {
+        {"shared", [](const Text& txt) { return txt.shared(); }},
+        {"txt", [](const Text& txt) { return txt.txt(); }},
+        {"logic", [](const Text& txt) { return txt.logic(); }},
+        {"one_time_events", [](const Text& txt) { return txt.one_time_events(); }},
+        {"permanent_events", [](const Text& txt) { return txt.permanent_events(); }},
+      };
+      return acc;
+    }
+   };
+
+  template<> struct TypeReflection<PtrView<Listener>> : TypeReflected<PtrView<Listener>> {
+    static auto& GetAccessors() {
+      static std::unordered_map<std::string, FieldAccessor> acc {
+        {"id", [](const PtrView<Listener> v) { return (v.ptr) ? v.ptr->id() : Value{}; }},
+        {"event", [](const PtrView<Listener> v) { return (v.ptr) ? v.ptr->event() : Value{}; }}, 
+        {"permeable", [](const PtrView<Listener> v) { return (v.ptr) ? v.ptr->permeable() : Value{}; }}, 
+        {"arguments", [](const PtrView<Listener> v) { return (v.ptr) ? v.ptr->arguments() : Value{}; }}, 
+        {"logic", [](const PtrView<Listener> v) { return (v.ptr) ? v.ptr->logic() : Value{}; }}, 
+        {"ctx", [](const PtrView<Listener> v) { return (v.ptr) ? v.ptr->ctx_id() : Value{}; }}, 
+      };
+      return acc;
+    }
+  };
+
+
+  template<> struct TypeReflection<PtrView<Context>> : TypeReflected<PtrView<Context>> {
+    static auto& GetAccessors() {
+      static std::unordered_map<std::string, FieldAccessor> acc = {
+        {"id", [](const PtrView<Context>& v) { return (v.ptr) ? v.ptr->id() : Value{}; }},
+        {"name", [](const PtrView<Context>& v) { return (v.ptr) ? v.ptr->name() : Value{}; }},
+        {"entry", [](const PtrView<Context>& v) { return (v.ptr) ? v.ptr->entry_condition_pattern() : Value{}; }},
+        {"priority", [](const PtrView<Context>& v) { return (v.ptr) ? v.ptr->priority() : Value{}; }},
+        {"permeable", [](const PtrView<Context>& v) { return (v.ptr) ? v.ptr->permeable() : Value{}; }},
+        {"shared", [](const PtrView<Context>& v) { return (v.ptr) ? v.ptr->shared() : Value{}; }},
+        {"description", [](const PtrView<Context>& v) { return (v.ptr) ? jinja2::Reflect(PtrView<Text>{&v.ptr->description()}) : Value{}; }},
+        {"attributes", [](const PtrView<Context>& v) { return (v.ptr) ? _jinja::Map(v.ptr->attributes()) : Value{}; }},
+        {"listeners", [](const PtrView<Context>& v) { return (v.ptr) ? _jinja::Map(v.ptr->listeners()) : Value{}; }},
+      };
+      return acc;
+    }
+  };
+
 }
 
 #endif

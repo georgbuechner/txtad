@@ -9,6 +9,7 @@
 #include <functional>
 #include <memory>
 #include <mutex>
+#include <nlohmann/json_fwd.hpp>
 #include <spdlog/spdlog.h>
 #include <string>
 
@@ -17,7 +18,7 @@ Game::MsgFn Game::_cout = nullptr;
 Game::Game(std::string path, std::string name) : _path(path), _name(name), _cur_user(nullptr), 
     _parser(std::bind(&Game::t_substitue_fn, this, std::placeholders::_1)),
     _settings(*util::LoadJsonFromDisc(_path + "/" + txtad::GAME_SETTINGS)),
-    _builder_settings(util::LoadJsonFromDisc(_path + "/" + txtad::BUILDER_EXTENSION).value_or({})) {
+    _builder_settings(util::LoadJsonFromDisc(_path + "/" + txtad::BUILDER_EXTENSION).value_or(nlohmann::json::object())) {
   util::SetUpLogger(txtad::FILES_PATH, _name, util::Logger()->level());
   util::LoggerContext scope(_name);
 
@@ -338,7 +339,7 @@ void Game::h_list_linked_contexts(const std::string& event, const std::string& a
             if (auto linked_ctx = it.lock()) {
               std::string str = "";
               if (print_ctx_2->_kind == txtad::CtxPrint::VARIABLE)
-                User::AddVariableToText(linked_ctx, print_ctx_2->_what, str);
+                User::AddVariableToText(linked_ctx, print_ctx_2->_what, str, _cur_user->event_queue(), _parser);
               else if (print_ctx_2->_kind == txtad::CtxPrint::ATTRIBUTE) {
                 if (auto attr = linked_ctx->GetAttribute(print_ctx_2->_what))
                   str = *attr;
@@ -403,7 +404,7 @@ std::string Game::t_substitue_fn(const std::string& subsitute) {
     return _cur_user->id();
   } else if (auto print_ctx = User::GetCtxPrint(subsitute)) {
     if (print_ctx->_kind == txtad::CtxPrint::VARIABLE)
-      return GetText("", _cur_user->PrintCtx(print_ctx->_ctx_id, print_ctx->_what));
+      return GetText("", _cur_user->PrintCtx(print_ctx->_ctx_id, print_ctx->_what, _parser));
     else if (print_ctx->_kind == txtad::CtxPrint::ATTRIBUTE)
       return _cur_user->PrintCtxAttribute(print_ctx->_ctx_id, print_ctx->_what);
   } else if (_cur_user->texts().count(subsitute) > 0) {

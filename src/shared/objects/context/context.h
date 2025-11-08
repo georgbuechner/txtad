@@ -55,12 +55,13 @@ public:
   // ***** ***** Getters ***** ***** //
   std::string id() const;
   std::string name() const;
-  std::string description() const;
+  const Text& description() const;
   std::string entry_condition_pattern() const;
   const std::map<std::string, std::string>& attributes() const;
   int priority() const;
   bool permeable() const;
   bool shared() const;
+  const std::map<std::string, std::shared_ptr<Listener>>& listeners() const;
 
   // ***** ***** Setters ***** ***** //
   void set_name(const std::string& name);
@@ -68,7 +69,7 @@ public:
   void set_entry_condition(const std::string& pattern);
 
   // ***** ***** String representation of the class ***** ***** //
-  std::string PrintDescription(std::string& event_queue);
+  std::string PrintDescription(std::string& event_queue, const ExpressionParser& parser);
   std::string ToString() const; 
   
   // ***** ***** Entry check ***** ***** //

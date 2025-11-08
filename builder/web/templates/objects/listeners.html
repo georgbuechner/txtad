@@ -1,0 +1,11 @@
+{% if listeners %} 
+  Listeners:
+  <br>
+  {% for l in listeners %} 
+  <span class="brand">{{listeners[l].event}}</span> 
+  <span style="padding: 0.7em;">⇒</span>
+  <span class="brand">{{listeners[l].arguments}}</span>
+  <br>
+  {% endfor %}
+  <br>
+{% endif %}

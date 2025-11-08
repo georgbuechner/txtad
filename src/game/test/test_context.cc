@@ -24,7 +24,7 @@ TEST_CASE("Test constructor", "[objects][context]") {
 
       REQUIRE(ctx.id() == ID);
       REQUIRE(ctx.name() == NAME);
-      REQUIRE(ctx.description() == DESCRIPTION);
+      REQUIRE(ctx.description().txt() == DESCRIPTION);
       REQUIRE(ctx.entry_condition_pattern() == ENTRY_CONDITION_PATTERN);
       REQUIRE(ctx.priority() == PRIORITY);
       REQUIRE(ctx.permeable() == PERMEABLE);
@@ -62,8 +62,8 @@ TEST_CASE("Test setters", "[objects][context]") {
   SECTION("Test set_description") {
     const std::string NEW_DESCRIPTION = "some new description";
     ctx.set_description(NEW_DESCRIPTION);
-    REQUIRE(ctx.description() != DESCRIPTION);
-    REQUIRE(ctx.description() == NEW_DESCRIPTION);
+    REQUIRE(ctx.description().txt() != DESCRIPTION);
+    REQUIRE(ctx.description().txt() == NEW_DESCRIPTION);
   }
 
   SECTION("Test set_entry_condition") {

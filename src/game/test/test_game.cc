@@ -96,10 +96,13 @@ TEST_CASE("Test Creating Game", "[game]") {
 
   const std::string GAME_NAME = "test_game";
   const std::string GAME_PATH = txtad::GAMES_PATH + GAME_NAME;
+  std::cout << "Creating game files" << std::endl;
   TestGameWrapper test_game_wrapper(GAME_NAME, settings, {{"", {ctx_general}}, {"rooms", {ctx_room_1, 
       ctx_room_2}}}, {{"texts/start", txt_text_1}});
+  std::cout << "Done Creating game files" << std::endl;
 
   Game game(GAME_PATH, GAME_NAME);
+  std::cout << "Game loaded" << std::endl;
 
   // Test game created successfully
   REQUIRE(game.name() == GAME_NAME);

@@ -17,6 +17,7 @@ LHandler::LHandler(std::string id, std::string re_event, Fn fn, bool permeable) 
 std::string LHandler::id() const { return _id; }
 std::string LHandler::event() const { return _event.str(); }
 bool LHandler::permeable() const { return _permeable; } 
+std::string LHandler::arguments() const { return _arguments; }
 
 // setter 
 void LHandler::set_fn(Fn fn) {
@@ -74,6 +75,9 @@ LForwarder::LForwarder(std::string id, std::string re_event, std::string argumen
 
 LForwarder::LForwarder(const nlohmann::json& json) : LForwarder(json.at("id"), json.at("re_event"), 
     json.at("arguments"), json.at("permeable"), json.value("logic", "")) { }
+
+// getter
+std::string LForwarder::logic() const { return _logic; }
 
 // methods 
 bool LForwarder::Test(const std::string& event, const ExpressionParser& parser) const {

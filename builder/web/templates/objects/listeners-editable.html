@@ -1,0 +1,60 @@
+<div class="accordion accordion" id="accordionExample">
+  {% for key in listeners%}
+  {% set listener = listeners[key] %}
+    <div class="accordion-item">
+      <h2 class="accordion-header" id="headinglistener{{label}}{{loop.index}}">
+        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" 
+            data-bs-target="#collapselistener{{label}}{{loop.index}}" aria-expanded="false" 
+            aria-controls="collapselistener{{label}}{{loop.index}}">
+          <span class="brand">{{listener.event}}</span> 
+          <span style="padding: 0.7em;">⇒</span>
+          <span class="brand">{{listener.arguments}}</span>
+        </button>
+      </h2>
+      <div id="collapselistener{{label}}{{loop.index}}" class="accordion-collapse collapse" 
+          aria-labelledby="headinglistener{{label}}{{loop.index}}" data-bs-parent="#accordionExample">
+        <div class="accordion-body">
+            <form> 
+              <div class="input-group mb-3">
+                <span class="input-group-text" id="id">listener:</span>
+                <input type="text" class="form-control" placeholder="text" aria-label="" aria-describedby="id" value="{{listener.id}}">
+              </div>
+              <div class="input-group mb-3">
+                <span class="input-group-text" id="event">Event:</span>
+                <input type="text" class="form-control" placeholder="..." aria-label="" 
+                  aria-describedby="event" value="{{listener.event}}">
+              </div>
+              <div class="input-group mb-3">
+                <span class="input-group-text" id="arguments">Arguments:</span>
+                <input type="text" class="form-control" placeholder="..." aria-label="" 
+                  aria-describedby="arguments" value="{{listener.arguments}}">
+              </div>
+              <div class="input-group mb-3">
+                <span class="input-group-text" id="logic">Logic:</span>
+                <input type="text" class="form-control" placeholder="..." aria-label="" 
+                  aria-describedby="logic" value="{{listener.logic}}">
+              </div>
+              <div class="input-group mb-3">
+                <span class="input-group-text" id="context">Context:</span>
+                <input type="text" class="form-control" placeholder="..." aria-label="" 
+                  aria-describedby="context" value="{{listener.context}}">
+              </div>
+              <div class="input-group mb-3">
+                <span class="input-group-text" id="shared">Permeable:</span>
+                <div class="input-group-text">
+                  <input class="form-check-input mt-0" type="checkbox"
+                    value="{{listener.permeable}}" aria-label="Checkbox for following text input">
+                </div>
+              </div>
+              <button type="submit" class="btn btn-primary">save</button>
+              <button type="button" class="btn btn-secondary">remove</button>
+              <button type="button" class="btn btn-secondary">insert before</button>
+              <button type="button" class="btn btn-secondary">insert after</button>
+            </form>
+        </div>
+      </div>
+    </div>
+  {% endfor %}
+</div>
+
+

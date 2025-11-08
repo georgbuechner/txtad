@@ -5,6 +5,7 @@
 #include "shared/objects/context/context.h"
 #include "shared/objects/text/text.h"
 #include "shared/utils/eventmanager/context_stack.h"
+#include "shared/utils/parser/expression_parser.h"
 #include <memory>
 #include <optional>
 #include <string>
@@ -33,7 +34,7 @@ class User {
     void LinkContextToStack(std::shared_ptr<Context> ctx);
     void RemoveContext(const std::string& ctx_id);
     std::string PrintTxt(std::string id, const ExpressionParser& parser);
-    std::string PrintCtx(std::string id, std::string what);
+    std::string PrintCtx(std::string id, std::string what, const ExpressionParser& parser);
     std::string PrintCtxAttribute(std::string id, std::string what);
 
     // helpers 
@@ -44,7 +45,7 @@ class User {
     };
     static std::optional<CtxPrint> GetCtxPrint(std::string inp);
     static void AddVariableToText(const std::shared_ptr<Context>& ctx, const std::string& what, 
-        std::string& txt);
+        std::string& txt, std::string& event_queue, const ExpressionParser& parser);
 
   private: 
     const std::string _game_id;

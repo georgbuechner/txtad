@@ -1,0 +1,47 @@
+{% extends "layout/layout.html" %}
+
+{% block content %}
+<h1>{{ctx.name}} <span class="small">[{{ctx.id}}]</span></h1>
+
+<form>
+  <div class="input-group mb-3">
+    <span class="input-group-text" id="name">Name</span>
+    <input type="text" class="form-control" placeholder="..." aria-label="" aria-describedby="name" value="{{ctx.name}}">
+  </div>
+  <div class="input-group mb-3">
+    <span class="input-group-text" id="entry_condition">Entry:</span>
+    <input type="text" class="form-control" placeholder="..." aria-label="" aria-describedby="entry_condition" value="{{ctx.entry}}">
+  </div>
+  <div class="input-group mb-3">
+    <span class="input-group-text" id="entry_condition">Priority:</span>
+    <input type="number" class="form-control" aria-label="" aria-describedby="priority" value="{{ctx.priority}}">
+    <span class="input-group-text" id="shared">Permeable:</span>
+    <div class="input-group-text">
+      <input class="form-check-input mt-0" type="checkbox" value="{{ctx.permeable}}" aria-label="Checkbox for following text input">
+    </div>
+    <span class="input-group-text" id="shared">Shared</span>
+    <div class="input-group-text">
+      <input class="form-check-input mt-0" type="checkbox" value="" 
+        {% if ctx.shared %}checked{% endif %} aria-label="Checkbox for following text input">
+    </div>
+  </div>
+
+  <button type="submit" class="btn btn-primary">save</button>
+</form>
+<br>
+
+{% set texts=ctx.description %}
+{% set label="Description"%}
+{% include "objects/txt-editable.html" %}
+
+<br>
+<h4>Attributes</h4>
+{% set attributes=ctx.attributes%}
+{% include "objects/attributes-editable.html" %}
+<br>
+<h4>Listeners</h4>
+{% set listeners=ctx.listeners%}
+{% include "objects/listeners-editable.html" %}
+
+
+{% endblock %}

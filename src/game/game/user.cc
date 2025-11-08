@@ -102,14 +102,14 @@ std::string User::PrintTxt(std::string txt_id, const ExpressionParser& parser) {
   util::Logger()->warn("User::PrintText. Text {} not found", txt_id);
 }
 
-std::string User::PrintCtx(std::string ctx_id, std::string what) {
+std::string User::PrintCtx(std::string ctx_id, std::string what, const ExpressionParser& parser) {
   util::Logger()->debug("User::PrintCtx. printing \"{}\"...", ctx_id);
   std::string txt;
   if (ctx_id.front() == '*') {
     for (const auto& ctx : _context_stack.find(ctx_id.substr(1)))
-      User::AddVariableToText(ctx, what, txt);
+      User::AddVariableToText(ctx, what, txt, _event_queue, parser);
   } else if (_contexts.count(ctx_id) > 0) {
-    User::AddVariableToText(_contexts.at(ctx_id), what, txt);
+    User::AddVariableToText(_contexts.at(ctx_id), what, txt, _event_queue, parser);
   } else {
     util::Logger()->warn("User::PrintCtx. Context \"{}\" not found.", ctx_id);
   }
@@ -153,13 +153,13 @@ std::optional<User::CtxPrint> User::GetCtxPrint(std::string inp) {
 }
 
 void User::AddVariableToText(const std::shared_ptr<Context>& ctx, const std::string& what, 
-    std::string& txt) {
+    std::string& txt, std::string& event_queue, const ExpressionParser& parser) {
   util::Logger()->debug("User::AddVariableToText: {}, {}", ctx->id(), what);
   if (what == "name") {
     txt += ((txt.length() > 0) ? ", " : "") + ctx->name();
   // Print ctx description
   } else if (what == "desc" || what == "description") {
-    txt += ((txt.length() > 0) ? ", " : "") + ctx->description();
+    txt += ((txt.length() > 0) ? ", " : "") + ctx->PrintDescription(event_queue, parser);
   // Print ctx attributes (or all attributes)
   } else if (what == "attributes" || what == "all_attributes") {
     std::vector<std::string> hidden;
@@ -181,7 +181,7 @@ void User::AddVariableToText(const std::shared_ptr<Context>& ctx, const std::str
       for (const auto& it : ctx->LinkedContexts(print_ctx->_ctx_id.substr(1))) {
         if (auto linked_ctx = it.lock()) {
           if (print_ctx->_kind == txtad::CtxPrint::VARIABLE)
-            User::AddVariableToText(linked_ctx, print_ctx->_what, txt);
+            User::AddVariableToText(linked_ctx, print_ctx->_what, txt, event_queue, parser);
           else if (print_ctx->_kind == txtad::CtxPrint::ATTRIBUTE) {
             if (auto attr = linked_ctx->GetAttribute(print_ctx->_what))
               txt += ((txt != "") ? ", " : "") + *attr;

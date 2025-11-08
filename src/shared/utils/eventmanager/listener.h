@@ -18,6 +18,11 @@ class Listener {
     virtual std::string id() const = 0;
     virtual std::string event() const = 0;
     virtual bool permeable() const = 0;
+    virtual std::string arguments() const = 0;
+    virtual std::string logic() const { 
+      util::Logger()->error("Listener::logic(): Invalid Base Class call!");
+      return "";
+    }
     virtual std::string ctx_id () const { return ""; }
     virtual std::weak_ptr<Context> ctx() const { return {}; }
 
@@ -36,6 +41,7 @@ class LHandler : public Listener {
     std::string id() const override;
     std::string event() const override;
     bool permeable() const override;
+    std::string arguments() const override;
 
     // setter 
     void set_fn(Fn fn) override;
@@ -79,6 +85,9 @@ class LForwarder : public LHandler {
 
     LForwarder(const nlohmann::json& json);
 
+    // getter
+    std::string logic() const override;
+
     // methods 
     bool Test(const std::string& event, const ExpressionParser& parser) const override;
 
@@ -106,8 +115,8 @@ class LContextForwarder : public LForwarder {
     LContextForwarder(const nlohmann::json& json, std::shared_ptr<Context> ctx);
 
     // getter
-    std::string ctx_id() const;
-    std::weak_ptr<Context> ctx() const;
+    std::string ctx_id() const override;
+    std::weak_ptr<Context> ctx() const override;
 
     // methods 
     bool Test(const std::string& event, const ExpressionParser& parser) const override;

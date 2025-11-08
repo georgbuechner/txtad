@@ -45,7 +45,6 @@ std::map<std::string, builder::FileType> parser::GetPaths(const std::string& gam
     }
   }
   return paths;
-
 }
 
 std::map<std::string, builder::FileType> parser::GetPaths(const std::string& game_path, const std::string path) {

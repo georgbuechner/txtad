@@ -44,6 +44,11 @@ class Text {
     // getter 
     bool shared() const { return _shared; }
     std::string txt() const { return _txt; }
+    std::string one_time_events() const { return _one_time_events; }
+    std::string permanent_events() const { return _permanent_events; }
+    std::string logic() const { return _logic; }
+    Text* next() const { return _next; }
+
   
     // methods
     std::vector<std::string> print(std::string& event_queue, const ExpressionParser& parser) {

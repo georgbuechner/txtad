@@ -1,4 +1,3 @@
-#include "builder/creator/creator.h"
 #include "builder/creator/manager.h"
 #include "builder/utils/defines.h"
 #include "builder/utils/jinja_helpers.h"
@@ -11,12 +10,8 @@
 #include "jinja2cpp/value.h"
 #include "shared/utils/parser/game_file_parser.h"
 #include "shared/utils/utils.h"
-#include <algorithm>
 #include <exception>
-#include <filesystem>
 #include <httplib.h> 
-#include <iostream>
-#include <memory>
 #include <spdlog/spdlog.h>
 #include <string>
 #include <thread>
@@ -65,6 +60,12 @@ int main() {
           return params["s"].asString().find(params["sub"].asString()) != std::string::npos;
         }, std::vector<jinja2::ArgInfo>({jinja2::ArgInfo{"s"}, jinja2::ArgInfo{"sub"}})
       ));
+    env.AddGlobal("default_attribute", jinja2::UserCallable(
+        [](auto& params)->jinja2::ValuesMap {
+          return jinja2::ValuesMap({{"", ""}});
+        }, std::vector<jinja2::ArgInfo>()
+      ));
+
 
     auto load_template = [&](httplib::Response& resp, const std::string& page, 
         const jinja2::ValuesMap& params = jinja2::ValuesMap()) -> void {
@@ -109,13 +110,15 @@ int main() {
       if (game_id != "" && games.contains(game_id)) {
         std::string path = (req.has_param("path")) ? util::Strip(req.get_param_value("path"), '/') : "";
         util::Logger()->info(fmt::format("Builder::create_params. Got path: {}", path));
-        params.emplace("game", jinja2::Reflect(GamePtrView{games.at(game_id).get()}));
+        params.emplace("game", jinja2::Reflect(PtrView<Game>{games.at(game_id).get()}));
         params.emplace("all_paths", _jinja::Map(parser::GetPaths(txtad::GAMES_PATH + game_id)));
         params.emplace("selections", _jinja::Map(parser::GetPaths(txtad::GAMES_PATH + game_id, path)));
         if (req.has_param("type") && builder::REVERSE_FILE_TYPE_MAP.contains(type)) {
           auto t_type = builder::REVERSE_FILE_TYPE_MAP.at(type);
           if (t_type == builder::FileType::CTX) {
-            params.emplace("ctx", jinja2::Reflect(CtxPtrView{games.at(game_id)->contexts().at(path).get()}));
+            params.emplace("ctx", jinja2::Reflect(PtrView<Context>{games.at(game_id)->contexts().at(path).get()}));
+          } else if (t_type == builder::FileType::TXT) {
+            params.emplace("texts", jinja2::Reflect(PtrView<Text>{games.at(game_id)->texts().at(path).get()}));
           }
         }
         params.emplace("path", path);
@@ -209,7 +212,9 @@ int main() {
         if (!manager.CreatorFromCookie(req)->HasAccessToGame(game_id))
           throw _http::_t_exception({400, "No Access to game: \"" + game_id + "\""});
         if (type == "CTX") {
-          load_template(resp, "ctx.html", create_params(req, game_id, type));
+          load_template(resp, "ctx-edit.html", create_params(req, game_id, type));
+        } else if (type == "TXT") {
+          load_template(resp, "txt-edit.html", create_params(req, game_id, type));
         } else {
           load_template(resp, "game.html", create_params(req, game_id, type));
         }

@@ -4,6 +4,7 @@
 #include <spdlog/spdlog.h>
 #include <unistd.h>
 #include "context.h"
+#include "game/utils/defines.h"
 #include "shared/utils/eventmanager/eventmanager.h"
 #include "shared/utils/eventmanager/listener.h"
 #include "shared/utils/utils.h"
@@ -18,8 +19,8 @@ std::string Context::name() const {
   return _name;
 }
 
-std::string Context::description() const {
-  return _description.txt();
+const Text& Context::description() const {
+  return _description;
 }
 
 std::string Context::entry_condition_pattern() const {
@@ -36,6 +37,9 @@ bool Context::permeable() const {
 }
 bool Context::shared() const {
   return _shared;
+}
+const std::map<std::string, std::shared_ptr<Listener>>& Context::listeners() const {
+  return _event_manager->listeners();
 }
 
 // ***** ***** Setters ***** ***** //
@@ -55,8 +59,9 @@ void Context::set_entry_condition(const std::string& pattern) {
 std::string Context::ToString() const {
   return "Name: " + _name + "\n" + "Description: " + _description.txt() + "\n" + "Entry Condition (regex): " + _entry_condition.str();
 }
-std::string Context::PrintDescription(std::string& event_queue) {
-  
+
+std::string Context::PrintDescription(std::string& event_queue, const ExpressionParser& parser) {
+  return util::Join(_description.print(event_queue, parser), txtad::WEB_CMD_ADD_PROMPT);
 }
   
   // ***** ***** Entry check ***** ***** //

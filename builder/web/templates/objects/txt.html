@@ -1,0 +1,12 @@
+
+{% if label %} 
+  <span class="input-group-text">{{label}}</span>
+{% endif %}
+
+{% for txt in text %}
+  <i>{{txt.txt}}</i> 
+  {% if txt.one_time_events or txt.peranent_events %}
+    (events: {{txt.one_time_events}} {{txt.peranent_events}})
+  {% endif %}
+{% endfor %}
+<br>

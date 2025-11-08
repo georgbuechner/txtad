@@ -28,13 +28,13 @@ h1 {
   margin-left: 2rem;
 }
 
-.dir {
-  color: #282d31;
-}
-.obj {
-  color: #693a1e;
+.note {
+  font-size: small;
+  margin-left: 1em;
 }
 
-.small {
-  font-size: small;
+.game-desc {
+  margin-top: -3em;
+  font-style: italic;
 }
+

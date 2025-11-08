@@ -7,6 +7,13 @@ $brand-danger:    #4b3022;
 $brand-light:     #96999a;
 $brand-dark:      #160c08;
 
+$cadet-gray: #879098ff;
+$licorice: #150904ff;
+$gray: #7F8183ff;
+$bistre: #462B1Aff;
+$battleship-gray: #9D938Aff;
+$blood-red: #693a1e;
+
 // 2) Load & configure Bootstrap in one go
 @use "bootstrap/scss/bootstrap" with (
   // Theme tokens Bootstrap reads
@@ -36,4 +43,18 @@ $brand-dark:      #160c08;
 // 3) Your own extras (can come after)
 .bg-light-80 {
   background-color: color.scale($brand-light, $alpha: -40%) !important;
+}
+
+.DIR {
+  color: $brand-primary;
+}
+.CTX {
+  color: $gray;
+}
+.TXT {
+  color: $gray;
+}
+
+.brand {
+  color: $brand-primary;
 }
