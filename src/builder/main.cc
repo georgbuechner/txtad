@@ -12,12 +12,15 @@
 #include "shared/utils/utils.h"
 #include <exception>
 #include <httplib.h> 
+#include <nlohmann/json_fwd.hpp>
 #include <spdlog/spdlog.h>
 #include <string>
 #include <thread>
 #include <jinja2cpp/template.h>
 #include <jinja2cpp/template_env.h>
 #include <jinja2cpp/filesystem_handler.h>
+
+using namespace std::chrono_literals;
 
 int main() {
 
@@ -29,8 +32,43 @@ int main() {
 
   // Creators
   CreatorManager manager;
+  
+  // Create clinent "talking" to game-server
+  httplib::Client cli("localhost", 4080);
+  cli.set_connection_timeout(0, 200000);
+  cli.set_read_timeout(2,0);
+  cli.set_write_timeout(2,0);
 
-  std::thread thread_http([&games, &manager]() {
+  std::thread thread_game_srv([&games, &cli]() {
+      while(true) {
+        std::this_thread::sleep_for(1000ms);
+        for (auto& [_, game] : games) {
+          game->set_running(false);
+        }
+        if (auto res = cli.Get("/api/games/running")) {
+          if (res->status == httplib::StatusCode::OK_200) {
+            try {
+              const auto& game_info = nlohmann::json::parse(res->body);
+              for (const auto& [id, status] : game_info.get<std::map<std::string, bool>>()) {
+                if (games.contains(id)) {
+                  games.at(id)->set_running(status);
+                } else {
+                  util::Logger()->warn(fmt::format("/api/games/running: Game {} not found", id));
+                }
+              }
+            } catch (std::exception& e) {
+              util::Logger()->warn(fmt::format("/api/games/running: Payload invalid: {}", e.what()));
+            }
+          } else {
+            util::Logger()->warn(fmt::format("/api/games/running: Invalid Response: {}", res->status));
+          }
+        } else {
+          util::Logger()->warn(fmt::format("/api/games/running: No Response!"));
+        }
+      }
+  });
+
+  std::thread thread_http([&games, &manager, &cli]() {
     httplib::Server http_server;
     http_server.set_mount_point("/static", builder::STATIC_PATH);
     http_server.set_mount_point("/media", builder::MEDIA_PATH);
@@ -187,6 +225,44 @@ int main() {
       }
     });
 
+    http_server.Get("/api/game/reload/:game_id", [&](const httplib::Request& req, httplib::Response& resp) {
+      std::string game_id = req.path_params.at("game_id");
+      if (!manager.CreatorFromCookie(req)->HasAccessToGame(game_id))
+        throw _http::_t_exception({400, "No Access to game: \"" + game_id + "\""});
+      if (auto res = cli.Get("/api/game/reload/" + game_id)) {
+        if (res->status == httplib::StatusCode::OK_200) {
+          resp.set_redirect(_http::Referer(req) + "?msg=Successfully reloaded game!", 303);
+          if (games.contains(game_id)) {
+            games.at(game_id)->set_running(true);
+          }
+        } else {
+          resp.set_redirect(_http::Referer(req) + fmt::format("?msg=Reloading game failed with status: {}", 
+                res->status), 303);
+        }
+        return;
+      }
+      resp.set_redirect(_http::Referer(req) + "?msg=Reloading game failed: Error with game-server.", 303);
+    });
+
+    http_server.Get("/api/game/stop/:game_id", [&](const httplib::Request& req, httplib::Response& resp) {
+      std::string game_id = req.path_params.at("game_id");
+      if (!manager.CreatorFromCookie(req)->HasAccessToGame(game_id))
+        throw _http::_t_exception({400, "No Access to game: \"" + game_id + "\""});
+      if (auto res = cli.Get("/api/game/stop/" + game_id)) {
+        if (res->status == httplib::StatusCode::OK_200) {
+          resp.set_redirect(_http::Referer(req) + "?msg=Successfully stoped game!", 303);
+          if (games.contains(game_id)) {
+            games.at(game_id)->set_running(false);
+          }
+        } else {
+          resp.set_redirect(_http::Referer(req) + fmt::format("?msg=Stopping game failed with status: {}", 
+                res->status), 303);
+        }
+        return;
+      }
+      resp.set_redirect(_http::Referer(req) + "?msg=Stopping game failed: Error with game-server.", 303);
+    });
+
     // PAGES
     http_server.Get("/", [&](const httplib::Request& req, httplib::Response& resp) {
       util::Logger()->info(fmt::format("Builder::Root"));
@@ -223,10 +299,10 @@ int main() {
       }
     });
 
-
     util::Logger()->info("MAIN: Successfully started http-server on port 4081");
     http_server.listen("0.0.0.0", 4081);
   });
 
+  thread_game_srv.join();
   thread_http.join();
 }

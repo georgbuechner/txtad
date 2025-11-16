@@ -15,7 +15,7 @@
 
 Game::MsgFn Game::_cout = nullptr;
 
-Game::Game(std::string path, std::string name) : _path(path), _name(name), _cur_user(nullptr), 
+Game::Game(std::string path, std::string name) : _path(path), _name(name), _cur_user(nullptr), _running(false),
     _parser(std::bind(&Game::t_substitue_fn, this, std::placeholders::_1)),
     _settings(*util::LoadJsonFromDisc(_path + "/" + txtad::GAME_SETTINGS)),
     _builder_settings(util::LoadJsonFromDisc(_path + "/" + txtad::BUILDER_EXTENSION).value_or(nlohmann::json::object())) {
@@ -88,9 +88,11 @@ const std::map<std::string, std::shared_ptr<Text>>& Game::texts() const { return
 const Settings& Game::settings() const { return _settings; }
 const builder::Settings& Game::builder_settings() const { return _builder_settings; }
 const std::shared_ptr<User>& Game::cur_user() { return _cur_user; }
+bool Game::running() const { return _running; }
 
 // setter
 void Game::set_msg_fn(Game::MsgFn fn) { _cout = fn; }
+void Game::set_running(bool status) { _running = status; }
 
 // methods 
 void Game::HandleEvent(const std::string& user_id, const std::string& event) {

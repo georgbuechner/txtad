@@ -26,10 +26,20 @@
             <br>
             <br>
             {% if request_allowed %}
-              <form action="/api/creator/requests/add" method="post">
-                <input id="game_id" name="game_id" hidden type="text" value="{{id}}"></input>
-                <input type="submit" class="btn btn-primary" value="Request Access"></input>
-              </form>
+              {% if username %}
+                <form action="/api/creator/requests/add" method="post">
+                  <input id="game_id" name="game_id" hidden type="text" value="{{id}}"></input>
+                  <input type="submit" class="btn btn-primary" value="Request Access"></input>
+                </form>
+              {% endif %}
+              {% if games[id].running %} 
+                <a 
+                   href="http://localhost:4080/{{id}}/" 
+                   target="_blank"
+                   rel="noopener"
+                   noreferrer
+                >play</a>
+              {% endif %}
             {% else %}
               <a href="/{{id}}">edit</a>
             {% endif %}

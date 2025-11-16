@@ -116,6 +116,7 @@ namespace jinja2 {
         {"contexts", [](const PtrView<Game>& v){ return (v.ptr) ? _jinja::Map(v.ptr->contexts()) : Value{}; }},
         {"texts", [](const PtrView<Game>& v){ return (v.ptr) ? _jinja::Map(v.ptr->texts()) : Value{}; }},
         {"description", [](const PtrView<Game>& v){ return (v.ptr) ? v.ptr->builder_settings()._description : Value{}; }},
+        {"running", [](const PtrView<Game>& v){ return (v.ptr) ? v.ptr->running() : Value{}; }},
       };
       return acc;
     }

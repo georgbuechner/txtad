@@ -65,7 +65,30 @@
           </li>
         {% endif %}
       </ul>
-        {{creatorname}}
+        {% if game %}
+          <span class="nav-item">|<i>{{game.name}}</i>
+          <a 
+             href="/api/game/reload/{{game.name}}/" 
+             style="color: #2b2c2c;"
+          >reload</i></a>
+          {% if game.running %} 
+            <a 
+               href="http://localhost:4080/{{game.name}}/" 
+               target="_blank"
+               rel="noopener"
+               style="color: #2b2c2c;"
+               noreferrer
+            >play</i></a>
+            <a 
+               href="/api/game/stop/{{game.name}}/" 
+               style="color: #2b2c2c;"
+            >stop</i></a>
+          {% endif %}
+          </span>
+        {% endif %}
+        {% if creatorname %}
+          <span class="nav-item">|{{creatorname}}|</span>
+        {% endif %}
     </div>
   </div>
 </nav>

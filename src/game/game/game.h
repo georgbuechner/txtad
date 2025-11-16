@@ -29,9 +29,11 @@ class Game {
     const Settings& settings() const;
     const builder::Settings& builder_settings() const;
     const std::shared_ptr<User>& cur_user();
+    bool running() const;
     
     // setter 
     static void set_msg_fn(MsgFn fn);
+    void set_running(bool status);
 
     // methods 
     void HandleEvent(const std::string& user_id, const std::string& event);
@@ -45,6 +47,7 @@ class Game {
     const std::string _name;
     std::map<std::string, std::shared_ptr<User>> _users;
     std::shared_ptr<User> _cur_user;
+    bool _running;
 
     ExpressionParser _parser;
 
