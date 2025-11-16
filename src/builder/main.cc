@@ -291,7 +291,7 @@ int main() {
           load_template(resp, "ctx-edit.html", create_params(req, game_id, type));
         } else if (type == "TXT") {
           load_template(resp, "txt-edit.html", create_params(req, game_id, type));
-        } else {
+        }  else {
           load_template(resp, "game.html", create_params(req, game_id, type));
         }
       } catch (_http::_t_exception& e) {

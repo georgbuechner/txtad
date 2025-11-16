@@ -7,6 +7,7 @@
 #include "game/game/game.h"
 #include "jinja2cpp/reflected_value.h"
 #include "shared/objects/context/context.h"
+#include "shared/objects/settings/settings.h"
 #include "shared/utils/eventmanager/listener.h"
 #include <unordered_map>
 
@@ -19,6 +20,17 @@ struct PtrView {
 };
 
 namespace _jinja {
+
+  template<typename T1>
+  jinja2::ValuesList Vec(const std::vector<T1>& vec) {
+    jinja2::ValuesList vl;
+    vl.reserve(vec.size());
+    for (const auto& it : vec) {
+      vl.emplace_back(it);
+    }
+    return vl;
+  }
+
   template<typename T1>
   jinja2::ValuesList SetToVec(const std::set<T1>& set) {
     jinja2::ValuesList vl;
@@ -111,6 +123,7 @@ namespace jinja2 {
   template<> struct TypeReflection<PtrView<Game>> : TypeReflected<PtrView<Game>> {
     static auto& GetAccessors() {
       static std::unordered_map<std::string, FieldAccessor> acc = {
+        {"settings", [](const PtrView<Game>& v){ return (v.ptr) ? jinja2::Reflect(v.ptr->settings()) : Value{}; }},
         {"name", [](const PtrView<Game>& v){ return (v.ptr) ? v.ptr->name() : Value{}; }},
         {"path", [](const PtrView<Game>& v){ return (v.ptr) ? v.ptr->path() : Value{}; }},
         {"contexts", [](const PtrView<Game>& v){ return (v.ptr) ? _jinja::Map(v.ptr->contexts()) : Value{}; }},
@@ -121,6 +134,17 @@ namespace jinja2 {
       return acc;
     }
   };
+
+  template<> struct TypeReflection<Settings> : TypeReflected<Settings> {
+    static auto& GetAccessors() {
+      static std::unordered_map<std::string, FieldAccessor> acc = {
+        {"initial_events", [](const Settings& settings) { return settings.initial_events(); }},
+        {"initial_contexts", [](const Settings& settings) { return _jinja::Vec(settings.initial_ctx_ids()); }},
+      };
+      return acc;
+    }
+   };
+
 
   template<> struct TypeReflection<Text> : TypeReflected<Text> {
     static auto& GetAccessors() {

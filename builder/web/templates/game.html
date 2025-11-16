@@ -8,6 +8,12 @@
 {% endif %}
 <div class="game-desc">
   <p><span>&mdash;</span>{{game.description}}</p>
+  <button type="button" 
+    class="dropdown-item" 
+    data-bs-toggle="modal" 
+    data-bs-target="#shareSettingsModal">
+      Settings
+  </button>
 </div>
 
 <div class="accordion accordion-flush" id="accordionFlushExample">
@@ -45,7 +51,7 @@
               {% set ctx = game.contexts[s] %}
             {% endif %}
             {% include "objects/ctx.html" %}
-            <a href="/{{game.name}}?path={{path}}/{{s}}&type={{type}}" >edit</a>
+            <a href="/{{game.name}}?path={{path}}/{{s}}&type={{type}}">edit</a>
           {% elif type == "TXT" %}
             {% if path %}
               {% set text = game.texts[path + "/" + s] %}
@@ -61,6 +67,39 @@
       </div>
     </div>
   {% endfor %}
+</div>
+
+<!-- Modal -->
+<div class="modal fade" id="shareSettingsModal" tabindex="-1" aria-labelledby="#shareSettingsModal" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="shareSettingsModalLabel">Settings</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <form>
+          <div class="input-group mb-3">
+            <span class="input-group-text" id="initial_events">Inital Events:</span>
+            <input type="text" class="form-control" placeholder="text" aria-label="" aria-describedby="id" 
+              value="{{game.settings.initial_events}}">
+          </div>
+          <h4>Initial contexts:</h4>
+          {% for ctx in game.settings.initial_contexts %} 
+            <div class="input-group mb-3">
+              <span class="input-group-text" id="initial_events_{{loop.index}}">{{loop.index}}</span>
+              <input type="text" class="form-control" placeholder="text" aria-label="" aria-describedby="id" 
+                value="{{ctx}}">
+              <button class="btn btn-outline-danger" type="button">remove</button>
+            </div>
+          {% endfor %}
+          <button class="btn btn-outline-secondary" type="button">add</button>
+          <br><br>
+          <button type="submit" class="btn btn-primary">save</button>
+        </form>
+      </div>
+    </div>
+  </div>
 </div>
 
 
