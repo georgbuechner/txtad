@@ -85,15 +85,9 @@
               value="{{game.settings.initial_events}}">
           </div>
           <h4>Initial contexts:</h4>
-          {% for ctx in game.settings.initial_contexts %} 
-            <div class="input-group mb-3">
-              <span class="input-group-text" id="initial_events_{{loop.index}}">{{loop.index}}</span>
-              <input type="text" class="form-control" placeholder="text" aria-label="" aria-describedby="id" 
-                value="{{ctx}}">
-              <button class="btn btn-outline-danger" type="button">remove</button>
-            </div>
-          {% endfor %}
-          <button class="btn btn-outline-secondary" type="button">add</button>
+          {% set list_id = "initial_contexts" %}
+          {% set list_elements = game.settings.initial_contexts %}
+          {% include "forms/str_list.html" %}
           <br><br>
           <button type="submit" class="btn btn-primary">save</button>
         </form>

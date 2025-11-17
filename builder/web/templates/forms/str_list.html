@@ -1,0 +1,27 @@
+<div id="{{list_id}}">
+  {% for elem in list_elements %} 
+    <div class="input-group mb-3" id="parent_{{list_id}}_{{loop.index}}">
+      <span class="input-group-text" id="label_{{list_id}}_{{loop.index}}">{{loop.index}}</span>
+      <input 
+        type="text" 
+        class="form-control" 
+        placeholder="context id" 
+        aria-label="" 
+        aria-describedby="id" 
+        id="{{list_id}}_{{loop.index}}"
+        name="{{list_id}}_{{loop.index}}"
+        value="{{elem}}"
+      >
+      <button 
+        class="btn btn-outline-danger" 
+        type="button"
+        onclick="RemoveListElement('{{list_id}}', '{{loop.index}}');"
+      >remove</button>
+    </div>
+  {% endfor %}
+</div>
+<button 
+  class="btn btn-outline-secondary" 
+  type="button"
+  onclick="AddListElement('{{list_id}}');"
+>add</button>
