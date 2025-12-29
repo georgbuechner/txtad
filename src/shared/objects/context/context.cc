@@ -138,3 +138,12 @@ std::vector<std::weak_ptr<Context>> Context::LinkedContexts(std::string type) {
   }
   return linked_contexts;
 }
+
+nlohmann::json Context::ToJson() const {
+  nlohmann::json j = {{"id", _id}, {"name", _name}, {"description", _description.ToJson()}, 
+    {"entry", _entry_condition.str()}, {"attributes", _attributes}, {"priority", _priority}, 
+    {"permeable", _permeable}, {"shared", _shared}, {"listeners", nlohmann::json::object()} };
+  for (const auto& it : _event_manager->listeners()) {
+    j["listeners"][it.first] = it.second->ToJson();
+  }
+}

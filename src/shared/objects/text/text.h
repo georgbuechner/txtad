@@ -66,6 +66,22 @@ class Text {
       return txts;
     }
 
+    nlohmann::json ToJson() const {
+      nlohmann::json j = {{"shared", _shared}, {"txt", _txt}, {"one_time_events", _one_time_events},
+        {"permanent_events", _permanent_events}, {"logic", _logic}};
+      if (_next) {
+        std::vector<nlohmann::json> txts; 
+        auto next = _next->ToJson();
+        if (next.is_array()) {
+          txts.insert(txts.end(), txts.begin(), txts.end()); 
+        } else if (next.is_object()) {
+          txts.push_back(next);
+        }
+        return txts;
+      } 
+      return j;
+    }
+
   private:
     bool _shared;
     std::string _txt;

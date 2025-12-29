@@ -401,3 +401,12 @@ std::string Game::GetText(std::string event, std::string args) {
   }
   return txt;
 }
+
+void Game::StoreGame(std::string path) {
+  path = (path == "") ? path : _path;
+  util::WriteJsonToDisc(path + "/" + txtad::GAME_SETTINGS, _settings.ToJson());
+  util::WriteJsonToDisc(path + "/" + txtad::BUILDER_EXTENSION, _settings.ToJson());
+  for (const auto& ctx : _contexts) {
+    util::WriteJsonToDisc(path + "/" + txtad::GAMES_PATH + ctx.first, ctx.second->ToJson());
+  }
+}

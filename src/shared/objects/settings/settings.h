@@ -15,6 +15,11 @@ class Settings {
     std::string initial_events() const { return _initial_events; }
     const std::vector<std::string>& initial_ctx_ids() const { return _initial_ctx_ids; }
 
+    // Methods 
+    nlohmann::json ToJson() const {
+      return {{"initial_events", _initial_events}, {"initial_contexts", _initial_ctx_ids}};
+    }
+
   private: 
     const std::string _initial_events;
     const std::vector<std::string> _initial_ctx_ids;

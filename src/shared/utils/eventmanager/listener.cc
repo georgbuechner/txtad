@@ -60,6 +60,9 @@ std::string LHandler::ReplacedArguments(const std::string& event, const std::str
   }
   return "";
 }
+nlohmann::json LHandler::ToJson() const {
+  return {{"id", _id}, {"event", _event.str()}, {"arguments", _arguments}, {"permeable", _permeable}};
+}
 
 // ## l-forwarder
 Listener::Fn LForwarder::_overwride_fn = nullptr;
@@ -89,6 +92,12 @@ bool LForwarder::Test(const std::string& event, const ExpressionParser& parser) 
 
 void LForwarder::set_overwite_fn(Fn fn) { 
   _overwride_fn = fn; 
+}
+
+nlohmann::json LForwarder::ToJson() const {
+  nlohmann::json j = LHandler::ToJson(); 
+  j["logic"] = _logic; 
+  return j;
 }
 
 // ## l-context-forwarded
@@ -158,4 +167,13 @@ std::string LContextForwarder::GetCtxName(std::weak_ptr<Context> _ctx) {
   } 
   util::Logger()->error("GetCtxName: Context for ContextForwarder not availible!");
   return "";
+}
+
+nlohmann::json LContextForwarder::ToJson() const {
+  nlohmann::json j = LHandler::ToJson(); 
+  if (auto ctx = _ctx.lock()) {
+    j["ctx"] = ctx->id(); 
+  }
+  j["use_ctx_regex"] = _use_ctx_regex; 
+  return j;
 }

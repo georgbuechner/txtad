@@ -6,6 +6,7 @@
 #include "shared/utils/utils.h"
 #include <functional>
 #include <memory>
+#include <nlohmann/json.hpp>
 #include <string>
 
 class Context;
@@ -31,6 +32,7 @@ class Listener {
 
     virtual bool Test(const std::string& event, const ExpressionParser& parser) const = 0;
     virtual void Execute(std::string event) const = 0;
+    virtual nlohmann::json ToJson() const = 0;
 };
 
 class LHandler : public Listener {
@@ -50,6 +52,7 @@ class LHandler : public Listener {
     bool Test(const std::string& event, const ExpressionParser& parser) const override;
 
     void Execute(std::string event) const override;
+    virtual nlohmann::json ToJson() const override;
 
   protected: 
     const std::string _id;
@@ -90,6 +93,7 @@ class LForwarder : public LHandler {
 
     // methods 
     bool Test(const std::string& event, const ExpressionParser& parser) const override;
+    nlohmann::json ToJson() const override;
 
     static void set_overwite_fn(Fn fn);
 
@@ -120,6 +124,7 @@ class LContextForwarder : public LForwarder {
 
     // methods 
     bool Test(const std::string& event, const ExpressionParser& parser) const override;
+    nlohmann::json ToJson() const override;
 
   private: 
     std::weak_ptr<Context> _ctx;

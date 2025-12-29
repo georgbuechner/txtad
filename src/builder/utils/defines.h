@@ -22,6 +22,8 @@ namespace builder {
     const std::string _description;
     Settings() : _description("") {}
     Settings(nlohmann::json j) : _description(j.value("description", "")) {}
+
+    nlohmann::json ToJson() const { return {{"description", _description}}; }
   };
 
   enum FileType {

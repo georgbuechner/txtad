@@ -7,7 +7,6 @@
 #include "shared/objects/settings/settings.h"
 #include "shared/objects/text/text.h"
 #include "shared/utils/parser/expression_parser.h"
-#include "shared/objects/tests/test_case.h"
 #include <functional>
 #include <map>
 #include <memory>
@@ -40,6 +39,7 @@ class Game {
     void HandleEvent(const std::string& user_id, const std::string& event);
     std::shared_ptr<User> CreateNewUser(std::string user_id);
     std::string CheckLogic(const std::string& logic);
+    void StoreGame(std::string path = "");
 
   private: 
     static MsgFn _cout;

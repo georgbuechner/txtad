@@ -91,6 +91,8 @@ public:
 
   std::vector<std::weak_ptr<Context>> LinkedContexts(std::string type);
 
+  nlohmann::json ToJson() const;
+
   // ***** ***** Attributes or Data Members ***** ***** //
 private:
   const std::string _id;
