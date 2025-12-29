@@ -8,17 +8,19 @@
 #include "jinja2cpp/filesystem_handler.h"
 #include "jinja2cpp/reflected_value.h"
 #include "jinja2cpp/value.h"
+#include "shared/objects/tests/test_case.h"
 #include "shared/utils/parser/game_file_parser.h"
 #include "shared/utils/utils.h"
 #include <exception>
-#include <httplib.h> 
-#include <nlohmann/json_fwd.hpp>
+#include "httplib.h"
+#include <nlohmann/json.hpp>
 #include <spdlog/spdlog.h>
 #include <string>
 #include <thread>
 #include <jinja2cpp/template.h>
 #include <jinja2cpp/template_env.h>
 #include <jinja2cpp/filesystem_handler.h>
+#include <websocketpp/error.hpp>
 
 using namespace std::chrono_literals;
 
@@ -97,6 +99,16 @@ int main() {
         [](auto& params)->jinja2::Value {
           return params["s"].asString().find(params["sub"].asString()) != std::string::npos;
         }, std::vector<jinja2::ArgInfo>({jinja2::ArgInfo{"s"}, jinja2::ArgInfo{"sub"}})
+      ));
+    env.AddGlobal("is_child", jinja2::UserCallable(
+        [](auto& params)->jinja2::Value {
+          const std::string path = params["path"].asString();
+          const std::string cur = params["cur"].asString();
+          if (path.find(cur) == 0) {
+            return path.substr(cur.length()).find("/") == std::string::npos;
+          }
+          return false;
+        }, std::vector<jinja2::ArgInfo>({jinja2::ArgInfo{"path"}, jinja2::ArgInfo{"cur"}})
       ));
     env.AddGlobal("default_attribute", jinja2::UserCallable(
         [](auto& params)->jinja2::ValuesMap {
@@ -261,6 +273,34 @@ int main() {
         return;
       }
       resp.set_redirect(_http::Referer(req) + "?msg=Stopping game failed: Error with game-server.", 303);
+    });
+
+    // Save Elements 
+    http_server.Post("/:game_id/save/settings", [&](const httplib::Request& req, httplib::Response& resp) {
+        std::cout << "initial events: " << req.form.get_field("initial_events") << std::endl;
+        if (req.form.has_field("initial_contexts") > 0) {
+          auto ctxs = req.form.get_fields("initial_contexts");
+          for (const auto& ctx : ctxs) 
+            std::cout << "- " << ctx << std::endl;
+        } 
+        resp.set_redirect(_http::Referer(req) + "?msg=Successfully saved game settings.", 303);
+    });
+
+    // Test Game 
+    http_server.Post("/:game_id/test", [&](const httplib::Request& req, httplib::Response& resp) {
+      std::string game_id = req.path_params.at("game_id");
+        auto test_cases = parser::LoadTestCases(game_id);
+        for (const auto& test_case : test_cases) {
+          // TODO: Save game to tmp-path 
+          // TODO: Load (copy of) game from tmp-path 
+          std::string test_result = test_case.Run(games.at(game_id));
+          if (test_result != "") {
+            resp.set_content(test_result, "text/txt");
+            resp.status = 400;
+            return;
+          }
+        }
+        resp.status = 200;
     });
 
     // PAGES

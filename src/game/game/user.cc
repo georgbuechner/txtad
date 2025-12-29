@@ -2,6 +2,7 @@
 #include "game/utils/defines.h"
 #include "shared/objects/context/context.h"
 #include "shared/utils/parser/expression_parser.h"
+#include "shared/utils/parser/pattern_parser.h"
 #include "shared/utils/utils.h"
 #include <memory>
 #include <optional>
@@ -71,6 +72,7 @@ void User::HandleEvent(const std::string& event, const ExpressionParser& parser)
   _event_queue = event;
   util::Logger()->info("User::HandleEvent ({}): {}", _id, event);
   while (_event_queue != "") {
+    _event_queue = util::ReplaceAll(_event_queue, txtad::UID_REPLACEMENT, _id);
     _context_stack.TakeEvents(_event_queue, parser);
   }
 }
@@ -138,20 +140,6 @@ std::string User::PrintCtxAttribute(std::string ctx_id, std::string attribute) {
   return txt;
 }
 
-std::optional<User::CtxPrint> User::GetCtxPrint(std::string inp) {
-  static const std::regex pattern(txtad::RE_PRINT_CTX);
-  std::smatch match;
-  if (std::regex_match(inp, match, pattern)) {
-    if (match[2].str() == "->") {
-      return CtxPrint({txtad::CtxPrint::VARIABLE, match[1].str(), match[3].str()});
-    }
-    else if (match[2].str() == ".") {
-      return CtxPrint({txtad::CtxPrint::ATTRIBUTE, match[1].str(), match[3].str()});
-    }   
-  }
-  return std::nullopt;
-}
-
 void User::AddVariableToText(const std::shared_ptr<Context>& ctx, const std::string& what, 
     std::string& txt, std::string& event_queue, const ExpressionParser& parser) {
   util::Logger()->debug("User::AddVariableToText: {}, {}", ctx->id(), what);
@@ -177,13 +165,14 @@ void User::AddVariableToText(const std::shared_ptr<Context>& ctx, const std::str
     }
   // Print linked contexts
   } else if (what.front() == '*') {
-    if (auto print_ctx = User::GetCtxPrint(what)) {
-      for (const auto& it : ctx->LinkedContexts(print_ctx->_ctx_id.substr(1))) {
+    if (auto print_ctx = pattern::member_access(what)) {
+      for (const auto& it : ctx->LinkedContexts(print_ctx->ctx_id.substr(1))) {
         if (auto linked_ctx = it.lock()) {
-          if (print_ctx->_kind == txtad::CtxPrint::VARIABLE)
-            User::AddVariableToText(linked_ctx, print_ctx->_what, txt, event_queue, parser);
-          else if (print_ctx->_kind == txtad::CtxPrint::ATTRIBUTE) {
-            if (auto attr = linked_ctx->GetAttribute(print_ctx->_what))
+          if (print_ctx->member_type == pattern::CtxMemberAccess::VARIABLE) {
+            User::AddVariableToText(linked_ctx, print_ctx->key, txt, event_queue, parser);
+          }
+          else if (print_ctx->member_type == pattern::CtxMemberAccess::ATTRIBUTE) {
+            if (auto attr = linked_ctx->GetAttribute(print_ctx->key))
               txt += ((txt != "") ? ", " : "") + *attr;
           }
         }

@@ -61,6 +61,19 @@
 
             {% include "objects/txt.html" %}
             <a href="/{{game.name}}?path={{path}}/{{s}}&type={{type}}">edit</a>
+          {% else %} 
+            {% set subpath = path + "/" + s + "/" if path else s + "/" %}
+            <ul class="list-group" style="text-align: left; font-size: small;">
+            {% for p in all_paths %} 
+              {% if is_child(p, subpath) %}
+                {% set t=all_paths[p] %}
+                <li class="list-group-item {{t}}">
+                  {{ p }}
+                  <span class="{{t}} note">[{{t}}]: </span> 
+                </li>
+              {% endif %}
+            {% endfor %}
+            </ul>
           {% endif %}
 
         </div>
@@ -78,13 +91,13 @@
         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
       <div class="modal-body">
-        <form>
+        <form action="/{{game.name}}/save/settings" method="POST" enctype="multipart/form-data">
           <div class="input-group mb-3">
             <span class="input-group-text" id="initial_events">Inital Events:</span>
             <input type="text" class="form-control" placeholder="text" aria-label="" aria-describedby="id" 
-              value="{{game.settings.initial_events}}">
+              id="initial_events" name="initial_events" value="{{game.settings.initial_events}}">
           </div>
-          <h4>Initial contexts:</h4>
+          <h4 title="Max allowed entries: 1000">Initial contexts:</h4>
           {% set list_id = "initial_contexts" %}
           {% set list_elements = game.settings.initial_contexts %}
           {% include "forms/str_list.html" %}

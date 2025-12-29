@@ -4,7 +4,6 @@
 #ifndef SHARED_UTILS_UTIL_H
 #define SHARED_UTILS_UTIL_H
 
-#include <iostream>
 #include <nlohmann/json_fwd.hpp>
 #include <optional>
 #include <regex>
@@ -147,7 +146,6 @@ namespace util
   std::string generate_random_hex_string (size_t length);
 
   std::string GetPage(const std::string& path);
-
 }
 
 #endif

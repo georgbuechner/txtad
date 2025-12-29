@@ -6,7 +6,10 @@
   "priority":15,
   "permeable": true,
   "attributes": {
-    "_fails": "0"
+    "_fails": "0",
+    "_blackout_service": "0",
+    "_simulation_service": "0",
+    "_credit_service": "0"
   },
   "listeners": [
     {

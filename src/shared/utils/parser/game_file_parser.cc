@@ -1,9 +1,10 @@
-#include "shared/utils/parser/game_file_parser.h"
 #include "builder/utils/defines.h"
 #include "game/game/game.h"
 #include "game/utils/defines.h"
 #include "shared/objects/text/text.h"
+#include "shared/objects/tests/test_case.h"
 #include "shared/utils/eventmanager/listener.h"
+#include "shared/utils/parser/game_file_parser.h"
 #include "shared/utils/utils.h"
 #include <cstddef>
 #include <filesystem>
@@ -198,4 +199,15 @@ std::optional<nlohmann::json> parser::GetContextListener(const std::filesystem::
     }
   }
   return std::nullopt;
+}
+
+std::vector<TestCase> parser::LoadTestCases(const std::string& game_id) {
+  util::Logger()->info("parser:LoadTestCases: path {}", txtad::GAMES_PATH + game_id + "/" + txtad::GAME_TESTS);
+  std::vector<TestCase> test_cases;
+  if (auto j_test_cases = util::LoadJsonFromDisc(txtad::GAMES_PATH + game_id + "/" + txtad::GAME_TESTS)) {
+    for (const auto& test_case : j_test_cases->get<std::vector<nlohmann::json>>()) {
+      test_cases.push_back(TestCase(test_case));
+    }
+  }
+  return test_cases;
 }

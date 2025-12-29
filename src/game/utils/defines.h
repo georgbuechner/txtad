@@ -14,6 +14,7 @@ namespace txtad {
   const std::string HTML_PATH = "web/";
   const std::string GAMES_PATH = "data/games/";
   const std::string GAME_SETTINGS = "settings.json";
+  const std::string GAME_TESTS = "tests.json";
   const std::string GAME_FILES = "game_files/";
 
   // Extentsion
@@ -33,10 +34,6 @@ namespace txtad {
 
   // print ctx regex 
   const std::string RE_PRINT_CTX = R"((.*?)(->|\.)(.*))";
-  enum CtxPrint {
-    VARIABLE = 0,
-    ATTRIBUTE,
-  };
 
   // GUI cmds 
   const std::string WEB_CMD_CLEAR_CONSOLE = "$clear";

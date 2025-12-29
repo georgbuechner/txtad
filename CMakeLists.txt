@@ -15,12 +15,15 @@ set(GAME_SRC_FILES
   src/game/game/game.cc 
   src/game/game/user.cc 
   src/game/server/websocket_server.cc 
+  src/shared/objects/tests/test_case.cc
+  src/shared/objects/tests/test.cc
   src/shared/objects/context/context.cc
   src/shared/utils/eventmanager/context_stack.cc
   src/shared/utils/eventmanager/listener.cc
   src/shared/utils/utils.cc
   src/shared/utils/parser/expression_parser.cc
   src/shared/utils/parser/game_file_parser.cc
+  src/shared/utils/parser/pattern_parser.cc
   src/shared/utils/fuzzy_search/fuzzy.cc
 )
 
@@ -37,12 +40,15 @@ set(GAME_TEST_FILES
   src/game/test/helpers.cc
   src/game/game/game.cc
   src/game/game/user.cc
+  src/shared/objects/tests/test_case.cc
+  src/shared/objects/tests/test.cc
   src/shared/objects/context/context.cc
   src/shared/utils/eventmanager/context_stack.cc
   src/shared/utils/eventmanager/listener.cc
   src/shared/utils/utils.cc
   src/shared/utils/parser/expression_parser.cc
   src/shared/utils/parser/game_file_parser.cc
+  src/shared/utils/parser/pattern_parser.cc
   src/shared/utils/fuzzy_search/fuzzy.cc
 )
 
@@ -52,17 +58,19 @@ set(BUILDER_SRC_FILES
   src/game/game/game.cc 
   src/game/game/user.cc 
   src/shared/objects/context/context.cc
+  src/shared/objects/tests/test.cc
+  src/shared/objects/tests/test_case.cc
   src/shared/utils/eventmanager/context_stack.cc
   src/shared/utils/eventmanager/listener.cc
   src/shared/utils/utils.cc
   src/shared/utils/parser/expression_parser.cc
   src/shared/utils/parser/game_file_parser.cc
+  src/shared/utils/parser/pattern_parser.cc
   src/shared/utils/fuzzy_search/fuzzy.cc
 )
 
 find_package(nlohmann_json CONFIG REQUIRED)
 find_package(spdlog CONFIG REQUIRED)
-find_package(httplib CONFIG REQUIRED)
 find_package(websocketpp CONFIG REQUIRED)
 find_package(Catch2 CONFIG REQUIRED)
 find_package(CURL CONFIG REQUIRED)
@@ -135,7 +143,6 @@ endif()
 target_link_libraries(txtad.o PRIVATE
   nlohmann_json::nlohmann_json 
   spdlog::spdlog 
-  httplib::httplib 
   websocketpp::websocketpp 
   CURL::libcurl
 )
@@ -151,12 +158,11 @@ target_link_libraries(txtad_test.o PRIVATE
 target_link_libraries(builder.o PRIVATE
   nlohmann_json::nlohmann_json 
   spdlog::spdlog 
-  httplib::httplib 
   CURL::libcurl
   jinja2cpp 
   fmt::fmt
 )
 
-target_include_directories(txtad.o PUBLIC "src")
-target_include_directories(txtad_test.o PUBLIC "src")
-target_include_directories(builder.o PUBLIC "src")
+target_include_directories(txtad.o PUBLIC "src" "src/shared/libraries")
+target_include_directories(txtad_test.o PUBLIC "src" "src/shared/libraries")
+target_include_directories(builder.o PUBLIC "src" "src/shared/libraries")

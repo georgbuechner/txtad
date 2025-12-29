@@ -2,10 +2,13 @@
 #include "game/utils/defines.h"
 #include "shared/utils/defines.h"
 #include "shared/utils/parser/expression_parser.h"
+#include "shared/utils/parser/game_file_parser.h"
 #include "shared/utils/utils.h"
+#include "shared/objects/tests/test_case.h"
 #include <catch2/catch_test_macros.hpp>
 #include <filesystem>
 #include <nlohmann/json.hpp>
+#include <nlohmann/json_fwd.hpp>
 
 namespace fs = std::filesystem;
 
@@ -16,13 +19,17 @@ class TestGameWrapper {
   public: 
     TestGameWrapper(const std::string& name, const nlohmann::json& settings, 
           const std::map<std::string, std::vector<nlohmann::json>>& contexts,
-          const std::map<std::string, nlohmann::json>& texts) 
+          const std::map<std::string, nlohmann::json>& texts, 
+          const nlohmann::json& tests = {}) 
         : _path(txtad::GAMES_PATH + "/" + name) {
       const std::string game_files_path = _path + "/" + txtad::GAME_FILES;
       fs::create_directory(_path);
 
       // Write settings to disc
       util::WriteJsonToDisc(_path + "/" + txtad::GAME_SETTINGS, settings);
+      
+      // Write settings to disc
+      util::WriteJsonToDisc(_path + "/" + txtad::GAME_TESTS, tests);
 
       fs::create_directory(game_files_path);
       // Write texts to disc 
@@ -608,5 +615,92 @@ TEST_CASE("Test exec listeners", "[game]") {
 
     game.HandleEvent(USER_ID, "increase-counter");
     REQUIRE(game.cur_user()->contexts().at("general")->GetAttribute("counter").value_or("-1") == "2");
+  }
+}
+
+TEST_CASE("Test game-tests", "[game]") {
+  const nlohmann::json settings = {
+    {"initial_events", ""},
+    {"initial_contexts", {"general", "rooms/room_1"}}
+  };
+
+  const nlohmann::json ctx_general = {
+    {"id", "general"},
+    {"name", "General"},
+    {"description", "Some general handlers"},
+    {"shared", false},
+    {"attributes", {{"counter", "0"}, {"_hidden", "true"}}},
+    {"listeners", {
+      {{"id", "L1"}, {"re_event", "increase-counter"}, {"arguments", 
+        "#sa general.counter++"}, {"permeable", true}}
+    }},
+  };
+
+  // rooms
+  const nlohmann::json ctx_room_1 = {
+    {"id", "room_1"},
+    {"name", "Room 1"},
+    {"description", "Test room no. 1"},
+    {"attributes", {{"gravity", "10"}, {"darkness", "99"}}},
+    {"listeners", {
+      {{"id", "L1"}, {"re_event", "go to (.*)"}, {"ctx", "rooms/room_2"}, 
+        {"arguments", "#ctx replace *rooms -> <ctx>"}, {"use_ctx_regex", UseCtx::NAME},
+        {"permeable", false}},
+      {{"id", "L2"}, {"re_event", "go to (.*)"}, {"ctx", "rooms/room_3"}, 
+        {"arguments", "#ctx replace *rooms -> <ctx>"}, {"use_ctx_regex", UseCtx::NAME},
+        {"permeable", false}}
+    }},
+  };
+
+  const nlohmann::json ctx_room_2 = {
+    {"id", "room_2"},
+    {"name", "Room 2"},
+    {"description", "Test room no. 2"},
+    {"attributes", {{"gravity", "99"}, {"darkness", "9"}}}
+  };
+
+  const nlohmann::json ctx_room_3 = {
+    {"id", "room_3"},
+    {"name", "Room 3"},
+    {"description", "Test room no. 3"},
+    {"attributes", {{"gravity", "99"}, {"darkness", "9"}}}
+  };
+
+  // texts
+  const nlohmann::json txt_text_1 = {
+    {"txt", "Hello World"},
+    {"permanent_events", "#print texts.random"},
+    {"one_time_events", "#sa hp += 10"},
+  };
+
+  const nlohmann::json tests = nlohmann::json::array({
+    {
+      {"desc", "first-simple-test-case"}, 
+      {"tests", {
+        { {"cmd", "#> {*rooms->*rooms->name}"}, {"result", "Room 2, Room 3"} },
+        { {"cmd", "go to Room 3"}, {"checks", {"{*rooms->name}=Room 1"}} } 
+      }}
+    },
+    {
+      {"desc", "second-simple-test-case"}, 
+      {"tests", {
+        { {"cmd", "go to Room 3"}, {"result", "{*rooms->name}=Room 3"} } 
+      }}
+    },
+  });
+
+  const std::string GAME_NAME = "test_game";
+  const std::string GAME_PATH = txtad::GAMES_PATH + GAME_NAME;
+  std::cout << "Creating game files" << std::endl;
+  TestGameWrapper test_game_wrapper(GAME_NAME, settings, {{"", {ctx_general}}, {"rooms", {ctx_room_1, 
+      ctx_room_2, ctx_room_3}}}, {{"texts/start", txt_text_1}}, tests);
+  std::cout << "Done Creating game files" << std::endl;
+
+  std::shared_ptr<Game> game = std::make_shared<Game>(GAME_PATH, GAME_NAME);
+
+  // Run tests
+  auto test_cases = parser::LoadTestCases(GAME_NAME); 
+  for (const auto& test_case : test_cases) {
+    REQUIRE(test_case.Run(game) == "");
   }
 }
