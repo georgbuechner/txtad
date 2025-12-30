@@ -7,6 +7,7 @@
 #include "shared/utils/parser/pattern_parser.h"
 #include "shared/utils/utils.h"
 #include <fmt/core.h>
+#include <filesystem>
 #include <functional>
 #include <memory>
 #include <mutex>
@@ -14,9 +15,11 @@
 #include <spdlog/spdlog.h>
 #include <string>
 
-Game::MsgFn Game::_cout = nullptr;
+namespace fs = std::filesystem;
 
-Game::Game(std::string path, std::string name) : _path(path), _name(name), _cur_user(nullptr), _running(false),
+Game::MsgFn Game::_global_cout= nullptr;
+
+Game::Game(std::string path, std::string name) : _cout(_global_cout), _path(path), _name(name), _cur_user(nullptr), _running(false),
     _parser(std::bind(&Game::t_substitue_fn, this, std::placeholders::_1)),
     _settings(*util::LoadJsonFromDisc(_path + "/" + txtad::GAME_SETTINGS)),
     _builder_settings(util::LoadJsonFromDisc(_path + "/" + txtad::BUILDER_EXTENSION).value_or(nlohmann::json::object())) {
@@ -92,7 +95,8 @@ const std::shared_ptr<User>& Game::cur_user() { return _cur_user; }
 bool Game::running() const { return _running; }
 
 // setter
-void Game::set_msg_fn(Game::MsgFn fn) { _cout = fn; }
+void Game::set_global_msg_fn(Game::MsgFn fn) { _global_cout = fn; }
+void Game::set_msg_fn(MsgFn fn) { _cout = fn; }
 void Game::set_running(bool status) { _running = status; }
 
 // methods 
@@ -103,7 +107,7 @@ void Game::HandleEvent(const std::string& user_id, const std::string& event) {
   std::unique_lock ul(_mutex);
 
   // Inform all users about new connection
-  if (event == "#new_connection") {
+  if (event == txtad::NEW_CONNEXTION) {
     for (const auto& it : _users) {
       it.second->HandleEvent(event + " " + user_id, _parser);
     }
@@ -403,10 +407,17 @@ std::string Game::GetText(std::string event, std::string args) {
 }
 
 void Game::StoreGame(std::string path) {
-  path = (path == "") ? path : _path;
+  path = (path != "") ? path : _path;
   util::WriteJsonToDisc(path + "/" + txtad::GAME_SETTINGS, _settings.ToJson());
   util::WriteJsonToDisc(path + "/" + txtad::BUILDER_EXTENSION, _settings.ToJson());
   for (const auto& ctx : _contexts) {
-    util::WriteJsonToDisc(path + "/" + txtad::GAMES_PATH + ctx.first, ctx.second->ToJson());
+    fs::path p(path + "/" + txtad::GAME_FILES + ctx.first + txtad::CONTEXT_EXTENSION);
+    fs::create_directories(p.parent_path());
+    util::WriteJsonToDisc(p.string(), ctx.second->json());
+  }
+  for (const auto& txt : _texts) {
+    fs::path p(path + "/" + txtad::GAME_FILES + txt.first + txtad::TEXT_EXTENSION);
+    fs::create_directories(p.parent_path());
+    util::WriteJsonToDisc(p.string(), txt.second->json());
   }
 }

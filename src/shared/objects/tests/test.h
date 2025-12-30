@@ -14,7 +14,7 @@ class Test {
     Test(const nlohmann::json& test);
 
     // Methods
-    _t_test_result Run(std::shared_ptr<Game> game, const std::string& user_id, std::string& res) const;
+    _t_test_result Run(Game& game, const std::string& user_id, std::string& res) const;
   
   private: 
     const std::string _cmd;

@@ -46,6 +46,7 @@ namespace txtad {
   const std::string FG_SOUND = "$fgsound_"; // played and pauses action while playing
 
   // Other cmds
+  const std::string NEW_CONNEXTION = "#new_connection";
   const std::string REMOVE_USER = "#remove_user";
 };
 

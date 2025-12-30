@@ -156,6 +156,7 @@ void util::WriteJsonToDisc(const std::string& path, const nlohmann::json& json) 
   } else {
     ofs << json;
     ofs.close();
+    Logger()->debug("util::WriteJsonToDisc: Saved json @ {}", path);
   }
 }
 

@@ -32,7 +32,8 @@ class Game {
     bool running() const;
     
     // setter 
-    static void set_msg_fn(MsgFn fn);
+    static void set_global_msg_fn(MsgFn fn);
+    void set_msg_fn(MsgFn fn);
     void set_running(bool status);
 
     // methods 
@@ -42,7 +43,8 @@ class Game {
     void StoreGame(std::string path = "");
 
   private: 
-    static MsgFn _cout;
+    static MsgFn _global_cout;
+    MsgFn _cout;
 
     mutable std::shared_mutex _mutex;  ///< Mutex for connections_.
     const std::string _path;

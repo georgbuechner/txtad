@@ -103,13 +103,10 @@ TEST_CASE("Test Creating Game", "[game]") {
 
   const std::string GAME_NAME = "test_game";
   const std::string GAME_PATH = txtad::GAMES_PATH + GAME_NAME;
-  std::cout << "Creating game files" << std::endl;
   TestGameWrapper test_game_wrapper(GAME_NAME, settings, {{"", {ctx_general}}, {"rooms", {ctx_room_1, 
       ctx_room_2}}}, {{"texts/start", txt_text_1}});
-  std::cout << "Done Creating game files" << std::endl;
 
   Game game(GAME_PATH, GAME_NAME);
-  std::cout << "Game loaded" << std::endl;
 
   // Test game created successfully
   REQUIRE(game.name() == GAME_NAME);
@@ -327,7 +324,7 @@ TEST_CASE("Test Game handlers/mechanics", "[game]") {
   };
 
   std::string cout = "";
-  Game::set_msg_fn([&cout](std::string id, std::string txt) { 
+  Game::set_global_msg_fn([&cout](std::string id, std::string txt) { 
       cout += ((cout != "") ? "\n" : "") + txt; });
   auto get_cout = [&cout]() { 
     std::string str = cout;
@@ -678,13 +675,16 @@ TEST_CASE("Test game-tests", "[game]") {
       {"desc", "first-simple-test-case"}, 
       {"tests", {
         { {"cmd", "#> {*rooms->*rooms->name}"}, {"result", "Room 2, Room 3"} },
-        { {"cmd", "go to Room 3"}, {"checks", {"{*rooms->name}=Room 1"}} } 
+        { {"cmd", "go to Room 3"}, {"checks", {"{*rooms->name}=Room 3"}} },
+        { {"cmd", "increase-counter"}, {"checks", {"{general.counter}=1"}} },
+        { {"cmd", "increase-counter"}, {"checks", {"{general.counter}=2"}} }
       }}
     },
     {
       {"desc", "second-simple-test-case"}, 
       {"tests", {
-        { {"cmd", "go to Room 3"}, {"result", "{*rooms->name}=Room 3"} } 
+        { {"cmd", "go to Room 3"}, {"checks", {"{*rooms->name}=Room 3"}} },
+        { {"cmd", "increase-counter"}, {"checks", {"{general.counter}=1"}} }
       }}
     },
   });
@@ -703,4 +703,105 @@ TEST_CASE("Test game-tests", "[game]") {
   for (const auto& test_case : test_cases) {
     REQUIRE(test_case.Run(game) == "");
   }
+}
+
+TEST_CASE("Store game", "[game]") {
+  util::TmpPath tmp_path({txtad::GAME_FILES});
+  const nlohmann::json settings = {
+    {"initial_events", "#print texts.START"},
+    {"initial_contexts", {"rooms/room_1"}}
+  };
+
+  const nlohmann::json ctx_general = {
+    {"id", "general"},
+    {"name", "General"},
+    {"description", "Some gegnaral handlers"},
+    {"listeners", {
+      {{"id", "L1"}, {"re_event", "#ctx replace *rooms -> (.*)"}, {"arguments", 
+        "#> You've entered {ctx.*rooms->description}"}, {"permeable", true}}
+    }},
+  };
+
+  const nlohmann::json ctx_room_1 = {
+    {"id", "room_1"},
+    {"name", "Room 1"},
+    {"description", "Test room no. 1"},
+    {"attributes", {{"gravity", "10"}, {"darkness", "99"}}},
+    {"listeners", {
+      {{"id", "L2"}, {"re_event", "go right"}, {"ctx", "rooms/room_2"}, {"arguments", "#ctx replace *rooms -> <ctx>"}, 
+        {"permeable", true}, {"use_ctx_regex", UseCtx::NO}}
+    }},
+  };
+
+  const nlohmann::json ctx_room_2 = {
+    {"id", "room_2"},
+    {"name", "Room 2"},
+    {"description", "Test room no. 1"},
+    {"attributes", {{"gravity", "99"}, {"darkness", "10"}}},
+    {"listeners", {
+      {{"id", "L1"}, {"re_event", "go (.*)"}, {"ctx", "rooms/room_1"}, {"arguments", "#ctx replace *rooms -> <ctx>"}, 
+        {"permeable", true}, {"use_ctx_regex", UseCtx::NAME}}
+    }},
+  };
+
+  const nlohmann::json txt_text_1 = {
+    {"txt", "Hello World"},
+    {"permanent_events", "#print texts.random"},
+    {"one_time_events", "#sa hp += 10"},
+  };
+
+  const std::string GAME_NAME = "test_game";
+  const std::string GAME_PATH = txtad::GAMES_PATH + GAME_NAME;
+  TestGameWrapper test_game_wrapper(GAME_NAME, settings, {{"", {ctx_general}}, {"rooms", {ctx_room_1, ctx_room_2}}}, 
+      {{"texts/start", txt_text_1}});
+  Game game(GAME_PATH, GAME_NAME);
+
+  // Store game 
+  std::cout << "Storing game... " << tmp_path.get() << std::endl; 
+  game.StoreGame(tmp_path.get());
+
+  // Load game
+  const std::string SAVED_GAME = "saved_game"; 
+  std::cout << "Loading game..." << std::endl; 
+  Game saved_game(tmp_path.get(), SAVED_GAME); 
+
+  // Test stored game
+  std::cout << "Testing game..." << std::endl; 
+  REQUIRE(saved_game.name() == SAVED_GAME);
+  REQUIRE(saved_game.path() == tmp_path.get()); 
+  // Test settings created successfully
+  REQUIRE(saved_game.settings().initial_events() == settings["initial_events"].get<std::string>());
+  REQUIRE(saved_game.settings().initial_ctx_ids().size() == settings["initial_contexts"].size());
+  REQUIRE(saved_game.settings().initial_ctx_ids().front() == "rooms/room_1");
+  // Test contexts created successfully
+  REQUIRE(saved_game.contexts().count("rooms/room_1") > 0); 
+  auto ctx = saved_game.contexts().at("rooms/room_1");
+  REQUIRE(ctx->id() == "rooms/" + ctx_room_1["id"].get<std::string>()); 
+  REQUIRE(ctx->name() == ctx_room_1["name"].get<std::string>()); 
+  // Tests attributes
+  REQUIRE(ctx->GetAttribute("gravity") == ctx_room_1["attributes"]["gravity"].get<std::string>()); 
+  REQUIRE(ctx->GetAttribute("darkness") == ctx_room_1["attributes"]["darkness"].get<std::string>()); 
+
+  // Create user: 
+  const std::string USER_ID = "0x1234";
+  saved_game.HandleEvent(USER_ID, "");
+
+  // Test events
+  ExpressionParser parser;
+  REQUIRE(ctx->TakeEvent("go left", parser) == false);
+  REQUIRE(ctx->TakeEvent("go right", parser) == true);
+  auto ctx_2 = saved_game.contexts().at("rooms/room_2");
+  REQUIRE(ctx_2->TakeEvent("go left", parser) == false);
+  REQUIRE(ctx_2->TakeEvent("go Room 1", parser) == true);
+
+  // Test texts 
+  REQUIRE(saved_game.texts().count("texts/start") > 0);
+  std::string event_queue;
+  REQUIRE(util::Join(saved_game.texts().at("texts/start")->print(event_queue, parser), ", ") == txt_text_1["txt"].get<std::string>());
+  REQUIRE(event_queue == txt_text_1["permanent_events"].get<std::string>() + ";" 
+      + txt_text_1["one_time_events"].get<std::string>());
+  event_queue = "";
+  // After second print, event_queue does not contain onetime events.
+  REQUIRE(util::Join(saved_game.texts().at("texts/start")->print(event_queue, parser), ", ") == txt_text_1["txt"].get<std::string>());
+  REQUIRE(event_queue == txt_text_1["permanent_events"].get<std::string>());
 }

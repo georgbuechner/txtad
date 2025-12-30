@@ -4,6 +4,7 @@
 #ifndef SHARED_UTILS_UTIL_H
 #define SHARED_UTILS_UTIL_H
 
+#include <filesystem>
 #include <nlohmann/json_fwd.hpp>
 #include <optional>
 #include <regex>
@@ -13,6 +14,8 @@
 
 namespace util
 {
+  namespace fs = std::filesystem;
+
   void SetUpLogger(const std::string& main_path, const std::string& name, spdlog::level::level_enum log_level);
   std::shared_ptr<spdlog::logger> Logger();
 
@@ -143,9 +146,26 @@ namespace util
    */
   std::string HashSha3512(const std::string& input);
 
-  std::string generate_random_hex_string (size_t length);
+  std::string generate_random_hex_string(size_t length);
 
   std::string GetPage(const std::string& path);
+
+  class TmpPath {
+    public: 
+      TmpPath(const std::vector<std::string>& dirs = {}) : _path("data/tmp/" + CreateRandomString(8)) {
+        fs::create_directory(_path);
+        for (const auto& it : dirs) {
+          fs::create_directory(_path + "/" + it);
+        }
+      }
+      ~TmpPath() {
+        fs::remove_all(_path);
+      }
+      const std::string& get() { return _path; }
+
+    private: 
+      const std::string _path;
+  };
 }
 
 #endif

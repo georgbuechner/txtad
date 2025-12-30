@@ -27,7 +27,7 @@ int main() {
     game->set_running(true);
   }
 
-  Game::set_msg_fn([&wss](const std::string& id, const std::string& msg) {
+  Game::set_global_msg_fn([&wss](const std::string& id, const std::string& msg) {
     util::Logger()->debug("MAIN: SendMessage: {}, {}", id, msg);
     try {
       wss->SendMessage(id, msg);

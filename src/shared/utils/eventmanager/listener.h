@@ -5,6 +5,7 @@
 #include "shared/utils/parser/expression_parser.h"
 #include "shared/utils/utils.h"
 #include <functional>
+#include <iostream>
 #include <memory>
 #include <nlohmann/json.hpp>
 #include <string>
@@ -32,7 +33,7 @@ class Listener {
 
     virtual bool Test(const std::string& event, const ExpressionParser& parser) const = 0;
     virtual void Execute(std::string event) const = 0;
-    virtual nlohmann::json ToJson() const = 0;
+    virtual nlohmann::json json() const { std::cout << "INVALID BASE CALL CLASS!!" << std::endl; return ""; }
 };
 
 class LHandler : public Listener {
@@ -52,7 +53,7 @@ class LHandler : public Listener {
     bool Test(const std::string& event, const ExpressionParser& parser) const override;
 
     void Execute(std::string event) const override;
-    virtual nlohmann::json ToJson() const override;
+    virtual nlohmann::json json() const override;
 
   protected: 
     const std::string _id;
@@ -93,7 +94,7 @@ class LForwarder : public LHandler {
 
     // methods 
     bool Test(const std::string& event, const ExpressionParser& parser) const override;
-    nlohmann::json ToJson() const override;
+    nlohmann::json json() const override;
 
     static void set_overwite_fn(Fn fn);
 
@@ -124,7 +125,7 @@ class LContextForwarder : public LForwarder {
 
     // methods 
     bool Test(const std::string& event, const ExpressionParser& parser) const override;
-    nlohmann::json ToJson() const override;
+    nlohmann::json json() const override;
 
   private: 
     std::weak_ptr<Context> _ctx;
