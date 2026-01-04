@@ -101,6 +101,7 @@ const Settings& Game::settings() const { return _settings; }
 const builder::Settings& Game::builder_settings() const { return _builder_settings; }
 const std::shared_ptr<User>& Game::cur_user() { return _cur_user; }
 bool Game::running() const { return _running; }
+bool Game::modified() const { return _modified; }
 
 // setter
 void Game::set_global_msg_fn(Game::MsgFn fn) { _global_cout = fn; }
@@ -109,6 +110,8 @@ void Game::set_msg_fn(MsgFn fn) {
   _cout = fn; 
 }
 void Game::set_running(bool status) { _running = status; }
+void Game::set_modified(bool modified) { _modified = modified; }
+void Game::set_settings(Settings&& settings) { _settings = std::move(settings); }
 
 // methods 
 void Game::HandleEvent(const std::string& user_id, const std::string& event) {

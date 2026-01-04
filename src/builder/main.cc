@@ -8,12 +8,14 @@
 #include "jinja2cpp/filesystem_handler.h"
 #include "jinja2cpp/reflected_value.h"
 #include "jinja2cpp/value.h"
+#include "shared/objects/settings/settings.h"
 #include "shared/objects/tests/test_case.h"
 #include "shared/utils/parser/game_file_parser.h"
 #include "shared/utils/utils.h"
 #include <exception>
 #include "httplib.h"
 #include <nlohmann/json.hpp>
+#include <nlohmann/json_fwd.hpp>
 #include <spdlog/spdlog.h>
 #include <string>
 #include <thread>
@@ -183,6 +185,7 @@ int main() {
         }
         params.emplace("test_cases", _jinja::Vec(test_cases));
         params.emplace("path", path);
+        params.emplace("modified", games.at(game_id)->modified());
       }
       util::Logger()->info(fmt::format("Builder::create_params. done"));
       return params;
@@ -310,12 +313,25 @@ int main() {
     // Save Elements 
     http_server.Post("/:game_id/save/settings", [&](const httplib::Request& req, httplib::Response& resp) {
         std::cout << "initial events: " << req.form.get_field("initial_events") << std::endl;
+        std::string game_id = req.path_params.at("game_id");
         if (req.form.has_field("initial_contexts") > 0) {
           auto ctxs = req.form.get_fields("initial_contexts");
           for (const auto& ctx : ctxs) 
             std::cout << "- " << ctx << std::endl;
         } 
-        resp.set_redirect(_http::Referer(req) + "?msg=Successfully saved game settings.", 303);
+        try {
+          nlohmann::json settings_json = {
+            {"initial_events", req.form.get_field("initial_events")},
+            {"initial_contexts", req.form.get_fields("initial_contexts")}
+          };
+          games.at(game_id)->set_settings(Settings(settings_json));
+          games.at(game_id)->set_modified(true);
+          resp.set_redirect(_http::Referer(req) + "?msg=Successfully saved game settings.", 303);
+        } catch (std::exception& e) {
+          std::string msg = "Failed saving settings: " + std::string(e.what());
+          util::Logger()->warn("/:game_id/save/settings: " + msg);
+          resp.set_redirect(_http::Referer(req) + "?msg=" + msg, 303);
+        }
     });
 
     http_server.Post("/:game_id/save/tests", [&](const httplib::Request& req, httplib::Response& resp) {

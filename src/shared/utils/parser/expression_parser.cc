@@ -18,6 +18,14 @@ std::map<std::string, std::string(*)(const std::string&, const std::string&)> Ex
   {"=", [](const std::string& a, const std::string& b) { return std::to_string(a == b); } },
   {"!=", [](const std::string& a, const std::string& b) { return std::to_string(a != b); } },
   {"~", [](const std::string& a, const std::string& b) { return std::to_string(fuzzy::fuzzy(b, a)); } },
+  {"~" + std::to_string(fuzzy::FuzzyMatch::DIRECT), [](const std::string& a, const std::string& b) { 
+            return std::to_string(fuzzy::fuzzy(b, a) == fuzzy::FuzzyMatch::DIRECT); } },
+  {"~" + std::to_string(fuzzy::FuzzyMatch::STARTS_WITH), [](const std::string& a, const std::string& b) { 
+            return std::to_string(fuzzy::fuzzy(b, a) == fuzzy::FuzzyMatch::STARTS_WITH); } },
+  {"~" + std::to_string(fuzzy::FuzzyMatch::CONTAINS), [](const std::string& a, const std::string& b) { 
+            return std::to_string(fuzzy::fuzzy(b, a) == fuzzy::FuzzyMatch::CONTAINS); } },
+  {"~" + std::to_string(fuzzy::FuzzyMatch::FUZZY), [](const std::string& a, const std::string& b) { 
+            return std::to_string(fuzzy::fuzzy(b, a) == fuzzy::FuzzyMatch::FUZZY); } },
   {":", [](const std::string& a, const std::string& b) -> std::string { 
           util::Logger()->debug("EP:InList. {} in {}", a, b);
           const std::string vec = (a.front() != '[') ? "[" + a + "]" : a;

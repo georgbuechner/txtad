@@ -30,11 +30,15 @@ class Game {
     const builder::Settings& builder_settings() const;
     const std::shared_ptr<User>& cur_user();
     bool running() const;
+    bool modified() const;
     
     // setter 
     static void set_global_msg_fn(MsgFn fn);
     void set_msg_fn(MsgFn fn);
     void set_running(bool status);
+    void set_modified(bool modified);
+
+    void set_settings(Settings&& settings);
 
     // methods 
     void HandleEvent(const std::string& user_id, const std::string& event);
@@ -52,6 +56,7 @@ class Game {
     std::map<std::string, std::shared_ptr<User>> _users;
     std::shared_ptr<User> _cur_user;
     bool _running;
+    bool _modified;
 
     ExpressionParser _parser;
 

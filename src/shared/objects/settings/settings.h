@@ -21,8 +21,8 @@ class Settings {
     }
 
   private: 
-    const std::string _initial_events;
-    const std::vector<std::string> _initial_ctx_ids;
+    std::string _initial_events;
+    std::vector<std::string> _initial_ctx_ids;
 };
 
 #endif
