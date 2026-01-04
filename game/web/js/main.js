@@ -1,5 +1,6 @@
 let _socket = undefined;
 let _wait = false;
+let _audio_block = false;
 let _receiving = false;
 let _content = null;
 let _cmd = null;
@@ -14,6 +15,9 @@ const BGSOUND_SET = '$bgsset_';
 const BGSOUND_PLAY = '$bgsplay';
 const BGSOUND_PAUSE = '$bgspause';
 const FGSOUND_PLAY = '$fgsplay_';
+
+const STD_PROMPT = "Press enter to continue...";
+const FG_PROMPT = "Waiting...";
 
 window.onload = function() {
   document.getElementById("cmd").focus();
@@ -50,7 +54,7 @@ window.onload = function() {
       if (payload.indexOf(PROMPT) !== -1) {
         for (let part of payload.split(PROMPT)) {
           AddInput(part);
-          AddInput("Press enter to continue...");
+          AddInput((_audio_block) ? FG_PROMPT : STD_PROMPT);
           _wait = true;
           while (_wait) { await delay(100); }
         }
@@ -83,7 +87,7 @@ window.onbeforeunload = function() {
 };
 
 function SendInput(event) {
-  if (event.keyCode == 13) {
+  if (event.keyCode == 13 && !_audio_block) {
     RemovePromptIfExists();
     if (_cmd.value != "")
       _socket.send(CreateEvent(_cmd.value));
@@ -96,6 +100,14 @@ function RemovePromptIfExists() {
     _content.removeChild(_content.lastChild);
     _wait = false;
   }
+}
+
+function FgBlock() {
+  _audio_block = true;
+}
+function RemoveFgBlock() {
+  _audio_block = false;
+  _content.lastChild.innerHTML = STD_PROMPT;
 }
 
 function GetCmd(payload_part) {
@@ -154,6 +166,7 @@ function PlayForegroundMusik(audio_file, {duckTo=0.5, fadeMS = 200 } = {}) {
     if (_bg_sound && preVol !== null) {
       _bg_sound.fade(_bg_sound.volume(), duckTo, fadeMS); 
     }
+    FgBlock();
 
     const duckBack = () => {
       if (_bg_sound&& preVol !== null) {
@@ -175,11 +188,13 @@ function PlayForegroundMusik(audio_file, {duckTo=0.5, fadeMS = 200 } = {}) {
     }); 
 
     audio.once('end', () => {
+      RemoveFgBlock();
       duckBack(); 
       resolve();
     });
 
     audio.once('stop', () => {
+      RemoveFgBlock();
       duckBack(); 
       resolve();
     });
@@ -208,7 +223,6 @@ function AddInput(payload) {
     PlayForegroundMusik(audio_file);
     payload = modified_payload;
   }
-
 
   let cursor = 0;
   let closing = []
