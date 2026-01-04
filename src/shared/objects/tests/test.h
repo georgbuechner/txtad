@@ -11,7 +11,13 @@ class Test {
   public: 
     typedef std::pair<bool, std::string> _t_test_result;
 
+    Test();
     Test(const nlohmann::json& test);
+
+    // getter 
+    std::string cmd() const;
+    std::string result() const;
+    const std::vector<std::string>& checks() const;
 
     // Methods
     _t_test_result Run(Game& game, const std::string& user_id, std::string& res) const;

@@ -40,3 +40,10 @@ function AddListElement(base_id) {
   new_elem.children[2].onclick = function () { RemoveListElement(base_id, index); }
   list.appendChild(new_elem);
 }
+
+function clearInputs(root) {
+  root.querySelectorAll("input, textarea").forEach(el => {
+    if (el.type === "checkbox" || el.type === "radio") el.checked = false;
+    else el.value = "";
+  });
+}

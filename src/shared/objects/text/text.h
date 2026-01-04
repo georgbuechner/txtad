@@ -19,6 +19,7 @@ class Text {
 
     Text(nlohmann::json json) {
       _next = nullptr;
+      std::cout << json.dump() << std::endl;
 
       // If list-style, get first element of list and create next from remaining
       // list.
@@ -73,7 +74,7 @@ class Text {
         std::vector<nlohmann::json> txts; 
         auto next = _next->json();
         if (next.is_array()) {
-          txts.insert(txts.end(), txts.begin(), txts.end()); 
+          txts.insert(txts.end(), next.begin(), next.end()); 
         } else if (next.is_object()) {
           txts.push_back(next);
         }

@@ -3,7 +3,7 @@
   <h4>{{label}}</h4>
 {% endif %}
 
-<div class="accordion accordion" id="accordionExample">
+<div class="accordion accordion" id="accordion{{label}}">
   {% for txt in texts %}
     <div class="accordion-item">
       <h2 class="accordion-header" id="headingtxt{{label}}{{loop.index}}">
@@ -14,7 +14,7 @@
         </button>
       </h2>
       <div id="collapsetxt{{label}}{{loop.index}}" class="accordion-collapse collapse" 
-          aria-labelledby="headingtxt{{label}}{{loop.index}}" data-bs-parent="#accordionExample">
+          aria-labelledby="headingtxt{{label}}{{loop.index}}" data-bs-parent="#accordion{{label}}">
         <div class="accordion-body">
             <form> 
               <div class="input-group mb-3">

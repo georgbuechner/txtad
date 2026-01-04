@@ -14,7 +14,14 @@
     data-bs-target="#shareSettingsModal">
       Settings
   </button>
+  <button type="button" 
+    class="dropdown-item" 
+    data-bs-toggle="modal" 
+    data-bs-target="#shareTestsModal">
+      Tests
+  </button>
 </div>
+
 
 <div class="accordion accordion-flush" id="accordionFlushExample">
   {% for s in selections %} 
@@ -109,5 +116,80 @@
   </div>
 </div>
 
+<div class="modal fade" id="shareTestsModal" tabindex="-1" aria-labelledby="#shareTestsModal" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="shareTestsModalLabel">Tests</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+
+        <div id="testCasesContainer">
+          {% for test_case in test_cases %}
+            {% set outer_loop = loop %}
+
+            <div class="test-case" data-tc="{{outer_loop.index0}}">
+              <h4>Test Case {{outer_loop.index}}: {{test_case.desc}}</h4>
+              <div class="input-group mb-3">
+                <span class="input-group-text">Description:</span>
+                <input type="text" class="form-control" placeholder="text" 
+                  name="tc[{{outer_loop.index0}}][desc]" value="{{test_case.desc}}">
+              </div>
+
+              <div class="accordion accordion-flush tests" id="accordionTestCase{{outer_loop.index}}" data-tests>
+                {% for test in test_case.tests %}
+                  <div class="accordion-item test" data-test="{{loop.index0}}">
+                    <h2 class="accordion-header" id="headingTest{{outer_loop.index}}{{loop.index}}">
+                      <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" 
+                          data-bs-target="#collapseTest{{outer_loop.index}}{{loop.index}}" aria-expanded="false" 
+                          aria-controls="collapseTest{{outer_loop.index}}{{loop.index}}">
+                        [T{{loop.index}}] cmd: {{ test.cmd if test.cmd else "no-cmd"}}
+                      </button>
+                    </h2>
+                    <div id="collapseTest{{outer_loop.index}}{{loop.index}}" class="accordion-collapse collapse" 
+                        aria-labelledby="headingTest{{outer_loop.index}}{{loop.index}}" 
+                        data-bs-parent="#accordionTestCase{{outer_loop.index}}">
+                      <div class="accordion-body">
+                        <div class="input-group mb-3">
+                          <span class="input-group-text">Command:</span>
+                          <input type="text" class="form-control" placeholder="text" 
+                            name="tc[{{outer_loop.index0}}][tests][{{loop.index0}}][cmd]" value="{{test.cmd}}">
+                        </div>
+                        <div class="input-group mb-3">
+                          <span class="input-group-text">Result:</span>
+                          <input type="text" class="form-control" placeholder="text" 
+                            name="tc[{{outer_loop.index0}}][tests][{{loop.index0}}][result]" value="{{test.result}}">
+                        </div>
+                        <div class="input-group mb-3">
+                          <span class="input-group-text">Checks:</span>
+                          <input type="text" class="form-control" placeholder="text"
+                            name="tc[{{outer_loop.index0}}][tests][{{loop.index0}}][checks]" value="{{test.checks}}">
+                        </div>
+                        <button type="button" class="btn btn-secondary" onclick="AddTest(this);">Add</button>
+                        <button type="button" class="btn btn-secondary" onclick="DelTest(this);">Del</button>
+                      </div>
+                    </div>
+                  </div>
+                {% endfor %}
+              </div>
+              <br>
+              <button type="button" class="btn btn-secondary" onclick="AddTestCase();">Add TC</button>
+              <button type="button" class="btn btn-secondary" onclick="DelTestCase(this);">Del TC</button>
+            </div>
+            <br>
+          {% endfor %}
+        </div>
+
+        <br>
+        <button type="button" class="btn btn-primary" onclick="SaveTests('{{game.name}}');">Save</button>
+        <button type="button" class="btn btn-primary" onclick="RunTests('{{game.name}}');">Run Rests</button>
+
+        <p id="test_result"></p>
+
+      </div>
+    </div>
+  </div>
+</div>
 
 {% endblock %}

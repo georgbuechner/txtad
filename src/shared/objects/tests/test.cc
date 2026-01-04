@@ -1,8 +1,19 @@
 #include "game/game/game.h"
 #include "test.h"
 
-Test::Test(const nlohmann::json& test) : _cmd(test.at("cmd")), _result(test.value("result", "")),
-  _checks(test.value("checks", std::vector<std::string>())) { }
+Test::Test() : _cmd("..."), _result(), _checks() {}
+Test::Test(const nlohmann::json& test) : _cmd(test.at("cmd").get<std::string>()), 
+  _result(test.value("result", "")), _checks(test.value("checks", std::vector<std::string>())) { }
+// getter
+std::string Test::cmd() const { 
+  return _cmd;
+}
+std::string Test::result() const { 
+  return _result;
+}
+const std::vector<std::string>& Test::checks() const {
+  return _checks;
+}
 
 // Methods
 Test::_t_test_result Test::Run(Game& game, const std::string& user_id, std::string& res) const {

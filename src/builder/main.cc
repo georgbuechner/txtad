@@ -80,8 +80,10 @@ int main() {
       try {
         std::rethrow_exception(ep);
       } catch (std::exception &e) {
+        util::Logger()->error(e.what());
         resp.set_redirect(_http::Referer(req) + "?msg=" + e.what(), 303);
       } catch (...) { // See the following NOTE
+        util::Logger()->error("unkwon Error (500)");
         resp.set_redirect("/?msg=Unkwon Error (500)", 303);
       }
     });
@@ -110,9 +112,15 @@ int main() {
           return false;
         }, std::vector<jinja2::ArgInfo>({jinja2::ArgInfo{"path"}, jinja2::ArgInfo{"cur"}})
       ));
-    env.AddGlobal("default_attribute", jinja2::UserCallable(
+    env.AddGlobal("default_attributes", jinja2::UserCallable(
         [](auto& params)->jinja2::ValuesMap {
           return jinja2::ValuesMap({{"", ""}});
+        }, std::vector<jinja2::ArgInfo>()
+      ));
+    env.AddGlobal("default_test_cases", jinja2::UserCallable(
+        [](auto& params)->jinja2::ValuesList {
+          std::vector<TestCase> vec = { TestCase() };
+          return _jinja::Vec(vec);
         }, std::vector<jinja2::ArgInfo>()
       ));
 
@@ -136,7 +144,9 @@ int main() {
       }
     };
 
-    auto create_params = [&](const httplib::Request& req, std::string game_id = "", std::string type = "") -> jinja2::ValuesMap {
+    auto create_params = [&](const httplib::Request& req, std::string game_id = "", 
+        std::string type = "", const std::vector<TestCase>& test_cases = std::vector<TestCase>()
+    ) -> jinja2::ValuesMap {
       util::Logger()->info(fmt::format("Builder::create_params"));
       jinja2::ValuesMap params;
 
@@ -171,6 +181,7 @@ int main() {
             params.emplace("texts", jinja2::Reflect(PtrView<Text>{games.at(game_id)->texts().at(path).get()}));
           }
         }
+        params.emplace("test_cases", _jinja::Vec(test_cases));
         params.emplace("path", path);
       }
       util::Logger()->info(fmt::format("Builder::create_params. done"));
@@ -275,6 +286,27 @@ int main() {
       resp.set_redirect(_http::Referer(req) + "?msg=Stopping game failed: Error with game-server.", 303);
     });
 
+    http_server.Get("/api/tests/run/:game_id", [&](const httplib::Request& req, httplib::Response& resp) {
+      util::Logger()->info("/api/tests/run/:game_id");
+      std::string game_id = req.path_params.at("game_id");
+      util::Logger()->info("/api/tests/run/" + game_id);
+      auto test_cases = parser::LoadTestCases(game_id);
+      std::vector<nlohmann::json> result = nlohmann::json::array();
+      util::Logger()->info("/api/tests/run/" + game_id + ": running test-cases");
+      for (const auto& test_case : test_cases) {
+        std::string test_result = test_case.Run(games.at(game_id));
+        util::Logger()->info("/api/tests/run/" + game_id + ": - result: " + test_result);
+        if (test_result != "") {
+          result.push_back({{"desc", test_case.desc()}, {"success", false}, {"error", test_result}});
+        } else {
+          result.push_back({{"desc", test_case.desc()}, {"success", true}});
+        }
+      }
+      util::Logger()->info("/api/tests/run/" + game_id + ": returning: " + nlohmann::json(result).dump());
+      resp.set_content(nlohmann::json(result).dump(), "application/json");
+      resp.status = 200;
+    });
+
     // Save Elements 
     http_server.Post("/:game_id/save/settings", [&](const httplib::Request& req, httplib::Response& resp) {
         std::cout << "initial events: " << req.form.get_field("initial_events") << std::endl;
@@ -286,21 +318,26 @@ int main() {
         resp.set_redirect(_http::Referer(req) + "?msg=Successfully saved game settings.", 303);
     });
 
-    // Test Game 
-    http_server.Post("/:game_id/test", [&](const httplib::Request& req, httplib::Response& resp) {
-      std::string game_id = req.path_params.at("game_id");
-        auto test_cases = parser::LoadTestCases(game_id);
-        for (const auto& test_case : test_cases) {
-          // TODO: Save game to tmp-path 
-          // TODO: Load (copy of) game from tmp-path 
-          std::string test_result = test_case.Run(games.at(game_id));
-          if (test_result != "") {
-            resp.set_content(test_result, "text/txt");
-            resp.status = 400;
-            return;
+    http_server.Post("/:game_id/save/tests", [&](const httplib::Request& req, httplib::Response& resp) {
+        std::string game_id = req.path_params.at("game_id");
+        int tcs = 0;
+        int ts = 0;
+        nlohmann::json j;
+        try {
+          j = nlohmann::json::parse(req.body); 
+          for (const auto& it : j.at("test_cases").get<std::vector<nlohmann::json>>()) {
+            TestCase tc(it);
+            tcs++; ts += tc.tests().size();
           }
+        } catch (std::exception& e) {
+          resp.set_content("Failed saving tests: " + (std::string)e.what(), "text/txt");
+          resp.status = 400;
+          return;
         }
+        util::WriteJsonToDisc(txtad::GAMES_PATH + game_id + "/" + txtad::GAME_TESTS, j["test_cases"]);
         resp.status = 200;
+        resp.set_content("Successfully saved " + std::to_string(tcs) + " test cases with " 
+            + std::to_string(ts) + " tests.", "text/txt");
     });
 
     // PAGES
@@ -331,8 +368,12 @@ int main() {
           load_template(resp, "ctx-edit.html", create_params(req, game_id, type));
         } else if (type == "TXT") {
           load_template(resp, "txt-edit.html", create_params(req, game_id, type));
-        }  else {
-          load_template(resp, "game.html", create_params(req, game_id, type));
+        } else {
+          auto test_cases = parser::LoadTestCases(game_id);
+          if (test_cases.size() == 0) {
+            test_cases.push_back(TestCase());
+          }
+          load_template(resp, "game.html", create_params(req, game_id, type, test_cases));
         }
       } catch (_http::_t_exception& e) {
         resp.set_redirect("/?msg=" + e.second, 303);

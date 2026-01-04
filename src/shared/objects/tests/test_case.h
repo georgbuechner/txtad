@@ -9,10 +9,15 @@ class game;
 
 class TestCase {
   public: 
-    TestCase(const nlohmann::json json);
+    TestCase();
+    TestCase(const nlohmann::json& json);
+
+    // getter
+    const std::string& desc() const;
+    const std::vector<Test>& tests() const;
 
     // methods 
-
+    
     /** 
      * Initial connection (f.e. "#new_connection" not automatically run!
      */

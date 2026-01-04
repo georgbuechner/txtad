@@ -6,6 +6,7 @@
 #include "shared/utils/parser/game_file_parser.h"
 #include "shared/utils/parser/pattern_parser.h"
 #include "shared/utils/utils.h"
+#include <exception>
 #include <fmt/core.h>
 #include <filesystem>
 #include <functional>
@@ -13,6 +14,7 @@
 #include <mutex>
 #include <nlohmann/json_fwd.hpp>
 #include <spdlog/spdlog.h>
+#include <stdexcept>
 #include <string>
 
 namespace fs = std::filesystem;
@@ -24,7 +26,7 @@ Game::Game(std::string path, std::string name) : _cout(_global_cout), _path(path
     _settings(*util::LoadJsonFromDisc(_path + "/" + txtad::GAME_SETTINGS)),
     _builder_settings(util::LoadJsonFromDisc(_path + "/" + txtad::BUILDER_EXTENSION).value_or(nlohmann::json::object())) {
   util::SetUpLogger(txtad::FILES_PATH, _name, util::Logger()->level());
-  util::LoggerContext scope(_name);
+  // util::LoggerContext scope(_name);
   
   // Create baisc handlers
   LForwarder::set_overwite_fn(std::bind(&Game::h_add_to_eventqueue, this, std::placeholders::_1, 
@@ -73,14 +75,20 @@ Game::Game(std::string path, std::string name) : _cout(_global_cout), _path(path
   _mechanics_ctx->AddListener(std::make_shared<LHandler>("H01", "#remove_user (.*)", 
         std::bind(&Game::h_remove_user, this, std::placeholders::_1, std::placeholders::_2)));
 
-  auto exec_listeners = parser::LoadGameFiles(_path, _contexts, _texts);
-  for (auto it : exec_listeners) {
-    it->set_fn(std::bind(&Game::h_exec, this, std::placeholders::_1, std::placeholders::_2));
+  try {
+    for (auto it : parser::LoadGameFiles(_path, _contexts, _texts)) {
+      it->set_fn(std::bind(&Game::h_exec, this, std::placeholders::_1, std::placeholders::_2));
+    }
+  } catch (std::exception& e) {
+    util::Logger()->error(fmt::format("Game::Game. Game {} failed to initialize: \"{}\".", _name, e.what()));
+    spdlog::drop(_name);
+    throw std::runtime_error("Game::Game: " + std::string(e.what()));
   }
   util::Logger()->info(fmt::format("Game::Game. Created game with desc: {}", _builder_settings._description));
 }
 
 Game::~Game() {
+  util::Logger()->info(fmt::format("Game::~::game. Game {} deleted, logger dropped.", _name));
   spdlog::drop(_name);
 }
 
@@ -107,7 +115,7 @@ void Game::HandleEvent(const std::string& user_id, const std::string& event) {
   std::unique_lock ul(_mutex);
 
   // Inform all users about new connection
-  if (event == txtad::NEW_CONNEXTION) {
+  if (event == txtad::NEW_CONNECTION) {
     for (const auto& it : _users) {
       it.second->HandleEvent(event + " " + user_id, _parser);
     }

@@ -8,7 +8,10 @@
 #include "jinja2cpp/reflected_value.h"
 #include "shared/objects/context/context.h"
 #include "shared/objects/settings/settings.h"
+#include "shared/objects/tests/test.h"
+#include "shared/objects/tests/test_case.h"
 #include "shared/utils/eventmanager/listener.h"
+#include "shared/utils/utils.h"
 #include <unordered_map>
 
 #include <map>
@@ -26,7 +29,7 @@ namespace _jinja {
     jinja2::ValuesList vl;
     vl.reserve(vec.size());
     for (const auto& it : vec) {
-      vl.emplace_back(it);
+      vl.emplace_back(jinja2::Reflect(it));
     }
     return vl;
   }
@@ -186,6 +189,26 @@ namespace jinja2 {
         {"description", [](const PtrView<Context>& v) { return (v.ptr) ? jinja2::Reflect(PtrView<Text>{&v.ptr->description()}) : Value{}; }},
         {"attributes", [](const PtrView<Context>& v) { return (v.ptr) ? _jinja::Map(v.ptr->attributes()) : Value{}; }},
         {"listeners", [](const PtrView<Context>& v) { return (v.ptr) ? _jinja::Map(v.ptr->listeners()) : Value{}; }},
+      };
+      return acc;
+    }
+  };
+
+  template<> struct TypeReflection<Test> : TypeReflected<Test> {
+    static auto& GetAccessors() {
+      static std::unordered_map<std::string, FieldAccessor> acc = {
+        {"cmd", [](const Test& t) { return t.cmd(); }},
+        {"result", [](const Test& t) { return t.result(); }},
+        {"checks", [](const Test& t) { return util::Join(t.checks(), ";"); }}
+      };
+      return acc;
+    }
+  };
+  template<> struct TypeReflection<TestCase> : TypeReflected<TestCase> {
+    static auto& GetAccessors() {
+      static std::unordered_map<std::string, FieldAccessor> acc = {
+        {"desc", [](const TestCase& t) { return jinja2::Value(t.desc()); }},
+        {"tests", [](const TestCase& t) { return _jinja::Vec(t.tests()); }}
       };
       return acc;
     }
