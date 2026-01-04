@@ -691,10 +691,8 @@ TEST_CASE("Test game-tests", "[game]") {
 
   const std::string GAME_NAME = "test_game";
   const std::string GAME_PATH = txtad::GAMES_PATH + GAME_NAME;
-  std::cout << "Creating game files" << std::endl;
   TestGameWrapper test_game_wrapper(GAME_NAME, settings, {{"", {ctx_general}}, {"rooms", {ctx_room_1, 
       ctx_room_2, ctx_room_3}}}, {{"texts/start", txt_text_1}}, tests);
-  std::cout << "Done Creating game files" << std::endl;
 
   std::shared_ptr<Game> game = std::make_shared<Game>(GAME_PATH, GAME_NAME);
 
@@ -757,16 +755,13 @@ TEST_CASE("Store game", "[game]") {
   Game game(GAME_PATH, GAME_NAME);
 
   // Store game 
-  std::cout << "Storing game... " << tmp_path.get() << std::endl; 
   game.StoreGame(tmp_path.get());
 
   // Load game
   const std::string SAVED_GAME = "saved_game"; 
-  std::cout << "Loading game..." << std::endl; 
   Game saved_game(tmp_path.get(), SAVED_GAME); 
 
   // Test stored game
-  std::cout << "Testing game..." << std::endl; 
   REQUIRE(saved_game.name() == SAVED_GAME);
   REQUIRE(saved_game.path() == tmp_path.get()); 
   // Test settings created successfully

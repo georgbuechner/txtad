@@ -21,20 +21,20 @@ int main() {
   // Create web socket server 
   std::shared_ptr<WebsocketServer> wss = std::make_shared<WebsocketServer>();
 
-  // Create games
-  auto games = parser::InitGames(txtad::GAMES_PATH);
-  for (auto& [_, game]: games) {
-    game->set_running(true);
-  }
-
   Game::set_global_msg_fn([&wss](const std::string& id, const std::string& msg) {
     util::Logger()->debug("MAIN: SendMessage: {}, {}", id, msg);
     try {
       wss->SendMessage(id, msg);
     } catch(std::exception& e) {
-      util::Logger()->warn("MAIN: SendMessage failed: {}", e.what());
+      util::Logger()->error("MAIN: SendMessage failed: {}", e.what());
     }
   });
+
+  // Create games
+  auto games = parser::InitGames(txtad::GAMES_PATH);
+  for (auto& [_, game]: games) {
+    game->set_running(true);
+  }
 
   std::shared_mutex mtx;
 
@@ -45,7 +45,7 @@ int main() {
       try {
         games.at(game)->HandleEvent(id, event);
       } catch(std::exception& e) {
-        util::Logger()->warn("MAIN: Handling: {}, {} failed: {}", game, event, e.what());
+        util::Logger()->error("MAIN: Handling: {}, {} failed: {}", game, event, e.what());
       }
     }
   });

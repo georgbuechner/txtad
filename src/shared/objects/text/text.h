@@ -3,7 +3,6 @@
 
 #include "shared/utils/parser/expression_parser.h"
 #include "shared/utils/utils.h"
-#include <iostream>
 #include <nlohmann/json.hpp>
 #include <nlohmann/json_fwd.hpp>
 #include <string>
@@ -19,8 +18,6 @@ class Text {
 
     Text(nlohmann::json json) {
       _next = nullptr;
-      std::cout << json.dump() << std::endl;
-
       // If list-style, get first element of list and create next from remaining
       // list.
       if (json.is_array()) {

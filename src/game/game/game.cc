@@ -26,7 +26,7 @@ Game::Game(std::string path, std::string name) : _cout(_global_cout), _path(path
     _settings(*util::LoadJsonFromDisc(_path + "/" + txtad::GAME_SETTINGS)),
     _builder_settings(util::LoadJsonFromDisc(_path + "/" + txtad::BUILDER_EXTENSION).value_or(nlohmann::json::object())) {
   util::SetUpLogger(txtad::FILES_PATH, _name, util::Logger()->level());
-  // util::LoggerContext scope(_name);
+  util::LoggerContext scope(_name);
   
   // Create baisc handlers
   LForwarder::set_overwite_fn(std::bind(&Game::h_add_to_eventqueue, this, std::placeholders::_1, 
@@ -104,7 +104,10 @@ bool Game::running() const { return _running; }
 
 // setter
 void Game::set_global_msg_fn(Game::MsgFn fn) { _global_cout = fn; }
-void Game::set_msg_fn(MsgFn fn) { _cout = fn; }
+void Game::set_msg_fn(MsgFn fn) { 
+  util::Logger()->warn("Game::set_msg_fn. MsgFn (cout) overwritten. Dangerous outside of test env.");
+  _cout = fn; 
+}
 void Game::set_running(bool status) { _running = status; }
 
 // methods 
@@ -130,13 +133,10 @@ void Game::HandleEvent(const std::string& user_id, const std::string& event) {
   } 
   // Otherwise, handle incomming event
   else {
-    std::cout << "Checking valid user" << std::endl;
     if (auto cur_user = _users.at(user_id)) {
-      std::cout << "Checking valid user success" << std::endl;
       _cur_user = cur_user;
       _cur_user->HandleEvent(event, _parser);
     } else {
-      std::cout << "Checking valid user failed." << std::endl;
       util::Logger()->error("Game::HandleEvent. Invalid Game state. Existing user no longer valid! id: {}", 
         user_id);
     }
@@ -241,12 +241,14 @@ void Game::h_print(const std::string& event, const std::string& args) {
   util::Logger()->info("Handler::h_print: {} {}", event, args);
   std::string txt = GetText(event, args);
   _cout(_cur_user->id(), txt);
+  util::Logger()->debug("Handler::h_print: {} {} done", event, args);
 }
 
 void Game::h_print_with_prompt(const std::string& event, const std::string& args) {
-  util::Logger()->info("Handler::h_print: {} {}", event, args);
+  util::Logger()->info("Handler::h_print_with_prompt: {} {}", event, args);
   std::string txt = GetText(event, args);
   _cout(_cur_user->id(), txt + txtad::WEB_CMD_ADD_PROMPT);
+  util::Logger()->debug("Handler::h_print_with_prompt: {} {} done", event, args);
 }
 
 
@@ -377,6 +379,7 @@ void Game::h_remove_user(const std::string& event, const std::string& ctx_id) {
 }
 
 std::string Game::t_substitue_fn(const std::string& subsitute) {
+  util::Logger()->info("Game::t_substitue_fn: subsitute {}", subsitute);
   if (subsitute == txtad::EVENT_REPLACEMENT) {
     return _cur_user->context_stack().cur_event();
   } else if (subsitute == txtad::UID_REPLACEMENT) {
