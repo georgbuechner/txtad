@@ -6,6 +6,21 @@ window.onload = function() {
   }
 }
 
+function updateUrlWithMessage(message) {
+  // Get current URL and search params
+  const url = new URL(window.location.href);
+  const params = new URLSearchParams(url.search);
+  
+  // Set or replace the 'msg' parameter
+  params.set('msg', message);
+  
+  // Update the URL search string
+  url.search = params.toString();
+  
+  // Replace the current URL and reload
+  window.location.href = url.toString();
+}
+
 function RemoveListElement(base_id, index) {
   const element = document.getElementById("parent_" + base_id + "_" + index);
   console.log(element);
@@ -46,4 +61,32 @@ function clearInputs(root) {
     if (el.type === "checkbox" || el.type === "radio") el.checked = false;
     else el.value = "";
   });
+}
+
+async function SaveContent(game_id) {
+  console.log("SaveContent: ", game_id);
+  let container = document.getElementById("save_results");
+  let tests_successfull = await RunTests(game_id, "save_test_results");
+  if (tests_successfull) {
+    console.log("SaveContent. All Tests successfull");
+    try {
+      let response = await fetch("/" + game_id + "/save", { method: "POST" });
+      if (response.status == 400) {
+        console.log("SaveContent: Saving failed.");
+        let text = await response.text();
+        container.innerHTML = text;
+      } else if (response.status == 200) {
+        console.log("SaveContent. Saving successfull");
+        updateUrlWithMessage("Successfully saved game content.");
+      } else {
+        container.innerHTML = "Failed to save: Unkown response: " + response.status;
+      }
+    } catch (error) {
+      console.log("SaveContent. Saving crashed");
+      container.innerHTML = error.message;
+      return false;
+    }
+  } else {
+    console.log("SaveContent. Some Tests failed");
+  }
 }

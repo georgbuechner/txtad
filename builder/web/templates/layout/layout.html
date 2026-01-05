@@ -12,6 +12,7 @@
     <!-- Custom CSS -->
     <link href="/static/css/custom.css" rel="stylesheet">
     <link href="/static/css/general.css" rel="stylesheet">
+    <link href="/static/css/game.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
 
     <title>Txtad*builder</title>
@@ -22,6 +23,7 @@
     {% include "layout/navbar.html" %}
     <div class="container-md main bg-light-80">
       <h1>TXTAD * BUILDER</h1>
+      <br>
       <div class="container-md sub" style="width: 70%;">
         {% block content scoped %}{% endblock %}
       </div>
@@ -66,6 +68,24 @@
         </div>
       </div>
     </div>
+
+<div class="modal fade" id="shareSaveModal" tabindex="-1" aria-labelledby="#shareSaveModal" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="shareSaveModalLabel">Save Content</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <p id="save_test_results"></p>
+        <p id="save_results"></p>
+        <button type="button" class="btn btn-primary" onclick="SaveContent('{{game.name}}');">
+          Run Tests and Save
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
 
 
   </body>

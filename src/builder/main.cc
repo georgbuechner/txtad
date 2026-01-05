@@ -14,8 +14,10 @@
 #include "shared/utils/utils.h"
 #include <exception>
 #include "httplib.h"
+#include <mutex>
 #include <nlohmann/json.hpp>
 #include <nlohmann/json_fwd.hpp>
+#include <shared_mutex>
 #include <spdlog/spdlog.h>
 #include <string>
 #include <thread>
@@ -32,6 +34,7 @@ int main() {
   util::LoggerContext scope(builder::LOGGER);
 
   // Create games
+  std::shared_mutex mtx_games;
   auto games = parser::InitGames(txtad::GAMES_PATH);
 
   // Creators
@@ -43,9 +46,10 @@ int main() {
   cli.set_read_timeout(2,0);
   cli.set_write_timeout(2,0);
 
-  std::thread thread_game_srv([&games, &cli]() {
+  std::thread thread_game_srv([&games, &cli, &mtx_games]() {
       while(true) {
         std::this_thread::sleep_for(1000ms);
+        std::unique_lock ul(mtx_games);
         for (auto& [_, game] : games) {
           game->set_running(false);
         }
@@ -72,7 +76,7 @@ int main() {
       }
   });
 
-  std::thread thread_http([&games, &manager, &cli]() {
+  std::thread thread_http([&games, &manager, &cli, &mtx_games]() {
     httplib::Server http_server;
     http_server.set_mount_point("/static", builder::STATIC_PATH);
     http_server.set_mount_point("/media", builder::MEDIA_PATH);
@@ -149,6 +153,7 @@ int main() {
     auto create_params = [&](const httplib::Request& req, std::string game_id = "", 
         std::string type = "", const std::vector<TestCase>& test_cases = std::vector<TestCase>()
     ) -> jinja2::ValuesMap {
+      std::shared_lock sl(mtx_games);
       util::Logger()->info(fmt::format("Builder::create_params"));
       jinja2::ValuesMap params;
 
@@ -258,6 +263,7 @@ int main() {
       if (auto res = cli.Get("/api/game/reload/" + game_id)) {
         if (res->status == httplib::StatusCode::OK_200) {
           resp.set_redirect(_http::Referer(req) + "?msg=Successfully reloaded game!", 303);
+          std::unique_lock ul(mtx_games);
           if (games.contains(game_id)) {
             games.at(game_id)->set_running(true);
           }
@@ -277,6 +283,7 @@ int main() {
       if (auto res = cli.Get("/api/game/stop/" + game_id)) {
         if (res->status == httplib::StatusCode::OK_200) {
           resp.set_redirect(_http::Referer(req) + "?msg=Successfully stoped game!", 303);
+          std::unique_lock ul(mtx_games);
           if (games.contains(game_id)) {
             games.at(game_id)->set_running(false);
           }
@@ -292,11 +299,11 @@ int main() {
     http_server.Get("/api/tests/run/:game_id", [&](const httplib::Request& req, httplib::Response& resp) {
       util::Logger()->info("/api/tests/run/:game_id");
       std::string game_id = req.path_params.at("game_id");
-      util::Logger()->info("/api/tests/run/" + game_id);
       auto test_cases = parser::LoadTestCases(game_id);
       std::vector<nlohmann::json> result = nlohmann::json::array();
       util::Logger()->info("/api/tests/run/" + game_id + ": running test-cases");
       for (const auto& test_case : test_cases) {
+        std::unique_lock ul(mtx_games);
         std::string test_result = test_case.Run(games.at(game_id));
         util::Logger()->info("/api/tests/run/" + game_id + ": - result: " + test_result);
         if (test_result != "") {
@@ -305,7 +312,6 @@ int main() {
           result.push_back({{"desc", test_case.desc()}, {"success", true}});
         }
       }
-      util::Logger()->info("/api/tests/run/" + game_id + ": returning: " + nlohmann::json(result).dump());
       resp.set_content(nlohmann::json(result).dump(), "application/json");
       resp.status = 200;
     });
@@ -324,6 +330,7 @@ int main() {
             {"initial_events", req.form.get_field("initial_events")},
             {"initial_contexts", req.form.get_fields("initial_contexts")}
           };
+          std::unique_lock ul(mtx_games);
           games.at(game_id)->set_settings(Settings(settings_json));
           games.at(game_id)->set_modified(true);
           resp.set_redirect(_http::Referer(req) + "?msg=Successfully saved game settings.", 303);
@@ -354,6 +361,25 @@ int main() {
         resp.status = 200;
         resp.set_content("Successfully saved " + std::to_string(tcs) + " test cases with " 
             + std::to_string(ts) + " tests.", "text/txt");
+    });
+
+    http_server.Post("/:game_id/save", [&](const httplib::Request& req, httplib::Response& resp) {
+      std::string game_id = req.path_params.at("game_id");
+      std::unique_lock ul(mtx_games);
+      std::string game_path = games.at(game_id)->path();
+      try {
+        games.at(game_id)->StoreGame();
+      } catch (std::exception& e) {
+        resp.set_content("Failed storing game: " + std::string(e.what()), "text/txt");
+        resp.status = 400;
+        return;
+      }
+      util::Logger()->debug("stored game, erasing... modified was: {}", games.at(game_id)->modified());
+      games.erase(game_id);
+      util::Logger()->debug("erased game, reloading...");
+      games[game_id] = std::make_shared<Game>(game_path, game_id);
+      util::Logger()->debug("loaded game. Modified: {}", games.at(game_id)->modified());
+      resp.status = 200;
     });
 
     // PAGES

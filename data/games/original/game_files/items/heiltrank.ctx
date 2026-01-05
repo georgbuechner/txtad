@@ -1,18 +1,1 @@
-{
-  "id": "heiltrank", 
-  "name": "Heiltrank",
-  "description": "Ein simpler Heiltrank",
-  "shared": true,
-  "permeable": false,
-  "priority": -10,
-  "listeners": [
-    {
-      "id": "L1",
-      "re_event": "use (.*)",
-      "ctx": "<_>",
-      "permeable": false,
-      "use_ctx_regex": 2,
-      "arguments":"#sa general.hp+=50;#ctx remove <_>;#> Hp set to {general.hp}."
-    }
-  ]
-}
+{"attributes":{},"description":{"logic":"","one_time_events":"","permanent_events":"","shared":true,"txt":"Ein simpler Heiltrank"},"id":"items/heiltrank","listeners":[{"arguments":"#sa general.hp+=50;#ctx remove items/heiltrank;#> Hp set to {general.hp}.","ctx":"items/heiltrank","id":"L1","logic":"","permeable":false,"re_event":"use (.*)","use_ctx_regex":2}],"name":"Heiltrank","permeable":false,"priority":-10,"re_entrycondition":"","shared":true}

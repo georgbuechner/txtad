@@ -21,7 +21,8 @@ namespace fs = std::filesystem;
 
 Game::MsgFn Game::_global_cout= nullptr;
 
-Game::Game(std::string path, std::string name) : _cout(_global_cout), _path(path), _name(name), _cur_user(nullptr), _running(false),
+Game::Game(std::string path, std::string name) : _cout(_global_cout), _path(path), _name(name), 
+    _cur_user(nullptr), _running(false), _modified(false),
     _parser(std::bind(&Game::t_substitue_fn, this, std::placeholders::_1)),
     _settings(*util::LoadJsonFromDisc(_path + "/" + txtad::GAME_SETTINGS)),
     _builder_settings(util::LoadJsonFromDisc(_path + "/" + txtad::BUILDER_EXTENSION).value_or(nlohmann::json::object())) {

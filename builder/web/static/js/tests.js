@@ -1,5 +1,7 @@
-function displayTestResults(data) {
-  const container = document.getElementById('test_result');
+function displayTestResults(data, results_container) {
+  if (results_container === undefined) 
+    results_container = "test_result";
+  const container = document.getElementById(results_container);
   
   // Clear any existing content
   container.innerHTML = '';
@@ -45,10 +47,21 @@ function displayTestResults(data) {
   container.appendChild(resultsContainer);
 }
 
-function RunTests(game_id) {
-  fetch("/api/tests/run/" + game_id)
-    .then(response => response.json()) 
-    .then(json => { displayTestResults(json) });
+async function RunTests(game_id, results_container) {
+  let container = document.getElementById(results_container);
+  try {
+    const response = await fetch("/api/tests/run/" + game_id);
+    if (!response.ok) {
+      container.innerHTML = "Request to /api/tests/run failed: " + response.status;
+      return false;
+    }
+    const json = await response.json();
+    displayTestResults(json, results_container);
+    return json.every(test => test.success === true);
+  } catch (error) {
+    container.innerHTML = error.message;
+    return false;
+  }
 }
 
 function buildTestsJson() {

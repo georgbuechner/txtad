@@ -1,21 +1,27 @@
 {% extends "layout/layout.html" %}
 
-{% block content %}
-{% if path %}
-  <h1>{{path}}</h1>
-{% else %}
-  <h1>{{game.name}}</h1>
-{% endif %}
-  {% if modified %}
-  <div class="modified-indicator">
-    <span class="badge bg-warning text-dark modified-badge">
-      <i class="bi bi-pencil-fill"></i> Modified
-    </span>
-    <button type="button" class="btn btn-success btn-sm save-btn">
-      <i class="bi bi-save"></i> Save Content
-    </button>
-  </div>
+<div class="game_header">
+  {% block content %}
+  {% if path %}
+    <h1>{{path}}</h1>
+  {% else %}
+    <h1>{{game.name}}</h1>
   {% endif %}
+
+  {% if modified %}
+    <div class="modified-indicator">
+      <button 
+        type="button" 
+        class="btn btn-success btn-sm save-btn"
+        data-bs-toggle="modal" 
+        data-bs-target="#shareSaveModal"
+      >
+        <i class="bi bi-save"></i> Save Content
+      </button>
+    </div>
+  {% endif %}
+</div>
+
 <div class="game-desc">
   <p><span>&mdash;</span>{{game.description}}</p>
   <button type="button" 

@@ -1,3 +1,1 @@
-{
-  "description": "Original Test-Game, using all default settings."
-}
+{"initial_contexts":["general","mechanics","rooms/freedom","catch"],"initial_events":"#> {start}"}
