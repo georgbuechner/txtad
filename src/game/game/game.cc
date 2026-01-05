@@ -103,6 +103,7 @@ const builder::Settings& Game::builder_settings() const { return _builder_settin
 const std::shared_ptr<User>& Game::cur_user() { return _cur_user; }
 bool Game::running() const { return _running; }
 bool Game::modified() const { return _modified; }
+const ExpressionParser& Game::parser() const { return _parser; }
 
 // setter
 void Game::set_global_msg_fn(Game::MsgFn fn) { _global_cout = fn; }

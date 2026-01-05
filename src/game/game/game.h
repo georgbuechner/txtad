@@ -31,6 +31,7 @@ class Game {
     const std::shared_ptr<User>& cur_user();
     bool running() const;
     bool modified() const;
+    const ExpressionParser& parser() const;
     
     // setter 
     static void set_global_msg_fn(MsgFn fn);

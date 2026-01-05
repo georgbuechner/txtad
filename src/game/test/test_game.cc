@@ -79,8 +79,10 @@ TEST_CASE("Test Creating Game", "[game]") {
     {"description", "Test room no. 1"},
     {"attributes", {{"gravity", "10"}, {"darkness", "99"}}},
     {"listeners", {
-      {{"id", "L2"}, {"re_event", "go right"}, {"ctx", "rooms/room_2"}, {"arguments", "#ctx replace *rooms -> <ctx>"}, 
-        {"permeable", true}, {"use_ctx_regex", UseCtx::NO}}
+      {{"id", "L2"}, {"re_event", "go right"}, {"ctx", "rooms/room_2"}, 
+        {"arguments", "#ctx replace *rooms -> <ctx>"}, {"permeable", true}, 
+        {"logic", "{<ctx>.gravity} = 99"}, {"permeable", true}, 
+        {"use_ctx_regex", UseCtx::NO}}
     }},
   };
 
@@ -129,27 +131,28 @@ TEST_CASE("Test Creating Game", "[game]") {
   game.HandleEvent(USER_ID, "");
 
   // Test events
-  ExpressionParser parser;
   util::Logger()->info("GO LEFT");
-  REQUIRE(ctx->TakeEvent("go left", parser) == false);
+  REQUIRE(ctx->TakeEvent("go left", game.parser()) == false);
   util::Logger()->info("GO RIGHT");
-  REQUIRE(ctx->TakeEvent("go right", parser) == true);
+  REQUIRE(ctx->TakeEvent("go right", game.parser()) == true);
   auto ctx_2 = game.contexts().at("rooms/room_2");
   util::Logger()->info("GO LEFT");
-  REQUIRE(ctx_2->TakeEvent("go left", parser) == false);
+  REQUIRE(ctx_2->TakeEvent("go left", game.parser()) == false);
   util::Logger()->info("GO ROOM 1");
-  REQUIRE(ctx_2->TakeEvent("go Room 1", parser) == true);
+  REQUIRE(ctx_2->TakeEvent("go Room 1", game.parser()) == true);
   util::Logger()->info("done");
 
   // Test texts 
   REQUIRE(game.texts().count("texts/start") > 0);
   std::string event_queue;
-  REQUIRE(util::Join(game.texts().at("texts/start")->print(event_queue, parser), ", ") == txt_text_1["txt"].get<std::string>());
+  REQUIRE(util::Join(game.texts().at("texts/start")->print(event_queue, game.parser()), ", ") 
+      == txt_text_1["txt"].get<std::string>());
   REQUIRE(event_queue == txt_text_1["permanent_events"].get<std::string>() + ";" 
       + txt_text_1["one_time_events"].get<std::string>());
   event_queue = "";
   // After second print, event_queue does not contain onetime events.
-  REQUIRE(util::Join(game.texts().at("texts/start")->print(event_queue, parser), ", ") == txt_text_1["txt"].get<std::string>());
+  REQUIRE(util::Join(game.texts().at("texts/start")->print(event_queue, game.parser()), ", ") 
+      == txt_text_1["txt"].get<std::string>());
   REQUIRE(event_queue == txt_text_1["permanent_events"].get<std::string>());
 }
 

@@ -135,6 +135,7 @@ parser::ExecListeners parser::LoadListeners(std::map<std::string, std::shared_pt
   ExecListeners exec_forwarders;
   for (const auto& [ctx_id, json_listeners] : listeners) {
     for (auto& json_listener : json_listeners.get<std::vector<nlohmann::json>>()) {
+
       // Replace "this"-field with ctx_id
       for (const auto* field : {"logic", "arguments"}) {
         if (json_listener.contains(field))
