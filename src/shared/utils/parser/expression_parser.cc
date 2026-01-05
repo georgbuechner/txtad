@@ -4,6 +4,7 @@
 #include "shared/utils/fuzzy_search/fuzzy.h"
 #include "shared/utils/utils.h"
 #include <algorithm>
+#include <optional>
 #include <spdlog/spdlog.h>
 #include <string>
 
@@ -18,13 +19,13 @@ std::map<std::string, std::string(*)(const std::string&, const std::string&)> Ex
   {"=", [](const std::string& a, const std::string& b) { return std::to_string(a == b); } },
   {"!=", [](const std::string& a, const std::string& b) { return std::to_string(a != b); } },
   {"~", [](const std::string& a, const std::string& b) { return std::to_string(fuzzy::fuzzy(b, a)); } },
-  {"~" + std::to_string(fuzzy::FuzzyMatch::DIRECT), [](const std::string& a, const std::string& b) { 
+  {"~1", [](const std::string& a, const std::string& b) { 
             return std::to_string(fuzzy::fuzzy(b, a) == fuzzy::FuzzyMatch::DIRECT); } },
-  {"~" + std::to_string(fuzzy::FuzzyMatch::STARTS_WITH), [](const std::string& a, const std::string& b) { 
+  {"~2", [](const std::string& a, const std::string& b) { 
             return std::to_string(fuzzy::fuzzy(b, a) == fuzzy::FuzzyMatch::STARTS_WITH); } },
-  {"~" + std::to_string(fuzzy::FuzzyMatch::CONTAINS), [](const std::string& a, const std::string& b) { 
+  {"~3", [](const std::string& a, const std::string& b) { 
             return std::to_string(fuzzy::fuzzy(b, a) == fuzzy::FuzzyMatch::CONTAINS); } },
-  {"~" + std::to_string(fuzzy::FuzzyMatch::FUZZY), [](const std::string& a, const std::string& b) { 
+  {"~4", [](const std::string& a, const std::string& b) { 
             return std::to_string(fuzzy::fuzzy(b, a) == fuzzy::FuzzyMatch::FUZZY); } },
   {":", [](const std::string& a, const std::string& b) -> std::string { 
           util::Logger()->debug("EP:InList. {} in {}", a, b);
@@ -155,6 +156,16 @@ std::pair<int, std::string> ExpressionParser::LastOpt(const std::string& inp) {
   }
   return {pos, opt};
 }
+std::optional<short> ExpressionParser::PartOfOpt(int i, const std::string& inp) {
+  std::string a = std::string(1, inp[i]);
+  if (_opts.contains(a))
+    return std::optional(1);
+  if (i > 0 && _opts.contains(a + std::string(1, inp[i-1])))
+    return std::optional(2);
+  if (i < inp.size()-1 && _opts.contains(std::string(1, inp[i+1]) + a)) 
+    return std::optional(1);
+  return std::nullopt;
+}
 
 std::string ExpressionParser::EnsureExecutionOrder(std::string inp) {
   util::Logger()->debug("EP:EnsureExecutionOrder. {}", inp);
@@ -189,19 +200,15 @@ std::string ExpressionParser::EnsureExecutionOrder(std::string inp) {
 
     // If current char is not (part of) a priority operand:
     if (std::find(priority_operands.begin(), priority_operands.end(), c) == priority_operands.end()) {
-      for (const auto& it : _opts) {
-        auto pos = it.first.find(c);
-        if (pos != std::string::npos) {
-          // If waiting is not empty added waiting to modified, surrounded by brackets
-          if (waiting != "") {
-            util::Logger()->debug("EP:EnsureExecutionOrder. -> {} (adding: {})", modified, waiting);
-            modified += "(" + waiting + ")";
-            waiting = "";
-          } 
-          // Set position of last found operand to position of current operand.
-          last = modified.length() + ((pos == 0) ? it.first.length() : it.first.length()-pos); 
-          break;
-        }
+      if (auto remaining_len = PartOfOpt(i, inp)) {
+        // If waiting is not empty, add (waiting) to modified 
+        if (waiting != "") {
+          util::Logger()->debug("EP:EnsureExecutionOrder. -> {} (adding: {})", modified, waiting);
+          modified += "(" + waiting + ")";
+          waiting = "";
+        } 
+        // Set position of last found operand to position of current operand.
+        last = modified.length() + *remaining_len; 
       }
     } 
     // If current char is priority-operand start waiting from last-operand to current position. 
