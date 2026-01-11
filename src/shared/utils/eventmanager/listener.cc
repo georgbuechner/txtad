@@ -6,6 +6,7 @@
 #include "shared/utils/utils.h"
 #include <nlohmann/json.hpp>
 #include <memory>
+#include <stdexcept>
 #include <string>
 
 // ## l-handler
@@ -77,8 +78,11 @@ LForwarder::LForwarder(std::string id, std::string re_event, std::string argumen
   _arguments = util::ReplaceAll(arguments, "; #", ";#"); 
 }
 
-LForwarder::LForwarder(const nlohmann::json& json) : LForwarder(json.at("id"), json.at("re_event"), 
-    json.at("arguments"), json.at("permeable"), json.value("logic", "")) { }
+LForwarder::LForwarder(const nlohmann::json& json, const nlohmann::json& original_json) 
+  : LForwarder(json.at("id"), json.at("re_event"), json.at("arguments"), json.at("permeable"), 
+      json.value("logic", "")) { 
+  _original_json = original_json;
+}
 
 // getter
 std::string LForwarder::logic() const { return _logic; }
@@ -96,9 +100,9 @@ void LForwarder::set_overwite_fn(Fn fn) {
 }
 
 nlohmann::json LForwarder::json() const {
-  nlohmann::json j = LHandler::json(); 
-  j["logic"] = _logic; 
-  return j;
+  if (!_original_json.empty())
+    return _original_json;
+  std::runtime_error("LForwarder::json: Saving l-forwarder that was not created from JSON " + _id);
 }
 
 // ## l-context-forwarded
@@ -108,9 +112,11 @@ LContextForwarder::LContextForwarder(std::string id, std::string re_event, std::
   : LForwarder(id, re_event, util::ReplaceAll(arguments, txtad::CTX_REPLACEMENT, GetCtxId(ctx)), 
       permeable, util::ReplaceAll(logic, txtad::CTX_REPLACEMENT, GetCtxId(ctx))), _ctx(ctx), _use_ctx_regex(use_ctx_regex) {}
 
-LContextForwarder::LContextForwarder(const nlohmann::json& json, std::shared_ptr<Context> ctx) 
+LContextForwarder::LContextForwarder(const nlohmann::json& json, std::shared_ptr<Context> ctx, 
+    const nlohmann::json& original_json) 
   : LContextForwarder(json.at("id"), json.at("re_event"), ctx, json.at("arguments"), json.at("permeable"),
       json.at("use_ctx_regex"), json.value("logic", "")) {
+  _original_json = original_json;
 }
 
 // getter 
@@ -171,10 +177,7 @@ std::string LContextForwarder::GetCtxName(std::weak_ptr<Context> _ctx) {
 }
 
 nlohmann::json LContextForwarder::json() const {
-  nlohmann::json j = LForwarder::json(); 
-  if (auto ctx = _ctx.lock()) {
-    j["ctx"] = ctx->id(); 
-  }
-  j["use_ctx_regex"] = _use_ctx_regex; 
-  return j;
+  if (!_original_json.empty())
+    return _original_json;
+  std::runtime_error("LForwarder::json: Saving l-forwarder that was not created from JSON " + _id);
 }

@@ -131,34 +131,11 @@ void parser::LoadObjects(const std::string& path, std::map<std::string, std::sha
 }
 
 parser::ExecListeners parser::LoadListeners(std::map<std::string, std::shared_ptr<Context>>& contexts,
-    std::map<std::string, nlohmann::json> listeners) {
+    const std::map<std::string, nlohmann::json>& listeners) {
   ExecListeners exec_forwarders;
   for (const auto& [ctx_id, json_listeners] : listeners) {
-    for (auto& json_listener : json_listeners.get<std::vector<nlohmann::json>>()) {
-
-      // Replace "this"-field with ctx_id
-      for (const auto* field : {"logic", "arguments"}) {
-        if (json_listener.contains(field))
-          json_listener[field] = util::ReplaceAll(json_listener[field], txtad::THIS_REPLACEMENT, ctx_id);
-      }
-
-      std::shared_ptr<Listener> new_listener = nullptr;
-      // Create context-listener
-      if (json_listener.contains("ctx")) {
-        std::string target_ctx_id = json_listener["ctx"];
-        auto it_ctx = contexts.find((target_ctx_id == txtad::THIS_REPLACEMENT) ? ctx_id : target_ctx_id);
-        if (it_ctx != contexts.end()) {
-          new_listener = std::make_shared<LContextForwarder>(json_listener, it_ctx->second);
-        } else {
-          util::Logger()->warn("parser::LoadListeners. For listener \"{}\", context \"{}\" not found.", 
-              json_listener["id"].get<std::string>(), ctx_id);
-        }
-      } 
-      // Create "normal" listener
-      else {
-        new_listener = std::make_shared<LForwarder>(json_listener);
-      }
-
+    for (const auto& json_listener : json_listeners.get<std::vector<nlohmann::json>>()) {
+      auto new_listener = CreateListenerFromJson(json_listener, ctx_id, contexts);
       // Add new listener
       if (new_listener) {
         contexts.at(ctx_id)->AddListener(new_listener);
@@ -169,6 +146,31 @@ parser::ExecListeners parser::LoadListeners(std::map<std::string, std::shared_pt
     }
   }
   return exec_forwarders;
+}
+
+std::shared_ptr<Listener> parser::CreateListenerFromJson(const nlohmann::json& og_json_listener, 
+    const std::string& ctx_id, const std::map<std::string, std::shared_ptr<Context>>& contexts) {
+  nlohmann::json json_listener = og_json_listener;
+  // Replace "this"-field with ctx_id
+  for (const auto* field : {"logic", "arguments"}) {
+    if (json_listener.contains(field))
+      json_listener[field] = util::ReplaceAll(json_listener[field], txtad::THIS_REPLACEMENT, ctx_id);
+  }
+
+  // Create context-listener
+  if (json_listener.contains("ctx")) {
+    std::string target_ctx_id = json_listener["ctx"];
+    auto it_ctx = contexts.find((target_ctx_id == txtad::THIS_REPLACEMENT) ? ctx_id : target_ctx_id);
+    if (it_ctx != contexts.end()) {
+      return std::make_shared<LContextForwarder>(json_listener, it_ctx->second, og_json_listener);
+    } else {
+      util::Logger()->warn("parser::LoadListeners. For listener \"{}\", context \"{}\" not found.", 
+          json_listener["id"].get<std::string>(), ctx_id);
+      return nullptr;
+    }
+  } 
+  // Create "normal" listener
+  return std::make_shared<LForwarder>(json_listener, og_json_listener);
 }
 
 std::shared_ptr<Context> parser::CreateContextFromPath(std::filesystem::path path, size_t id_path_offset) {

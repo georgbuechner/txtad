@@ -118,7 +118,8 @@ void Context::AddListener(std::shared_ptr<Listener> listener) {
   if (_event_manager) {
     _event_manager->AddListener(listener);
   } else {
-    util::Logger()->error("Context::AddListener: event_manager does not exist for listener {}", listener->id());
+    util::Logger()->error("Context::AddListener: event_manager does not exist for listener {}", 
+        listener->id());
   }
 }
 

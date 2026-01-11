@@ -437,3 +437,20 @@ void Game::StoreGame(std::string path) {
     util::WriteJsonToDisc(p.string(), txt.second->json());
   }
 }
+
+void Game::CreateListenerInPlace(const std::string& listener_id, const nlohmann::json& json_listener, 
+        const std::string& ctx_id) {
+  if (!_contexts.contains(ctx_id)) {
+    throw std::invalid_argument("context " + ctx_id + " not found!");
+  }
+  // Create listener from json
+  auto new_listener = parser::CreateListenerFromJson(json_listener, ctx_id, _contexts);
+  // If contains exec (direct execution), set exec function
+  if (json_listener.contains("exec")) {
+    new_listener->set_fn(std::bind(&Game::h_exec, this, std::placeholders::_1, std::placeholders::_2));
+  }
+  _contexts.at(ctx_id)->AddListener(new_listener);
+  if (listener_id != new_listener->id()) {
+    _contexts.at(ctx_id)->RemoveListener(listener_id);
+  }
+}

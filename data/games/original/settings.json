@@ -1,1 +1,1 @@
-{"initial_contexts":["general","mechanics","rooms/freedom","catch"],"initial_events":"#> {start}"}
+{"initial_contexts":["general","mechanics","rooms/closet","catch"],"initial_events":"#> {start}"}

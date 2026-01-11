@@ -14,42 +14,58 @@
       <div id="collapselistener{{label}}{{loop.index}}" class="accordion-collapse collapse" 
           aria-labelledby="headinglistener{{label}}{{loop.index}}" data-bs-parent="#accordionExample">
         <div class="accordion-body">
-            <form> 
+          <form 
+            action="/{{game.name}}/save/ctx/listener?ctx_id={{ctx.id}}&id={{listener.id}}&path={{path}}/{{s}}&type={{type}}"
+            method="POST" 
+            enctype="multipart/form-data"
+          > 
               <div class="input-group mb-3">
                 <span class="input-group-text" id="id">listener:</span>
-                <input type="text" class="form-control" placeholder="text" aria-label="" aria-describedby="id" value="{{listener.id}}">
+                <input type="text" class="form-control" placeholder="text" aria-describedby="id" 
+                  name="id" value="{{listener.id}}" required>
               </div>
               <div class="input-group mb-3">
                 <span class="input-group-text" id="event">In-Event:</span>
-                <input type="text" class="form-control" placeholder="..." aria-label="" 
+                <input type="text" class="form-control" placeholder="..." name="event"
                   aria-describedby="event" value="{{listener.event}}">
               </div>
               <div class="input-group mb-3">
                 <span class="input-group-text" id="arguments">Out-Event:</span>
-                <input type="text" class="form-control" placeholder="..." aria-label="" 
+                <input type="text" class="form-control" placeholder="..." name="arguments" 
                   aria-describedby="arguments" value="{{listener.arguments}}">
               </div>
               <div class="input-group mb-3">
                 <span class="input-group-text" id="logic">Logic:</span>
-                <input type="text" class="form-control" placeholder="..." aria-label="" 
+                <input type="text" class="form-control" placeholder="..." name="logic" 
                   aria-describedby="logic" value="{{listener.logic}}">
               </div>
               <div class="input-group mb-3">
                 <span class="input-group-text" id="context">Context:</span>
-                <input type="text" class="form-control" placeholder="..." aria-label="" 
-                  aria-describedby="context" value="{{listener.context}}">
+                <input type="text" class="form-control" placeholder="..." name="context" 
+                  aria-describedby="context" value="{{listener.ctx}}">
               </div>
               <div class="input-group mb-3">
-                <span class="input-group-text" id="shared">Permeable:</span>
+                <span class="input-group-text" id="permeable">Permeable:</span>
+                <div class="input-group-text">
+                  <input class="form-check-input mt-0" type="checkbox" name="permeable"
+                    value="{{listener.permeable}}" aria-label="Checkbox for following text input">
+                </div>
+              </div>
+              <div class="input-group mb-3">
+                <span class="input-group-text" id="exec">Exec:</span>
                 <div class="input-group-text">
                   <input class="form-check-input mt-0" type="checkbox"
                     value="{{listener.permeable}}" aria-label="Checkbox for following text input">
                 </div>
               </div>
-              <button type="submit" class="btn btn-primary">save</button>
+
+              <button 
+                type="submit" 
+                class="btn btn-primary"
+                onclick="SaveListener('{{ctx.id}}', '{{listener.id}}');"
+              >save</button>
               <button type="button" class="btn btn-secondary">remove</button>
-              <button type="button" class="btn btn-secondary">insert before</button>
-              <button type="button" class="btn btn-secondary">insert after</button>
+              <button type="button" class="btn btn-secondary">add</button>
             </form>
         </div>
       </div>

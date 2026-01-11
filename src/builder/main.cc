@@ -333,7 +333,9 @@ int main() {
           std::unique_lock ul(mtx_games);
           games.at(game_id)->set_settings(Settings(settings_json));
           games.at(game_id)->set_modified(true);
-          resp.set_redirect(_http::Referer(req) + "?msg=Successfully saved game settings.", 303);
+          std::string path = (req.has_param("path")) ? req.get_param_value("path") : "";
+          resp.set_redirect(_http::Referer(req) + "?msg=Successfully saved game settings." 
+              + ((path != "") ? "&path=" + path : ""), 303);
         } catch (std::exception& e) {
           std::string msg = "Failed saving settings: " + std::string(e.what());
           util::Logger()->warn("/:game_id/save/settings: " + msg);
@@ -361,6 +363,40 @@ int main() {
         resp.status = 200;
         resp.set_content("Successfully saved " + std::to_string(tcs) + " test cases with " 
             + std::to_string(ts) + " tests.", "text/txt");
+    });
+
+    http_server.Post("/:game_id/save/ctx/listener", [&](const httplib::Request& req, httplib::Response& resp) {
+      const std::string game_id = req.path_params.at("game_id");
+      std::unique_lock ul(mtx_games);
+      if (!req.has_param("ctx_id")) {
+        resp.set_redirect("/?msg=missing query-parameter: ctx_id", 303);
+        return;
+      }
+      if (!req.has_param("id")) {
+        resp.set_redirect("/?msg=missing query-parameter: (listener) id", 303);
+        return;
+      }
+      const std::string ctx_id = req.get_param_value("ctx_id");
+      const std::string listener_id = req.get_param_value("id");
+      try {
+        const nlohmann::json j = {
+          {"id", req.form.get_field("id")},
+          {"re_event", req.form.get_field("event")},
+          {"arguments", req.form.get_field("arguments")},
+          {"logic", req.form.get_field("logic")},
+          {"context", req.form.get_field("context")},
+          {"permeable", req.form.has_field("permeable")},
+          {"exec", req.form.has_field("exec")}
+        };
+        games.at(game_id)->CreateListenerInPlace(listener_id, j, ctx_id);
+        games.at(game_id)->set_modified(true);
+        resp.set_redirect(_http::Referer(req) + "?msg=Successfully updated/added listener", 303);
+      } catch (std::exception& e) {
+        std::string msg = fmt::format("Failed creating listener {} for ctx {}: {}", listener_id, 
+            ctx_id, e.what());
+        util::Logger()->error(msg);
+        resp.set_redirect(_http::Referer(req) + "?msg=" + msg, 303);
+      }
     });
 
     http_server.Post("/:game_id/save", [&](const httplib::Request& req, httplib::Response& resp) {

@@ -85,8 +85,8 @@ public:
   // ***** ***** Listener methods calling EventManager ***** ***** //
   bool TakeEvent(std::string event, const ExpressionParser& parser);
 
-  void AddListener(std::shared_ptr<Listener> listener);
-  void AddListener(const nlohmann::json& listener);
+  void AddListener(std::shared_ptr<Listener> listener); ///< also for modifying
+  // void AddListener(const nlohmann::json& listener);
   void RemoveListener(const std::string& id);
 
   std::vector<std::weak_ptr<Context>> LinkedContexts(std::string type);

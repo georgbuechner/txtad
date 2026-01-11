@@ -26,12 +26,13 @@ namespace parser {
   void LoadObjects(const std::string& path, std::map<std::string, std::shared_ptr<Context>>& contexts, 
       std::map<std::string, std::shared_ptr<Text>>& texts, std::map<std::string, nlohmann::json>& listeners);
   ExecListeners LoadListeners(std::map<std::string, std::shared_ptr<Context>>& contexts,
-      std::map<std::string, nlohmann::json> listeners);
-
-  
+      const std::map<std::string, nlohmann::json>& listeners);
+  std::shared_ptr<Listener> CreateListenerFromJson(const nlohmann::json& j_listener, const std::string& ctx_id,
+      const std::map<std::string, std::shared_ptr<Context>>& contexts);
 
   std::shared_ptr<Context> CreateContextFromPath(std::filesystem::path path, size_t id_path_offset);
-  std::shared_ptr<Text> CreateTextFromPath(std::filesystem::path path, size_t id_path_offset, std::string& txt_id);
+  std::shared_ptr<Text> CreateTextFromPath(std::filesystem::path path, size_t id_path_offset, 
+      std::string& txt_id);
   std::optional<nlohmann::json> GetContextListener(const std::filesystem::path& path);
 
   std::vector<TestCase> LoadTestCases(const std::string& game_id);

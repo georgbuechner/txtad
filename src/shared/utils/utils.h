@@ -34,12 +34,18 @@ namespace util
       std::string _prev;
   };
 
+  /**
+   * Custom regex class applying basic escaping and stores string
+   * representation.
+   * Escaping: 
+   * - '*' -> '\*'
+   */
   class Regex {
     public: 
       Regex(const std::string& pattern) : _pattern(pattern), _regex(std::regex(pattern)) {
         std::string new_pattern = "";
         for (int i=0; i<pattern.length(); i++) {
-          if (pattern[i] == '*' && (i == 0 || pattern[i-1] != '.'))
+          if (pattern[i] == '*' && (i == 0 || (pattern[i-1] != '.' && pattern[i-1] != '\\')))
             new_pattern += "\\*";
           else 
             new_pattern += pattern[i];

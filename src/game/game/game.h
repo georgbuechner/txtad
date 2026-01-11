@@ -47,6 +47,12 @@ class Game {
     std::string CheckLogic(const std::string& logic);
     void StoreGame(std::string path = "");
 
+    /**
+     * Creates/Updates/Replaces listener while game is running
+     */
+    void CreateListenerInPlace(const std::string& listener_id, const nlohmann::json& json_listener, 
+        const std::string& ctx_id);
+
   private: 
     static MsgFn _global_cout;
     MsgFn _cout;

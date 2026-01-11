@@ -87,7 +87,7 @@ class LForwarder : public LHandler {
     LForwarder(std::string id, std::string re_event, std::string arguments, bool permeable, 
         std::string logic="");
 
-    LForwarder(const nlohmann::json& json);
+    LForwarder(const nlohmann::json& json, const nlohmann::json& original_json);
 
     // getter
     std::string logic() const override;
@@ -101,6 +101,7 @@ class LForwarder : public LHandler {
   protected: 
     static Fn _overwride_fn;
     const std::string _logic;
+    nlohmann::json _original_json;
 };
 
 class LContextForwarder : public LForwarder {
@@ -117,7 +118,8 @@ class LContextForwarder : public LForwarder {
     LContextForwarder(std::string id, std::string re_event, std::weak_ptr<Context> ctx, std::string arguments, 
         bool permeable, UseCtx use_ctx_regex, std::string logic="");
 
-    LContextForwarder(const nlohmann::json& json, std::shared_ptr<Context> ctx);
+    LContextForwarder(const nlohmann::json& json, std::shared_ptr<Context> ctx, 
+        const nlohmann::json& original_json);
 
     // getter
     std::string ctx_id() const override;
