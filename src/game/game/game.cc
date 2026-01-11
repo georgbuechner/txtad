@@ -385,11 +385,7 @@ void Game::h_remove_user(const std::string& event, const std::string& ctx_id) {
 
 std::string Game::t_substitue_fn(const std::string& subsitute) {
   util::Logger()->info("Game::t_substitue_fn: subsitute {}", subsitute);
-  if (subsitute == txtad::EVENT_REPLACEMENT) {
-    return _cur_user->context_stack().cur_event();
-  } else if (subsitute == txtad::UID_REPLACEMENT) {
-    return _cur_user->id();
-  } else if (auto print_ctx = pattern::member_access(subsitute)) {
+  if (auto print_ctx = pattern::member_access(subsitute)) {
     if (print_ctx->member_type == pattern::CtxMemberAccess::VARIABLE)
       return GetText("", _cur_user->PrintCtx(print_ctx->ctx_id, print_ctx->key, _parser));
     else if (print_ctx->member_type == pattern::CtxMemberAccess::ATTRIBUTE)

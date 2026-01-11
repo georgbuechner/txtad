@@ -1,4 +1,1 @@
-{
-  "txt": "$center CREEP",
-  "permanent_events": "#>> {texts/start/01}" 
-}
+{"logic":"","one_time_events":"","permanent_events":"#> {texts/start/01}","shared":true,"txt":"$center CREEP"}

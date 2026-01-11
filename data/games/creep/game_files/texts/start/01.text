@@ -1,4 +1,1 @@
-{
-  "txt": "{minds.uneasyness} And what kind of...",
-  "permanent_events": "#>> {texts/start/02}" 
-}
+{"logic":"","one_time_events":"","permanent_events":"#>> {texts/start/02}","shared":true,"txt":"{minds.uneasyness} And what kind of..."}

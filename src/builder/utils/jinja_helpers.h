@@ -168,9 +168,12 @@ namespace jinja2 {
         {"id", [](const PtrView<Listener> v) { return (v.ptr) ? v.ptr->id() : Value{}; }},
         {"event", [](const PtrView<Listener> v) { return (v.ptr) ? v.ptr->event() : Value{}; }}, 
         {"permeable", [](const PtrView<Listener> v) { return (v.ptr) ? v.ptr->permeable() : Value{}; }}, 
-        {"arguments", [](const PtrView<Listener> v) { return (v.ptr) ? v.ptr->arguments() : Value{}; }}, 
-        {"logic", [](const PtrView<Listener> v) { return (v.ptr) ? v.ptr->logic() : Value{}; }}, 
+        {"arguments", [](const PtrView<Listener> v) { return (v.ptr)
+            ? v.ptr->original_json().at("arguments").get<std::string>() 
+            : Value{}; }}, 
+        {"logic", [](const PtrView<Listener> v) { return (v.ptr) ? v.ptr->original_json().value("logic", "") : Value{}; }}, 
         {"ctx", [](const PtrView<Listener> v) { return (v.ptr) ? v.ptr->ctx_id() : Value{}; }}, 
+        {"exec", [](const PtrView<Listener> v) { return (v.ptr) ? v.ptr->original_json().value("exec", false) : Value{}; }}, 
       };
       return acc;
     }

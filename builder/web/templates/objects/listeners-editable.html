@@ -6,7 +6,7 @@
         <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" 
             data-bs-target="#collapselistener{{label}}{{loop.index}}" aria-expanded="false" 
             aria-controls="collapselistener{{label}}{{loop.index}}">
-          <span class="brand">{{listener.event}}</span> 
+          <span class="brand">{{listener.event|safe}}</span> 
           <span style="padding: 0.7em;">⇒</span>
           <span class="brand">{{listener.arguments}}</span>
         </button>
@@ -47,15 +47,15 @@
               <div class="input-group mb-3">
                 <span class="input-group-text" id="permeable">Permeable:</span>
                 <div class="input-group-text">
-                  <input class="form-check-input mt-0" type="checkbox" name="permeable"
-                    value="{{listener.permeable}}" aria-label="Checkbox for following text input">
+                  <input class="form-check-input mt-0" type="checkbox" name="permeable" value=""
+                      {{ "checked" if listener.permeable else ""}}>
                 </div>
               </div>
               <div class="input-group mb-3">
                 <span class="input-group-text" id="exec">Exec:</span>
                 <div class="input-group-text">
-                  <input class="form-check-input mt-0" type="checkbox"
-                    value="{{listener.permeable}}" aria-label="Checkbox for following text input">
+                  <input class="form-check-input mt-0" type="checkbox" name="exec" value="" 
+                      {{ "checked" if listener.exec else ""}}>
                 </div>
               </div>
 

@@ -70,8 +70,7 @@ nlohmann::json LHandler::json() const {
 Listener::Fn LForwarder::_overwride_fn = nullptr;
 
 LForwarder::LForwarder(std::string id, std::string re_event, std::string arguments, bool permeable, 
-    std::string logic) : LHandler(id, util::ReplaceAll(re_event, txtad::IS_USER_REPLACEMENT, 
-        txtad::IS_USER_INP), _overwride_fn, permeable), _logic(logic) { 
+    std::string logic) : LHandler(id, re_event, _overwride_fn, permeable), _logic(logic) { 
     // Remove leading spaces in case of handlers (events starting with #)
   if (_arguments.find(" #") == 0)
     _arguments = arguments.substr(1);

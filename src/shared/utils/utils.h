@@ -4,6 +4,7 @@
 #ifndef SHARED_UTILS_UTIL_H
 #define SHARED_UTILS_UTIL_H
 
+#include "game/utils/defines.h"
 #include <filesystem>
 #include <nlohmann/json_fwd.hpp>
 #include <optional>
@@ -33,43 +34,6 @@ namespace util
     private: 
       std::string _prev;
   };
-
-  /**
-   * Custom regex class applying basic escaping and stores string
-   * representation.
-   * Escaping: 
-   * - '*' -> '\*'
-   */
-  class Regex {
-    public: 
-      Regex(const std::string& pattern) : _pattern(pattern), _regex(std::regex(pattern)) {
-        std::string new_pattern = "";
-        for (int i=0; i<pattern.length(); i++) {
-          if (pattern[i] == '*' && (i == 0 || (pattern[i-1] != '.' && pattern[i-1] != '\\')))
-            new_pattern += "\\*";
-          else 
-            new_pattern += pattern[i];
-        }
-        _regex = std::regex(new_pattern);
-        _pattern = new_pattern;
-      }
-
-      const std::string& str() const { return _pattern; } 
-      operator const std::regex&() const { return _regex; } 
-    private: 
-      std::string _pattern;
-      std::regex _regex;
-  };
-
-  template< typename tPair >
-  struct second_t {
-      typename tPair::second_type operator()( const tPair& p ) const { return p.second; }
-  };
-
-  template< typename tMap > 
-  second_t< typename tMap::value_type > second( const tMap& m ) { 
-    return second_t< typename tMap::value_type >(); }
-
 
   std::string Join(const std::vector<std::string>& vec, const std::string& separator);
 
@@ -172,6 +136,45 @@ namespace util
     private: 
       const std::string _path;
   };
+
+  /**
+   * Custom regex class applying basic escaping and stores string
+   * representation.
+   * Escaping: 
+   * - '*' -> '\*'
+   */
+  class Regex {
+    public: 
+      Regex(const std::string& pattern) : _pattern(pattern), _regex(std::regex(pattern)) {
+        static const std::string IS_USER_INP = "^(?!#)(.*)";
+        std::string new_pattern = "";
+        for (int i=0; i<pattern.length(); i++) {
+          if (pattern[i] == '*' && (i == 0 || (pattern[i-1] != '.' && pattern[i-1] != '\\')))
+            new_pattern += "\\*";
+          else 
+            new_pattern += pattern[i];
+        }
+        new_pattern = ReplaceAll(new_pattern, txtad::IS_USER_REPLACEMENT, IS_USER_INP);
+        _regex = std::regex(new_pattern);
+        _pattern = pattern;
+      }
+
+      const std::string& str() const { return _pattern; } 
+      operator const std::regex&() const { return _regex; } 
+    private: 
+      std::string _pattern;
+      std::regex _regex;
+  };
+
+  template< typename tPair >
+  struct second_t {
+      typename tPair::second_type operator()( const tPair& p ) const { return p.second; }
+  };
+
+  template< typename tMap > 
+  second_t< typename tMap::value_type > second( const tMap& m ) { 
+    return second_t< typename tMap::value_type >(); }
+
 }
 
 #endif

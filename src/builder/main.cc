@@ -108,6 +108,13 @@ int main() {
           return params["s"].asString().find(params["sub"].asString()) != std::string::npos;
         }, std::vector<jinja2::ArgInfo>({jinja2::ArgInfo{"s"}, jinja2::ArgInfo{"sub"}})
       ));
+    env.AddGlobal("safe", jinja2::UserCallable(
+        [](auto& params)->jinja2::Value {
+          const std::string str = params["s"].asString();
+          return util::ReplaceAll(util::ReplaceAll(str, ">", "&gt;"), "<", "&lt;");
+        }, std::vector<jinja2::ArgInfo>({jinja2::ArgInfo{"s"}})
+      ));
+
     env.AddGlobal("is_child", jinja2::UserCallable(
         [](auto& params)->jinja2::Value {
           const std::string path = params["path"].asString();
@@ -378,6 +385,8 @@ int main() {
       }
       const std::string ctx_id = req.get_param_value("ctx_id");
       const std::string listener_id = req.get_param_value("id");
+      std::cout << "permeable" << req.form.has_field("permeable") << std::endl;
+      std::cout << "exec" << req.form.has_field("exec") << std::endl;
       try {
         const nlohmann::json j = {
           {"id", req.form.get_field("id")},

@@ -1,10 +1,1 @@
-{
-  "initial_events": "#> {texts/start/00}",
-  "initial_contexts": [
-    "general", 
-    "mindsets/dusty", 
-    "dialogs/welcome/01_hello", 
-    "mechanics",
-    "catch"
-  ]
-}
+{"initial_contexts":["general","mindsets/dusty","dialogs/welcome/01_hello","mechanics","catch"],"initial_events":"#> {texts/start/00}"}

@@ -1,4 +1,1 @@
-{
-  "txt": "{minds.uneasyness} Sorry, I meant...",
-  "permanent_events": "#> {dialogs/welcome/01_hello->desc}" 
-}
+{"logic":"","one_time_events":"","permanent_events":"#> {dialogs/welcome/01_hello->desc}","shared":true,"txt":"{minds.uneasyness} Sorry, I meant..."}

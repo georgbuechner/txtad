@@ -1,3 +1,1 @@
-{
-  "description": "Creepy game experimenting with voices and early failures. Enter the dark!"
-}
+{"initial_contexts":["general","mindsets/dusty","dialogs/welcome/01_hello","mechanics","catch"],"initial_events":"#> {texts/start/00}"}

@@ -27,6 +27,7 @@ class Listener {
     }
     virtual std::string ctx_id () const { return ""; }
     virtual std::weak_ptr<Context> ctx() const { return {}; }
+    virtual const nlohmann::json& original_json() const { return nlohmann::json(); }
 
     // setter
     virtual void set_fn(Fn fn) {}
@@ -91,6 +92,7 @@ class LForwarder : public LHandler {
 
     // getter
     std::string logic() const override;
+    const nlohmann::json& original_json() const { return _original_json; }
 
     // methods 
     bool Test(const std::string& event, const ExpressionParser& parser) const override;

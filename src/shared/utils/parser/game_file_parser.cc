@@ -154,7 +154,8 @@ std::shared_ptr<Listener> parser::CreateListenerFromJson(const nlohmann::json& o
   // Replace "this"-field with ctx_id
   for (const auto* field : {"logic", "arguments"}) {
     if (json_listener.contains(field))
-      json_listener[field] = util::ReplaceAll(json_listener[field], txtad::THIS_REPLACEMENT, ctx_id);
+      json_listener[field] = util::ReplaceAll(util::ReplaceAll(json_listener[field], "_.", ctx_id + "."), 
+          "_->", ctx_id + "->");
   }
 
   // Create context-listener
