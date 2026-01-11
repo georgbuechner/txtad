@@ -1,4 +1,5 @@
 #include "http_helpers.h"
+#include "httplib.h"
 #include "shared/utils/utils.h"
 
 std::string _http::Get(const httplib::Request& req, const std::string &field) {
@@ -7,15 +8,47 @@ std::string _http::Get(const httplib::Request& req, const std::string &field) {
   return req.get_param_value(field);
 }
 
-std::string _http::Referer(const httplib::Request& req) {
+std::string _http::UrlPath(const std::string& url) {
+  size_t query_pos = url.find("?"); 
+  if (query_pos != std::string::npos) {
+    return url.substr(0, query_pos);
+  }
+  return url;
+}
+std::string _http::UrlQuery(const std::string& url) {
+  size_t query_pos = url.find("?"); 
+  if (query_pos == std::string::npos) {
+    return "";
+  }
+  return url.substr(query_pos+1);
+}
+
+std::string _http::Referer(const httplib::Request& req, std::string msg) {
   std::string referer = req.get_header_value("Referer");
   util::Logger()->info("Got referer: " + referer);
-  referer.replace(0, referer.find("/", 10), "");
-  util::Logger()->info("Got referer: " + referer);
-  auto pos = referer.find("?");
-  if (pos != std::string::npos) {
-    referer = referer.substr(0, pos);
-    util::Logger()->info("Got referer: " + referer);
+  if (referer.empty()) {
+    return msg.empty() ? "/" : "/?msg=";
   }
-  return referer;
+
+  std::string path = UrlPath(referer);
+  std::string query = UrlQuery(referer); 
+
+  httplib::Params params; 
+  if (!query.empty()) {
+    httplib::detail::parse_query_text(query, params);
+  }
+
+  // Handle msg 
+  params.erase("msg"); 
+
+  if (!msg.empty()) {
+    params.emplace("msg", msg);
+  }
+
+  std::string new_query = httplib::detail::params_to_query_str(params);
+
+  if (new_query.empty()) {
+    return path.empty() ? "/" : new_query;
+  }
+  return path + "?" + new_query;
 }

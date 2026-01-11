@@ -28,9 +28,7 @@ namespace txtad {
   const std::string UID_REPLACEMENT = "#uid";
   const std::string NO_REPLACEMENT = "#no_subsitute";
   
-  const std::string THIS_REPLACEMENT = "<_>";
   const std::string CTX_REPLACEMENT = "<ctx>";
-
   const std::string IS_USER_REPLACEMENT = "<user-inp>";
 
   // GUI cmds 

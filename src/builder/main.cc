@@ -87,7 +87,7 @@ int main() {
         std::rethrow_exception(ep);
       } catch (std::exception &e) {
         util::Logger()->error(e.what());
-        resp.set_redirect(_http::Referer(req) + "?msg=" + e.what(), 303);
+        resp.set_redirect(_http::Referer(req, e.what()), 303);
       } catch (...) { // See the following NOTE
         util::Logger()->error("unkwon Error (500)");
         resp.set_redirect("/?msg=Unkwon Error (500)", 303);
@@ -197,6 +197,7 @@ int main() {
         }
         params.emplace("test_cases", _jinja::Vec(test_cases));
         params.emplace("path", path);
+        params.emplace("back", (path.rfind("/") == std::string::npos) ? "" : path.substr(0, path.rfind("/")));
         params.emplace("modified", games.at(game_id)->modified());
       }
       util::Logger()->info(fmt::format("Builder::create_params. done"));
@@ -244,12 +245,12 @@ int main() {
         creator->RemoveRequest(_http::Get(req, "username"), _http::Get(req, "game_id"));
         if (auto creator_rec = manager.CreatorFromUsername(_http::Get(req, "username"))) {
           (*creator_rec)->AddShared(_http::Get(req, "game_id"));
-          resp.set_redirect(_http::Referer(req) + "?msg=Request accepted.", 303);
+          resp.set_redirect(_http::Referer(req, "Request accepted."), 303);
           return;
         } 
-        resp.set_redirect(_http::Referer(req) + "?msg=Accepting request failed.", 303);
+        resp.set_redirect(_http::Referer(req, "Accepting request failed."), 303);
       } catch (_http::_t_exception e) {
-        resp.set_redirect(_http::Referer(req) + "?msg=" + e.second, 303);
+        resp.set_redirect(_http::Referer(req, e.second), 303);
       }
     });
 
@@ -257,9 +258,9 @@ int main() {
       try {
         auto creator = manager.CreatorFromCookie(req);
         creator->RemoveRequest(_http::Get(req, "username"), _http::Get(req, "game_id"));
-        resp.set_redirect(_http::Referer(req) + "?msg=Request denied.", 303);
+        resp.set_redirect(_http::Referer(req, "Request denied."), 303);
       } catch (_http::_t_exception e) {
-        resp.set_redirect(_http::Referer(req) + "?msg=" + e.second, 303);
+        resp.set_redirect(_http::Referer(req, e.second), 303);
       }
     });
 
@@ -269,18 +270,17 @@ int main() {
         throw _http::_t_exception({400, "No Access to game: \"" + game_id + "\""});
       if (auto res = cli.Get("/api/game/reload/" + game_id)) {
         if (res->status == httplib::StatusCode::OK_200) {
-          resp.set_redirect(_http::Referer(req) + "?msg=Successfully reloaded game!", 303);
+          resp.set_redirect(_http::Referer(req, "Successfully reloaded game!"), 303);
           std::unique_lock ul(mtx_games);
           if (games.contains(game_id)) {
             games.at(game_id)->set_running(true);
           }
         } else {
-          resp.set_redirect(_http::Referer(req) + fmt::format("?msg=Reloading game failed with status: {}", 
-                res->status), 303);
+          resp.set_redirect(_http::Referer(req, "Reloading game failed with status: " + std::to_string(res->status)), 303);
         }
         return;
       }
-      resp.set_redirect(_http::Referer(req) + "?msg=Reloading game failed: Error with game-server.", 303);
+      resp.set_redirect(_http::Referer(req, "Reloading game failed: Error with game-server."), 303);
     });
 
     http_server.Get("/api/game/stop/:game_id", [&](const httplib::Request& req, httplib::Response& resp) {
@@ -289,18 +289,17 @@ int main() {
         throw _http::_t_exception({400, "No Access to game: \"" + game_id + "\""});
       if (auto res = cli.Get("/api/game/stop/" + game_id)) {
         if (res->status == httplib::StatusCode::OK_200) {
-          resp.set_redirect(_http::Referer(req) + "?msg=Successfully stoped game!", 303);
+          resp.set_redirect(_http::Referer(req, "Successfully stoped game!"), 303);
           std::unique_lock ul(mtx_games);
           if (games.contains(game_id)) {
             games.at(game_id)->set_running(false);
           }
         } else {
-          resp.set_redirect(_http::Referer(req) + fmt::format("?msg=Stopping game failed with status: {}", 
-                res->status), 303);
+          resp.set_redirect(_http::Referer(req, "Stopping game failed with status: " + std::to_string(res->status)), 303);
         }
         return;
       }
-      resp.set_redirect(_http::Referer(req) + "?msg=Stopping game failed: Error with game-server.", 303);
+      resp.set_redirect(_http::Referer(req, "Stopping game failed: Error with game-server."), 303);
     });
 
     http_server.Get("/api/tests/run/:game_id", [&](const httplib::Request& req, httplib::Response& resp) {
@@ -340,13 +339,11 @@ int main() {
           std::unique_lock ul(mtx_games);
           games.at(game_id)->set_settings(Settings(settings_json));
           games.at(game_id)->set_modified(true);
-          std::string path = (req.has_param("path")) ? req.get_param_value("path") : "";
-          resp.set_redirect(_http::Referer(req) + "?msg=Successfully saved game settings." 
-              + ((path != "") ? "&path=" + path : ""), 303);
+          resp.set_redirect(_http::Referer(req, "Successfully saved game settings."), 303);
         } catch (std::exception& e) {
           std::string msg = "Failed saving settings: " + std::string(e.what());
           util::Logger()->warn("/:game_id/save/settings: " + msg);
-          resp.set_redirect(_http::Referer(req) + "?msg=" + msg, 303);
+          resp.set_redirect(_http::Referer(req, msg), 303);
         }
     });
 
@@ -385,8 +382,6 @@ int main() {
       }
       const std::string ctx_id = req.get_param_value("ctx_id");
       const std::string listener_id = req.get_param_value("id");
-      std::cout << "permeable" << req.form.has_field("permeable") << std::endl;
-      std::cout << "exec" << req.form.has_field("exec") << std::endl;
       try {
         const nlohmann::json j = {
           {"id", req.form.get_field("id")},
@@ -399,12 +394,12 @@ int main() {
         };
         games.at(game_id)->CreateListenerInPlace(listener_id, j, ctx_id);
         games.at(game_id)->set_modified(true);
-        resp.set_redirect(_http::Referer(req) + "?msg=Successfully updated/added listener", 303);
+        resp.set_redirect(_http::Referer(req, "Successfully updated/added listener"), 303);
       } catch (std::exception& e) {
         std::string msg = fmt::format("Failed creating listener {} for ctx {}: {}", listener_id, 
             ctx_id, e.what());
         util::Logger()->error(msg);
-        resp.set_redirect(_http::Referer(req) + "?msg=" + msg, 303);
+        resp.set_redirect(_http::Referer(req, msg), 303);
       }
     });
 

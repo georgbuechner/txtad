@@ -161,7 +161,7 @@ std::shared_ptr<Listener> parser::CreateListenerFromJson(const nlohmann::json& o
   // Create context-listener
   if (json_listener.contains("ctx")) {
     std::string target_ctx_id = json_listener["ctx"];
-    auto it_ctx = contexts.find((target_ctx_id == txtad::THIS_REPLACEMENT) ? ctx_id : target_ctx_id);
+    auto it_ctx = contexts.find((target_ctx_id == "<_>") ? ctx_id : target_ctx_id);
     if (it_ctx != contexts.end()) {
       return std::make_shared<LContextForwarder>(json_listener, it_ctx->second, og_json_listener);
     } else {
