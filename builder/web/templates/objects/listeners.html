@@ -1,10 +1,13 @@
 {% if listeners %} 
   Listeners:
   <br>
-  {% for l in listeners %} 
-    {% set listener = listeners[l] %}
-    {% include "objects/listener-summary.html" %}
-  <br>
+  <ul class="list-group text-start">
+  {% for it in listeners|dictsort %} 
+    <li class="list-group-item">
+      {% set listener = listeners[it.key] %}
+      {% include "objects/listener-summary.html" %}
+    </li>
   {% endfor %}
-  <br>
+  </ul>
 {% endif %}
+<br>

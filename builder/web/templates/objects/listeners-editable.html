@@ -1,6 +1,6 @@
 <div class="accordion accordion" id="accordionExample">
-  {% for key in listeners %}
-  {% set listener = listeners[key] %}
+  {% for it in listeners|dictsort %}
+    {% set listener = listeners[it.key] %}
     <div class="accordion-item">
       <h2 class="accordion-header d-flex align-items-center" id="headinglistener{{label}}{{loop.index}}">
         <form class="" action="/{{game.name}}/remove/ctx/listener?ctx_id={{ctx.id}}&id={{listener.id}}" method="POST">
