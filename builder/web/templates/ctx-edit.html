@@ -1,7 +1,22 @@
 {% extends "layout/layout.html" %}
 
 {% block content %}
-<h1>{{ctx.name}} <span class="small">[{{ctx.id}}]</span></h1>
+
+<div class="game_header">
+  <h1>{{ctx.name}} <span class="tiny">[{{ctx.id}}]</span></h1>
+  {% if modified %}
+    <div class="modified-indicator">
+      <button 
+        type="button" 
+        class="btn btn-success btn-sm save-btn"
+        data-bs-toggle="modal" 
+        data-bs-target="#shareSaveModal"
+      >
+        <i class="bi bi-save"></i> Save Content
+      </button>
+    </div>
+  {% endif %}
+</div>
 
 <form>
   <div class="input-group mb-3">
@@ -43,5 +58,20 @@
 <h4>Listeners</h4>
 {% set listeners=ctx.listeners%}
 {% include "objects/listeners-editable.html" %}
+
+<div class="modal fade" id="listenerAddModal" tabindex="-1" aria-labelledby="#listenerAddModal" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="listenerAddModalLabel">Add Listener</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        {% set listener_id = NEW_LISTENER %}
+        {% include "objects/listener-edit.html" %}
+      </div>
+    </div>
+  </div>
+</div>
 
 {% endblock %}

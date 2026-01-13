@@ -55,7 +55,6 @@ class CreatorManager {
       if (_cookies.contains(GetSessionIdFromCookie(cookie))) {
         std::string username = _cookies.at(GetSessionIdFromCookie(cookie));
         if (_creators.contains(username) && _creators.at(username)) {
-          util::Logger()->info("Manager::CreatorFromCookie. returning");
           return AccessGuard(_creators.at(username));
         }
       }      

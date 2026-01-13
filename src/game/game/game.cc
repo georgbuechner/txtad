@@ -98,7 +98,7 @@ std::string Game::path() const { return _path; }
 std::string Game::name() const { return _name; } 
 const std::map<std::string, std::shared_ptr<Context>>& Game::contexts() const { return _contexts; }
 const std::map<std::string, std::shared_ptr<Text>>& Game::texts() const { return _texts; }
-const Settings& Game::settings() const { return _settings; }
+const txtad::Settings& Game::settings() const { return _settings; }
 const builder::Settings& Game::builder_settings() const { return _builder_settings; }
 const std::shared_ptr<User>& Game::cur_user() { return _cur_user; }
 bool Game::running() const { return _running; }
@@ -113,7 +113,7 @@ void Game::set_msg_fn(MsgFn fn) {
 }
 void Game::set_running(bool status) { _running = status; }
 void Game::set_modified(bool modified) { _modified = modified; }
-void Game::set_settings(Settings&& settings) { _settings = std::move(settings); }
+void Game::set_settings(txtad::Settings&& settings) { _settings = std::move(settings); }
 
 // methods 
 void Game::HandleEvent(const std::string& user_id, const std::string& event) {
@@ -437,7 +437,7 @@ void Game::StoreGame(std::string path) {
 void Game::CreateListenerInPlace(const std::string& listener_id, const nlohmann::json& json_listener, 
         const std::string& ctx_id) {
   if (!_contexts.contains(ctx_id)) {
-    throw std::invalid_argument("context " + ctx_id + " not found!");
+    throw std::invalid_argument("Game::CreateListenerInPlace: context " + ctx_id + " not found!");
   }
   // Create listener from json
   auto new_listener = parser::CreateListenerFromJson(json_listener, ctx_id, _contexts);
@@ -449,4 +449,11 @@ void Game::CreateListenerInPlace(const std::string& listener_id, const nlohmann:
   if (listener_id != new_listener->id()) {
     _contexts.at(ctx_id)->RemoveListener(listener_id);
   }
+}
+
+void Game::RemoveListener(const std::string& listener_id, const std::string& ctx_id) {
+  if (!_contexts.contains(ctx_id)) {
+    throw std::invalid_argument("Game::CreateListenerInPlace: context " + ctx_id + " not found!");
+  }
+  _contexts.at(ctx_id)->RemoveListener(listener_id);
 }

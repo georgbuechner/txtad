@@ -26,7 +26,7 @@ class Game {
     std::string name() const;
     const std::map<std::string, std::shared_ptr<Context>>& contexts() const;
     const std::map<std::string, std::shared_ptr<Text>>& texts() const;
-    const Settings& settings() const;
+    const txtad::Settings& settings() const;
     const builder::Settings& builder_settings() const;
     const std::shared_ptr<User>& cur_user();
     bool running() const;
@@ -39,7 +39,7 @@ class Game {
     void set_running(bool status);
     void set_modified(bool modified);
 
-    void set_settings(Settings&& settings);
+    void set_settings(txtad::Settings&& settings);
 
     // methods 
     void HandleEvent(const std::string& user_id, const std::string& event);
@@ -52,6 +52,7 @@ class Game {
      */
     void CreateListenerInPlace(const std::string& listener_id, const nlohmann::json& json_listener, 
         const std::string& ctx_id);
+    void RemoveListener(const std::string& listener_id, const std::string& ctx_id);
 
   private: 
     static MsgFn _global_cout;
@@ -67,7 +68,7 @@ class Game {
 
     ExpressionParser _parser;
 
-    Settings _settings;
+    txtad::Settings _settings;
     builder::Settings _builder_settings;
     std::shared_ptr<Context> _mechanics_ctx;
     std::map<std::string, std::shared_ptr<Context>> _contexts;

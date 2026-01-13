@@ -141,12 +141,9 @@ std::vector<std::weak_ptr<Context>> Context::LinkedContexts(std::string type) {
 }
 
 nlohmann::json Context::json() const {
-  std::cout << "Storing ctx: " << _id << std::endl;
   nlohmann::json j = {{"id", _id}, {"name", _name}, {"description", _description.json()}, 
     {"re_entrycondition", _entry_condition.str()}, {"attributes", _attributes}, {"priority", _priority}, 
     {"permeable", _permeable}, {"shared", _shared}, {"listeners", nlohmann::json::array()} };
-
-  std::cout << "Storing ctx's listeners" << std::endl;
   for (const auto& it : _event_manager->listeners()) {
     j["listeners"].push_back(it.second->json());
   }

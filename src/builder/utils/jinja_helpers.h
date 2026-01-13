@@ -2,7 +2,10 @@
 #define SRC_BUILDER_UTILS_JINJA_HELPERS_H 
 
 #include "builder/utils/defines.h"
+#include "jinja2cpp/filesystem_handler.h"
 #include "jinja2cpp/reflected_value.h"
+#include "jinja2cpp/template.h"
+#include "jinja2cpp/template_env.h"
 #include "jinja2cpp/value.h"
 #include "game/game/game.h"
 #include "jinja2cpp/reflected_value.h"
@@ -23,6 +26,18 @@ struct PtrView {
 };
 
 namespace _jinja {
+
+  class Env {
+    public: 
+      Env(std::string template_path);
+
+      // methods
+      std::string LoadTemplate(std::string page, const jinja2::ValuesMap& params);
+
+    private: 
+      jinja2::TemplateEnv _env;
+      jinja2::RealFileSystem _fs;
+  };
 
   template<typename T1>
   jinja2::ValuesList Vec(const std::vector<T1>& vec) {
@@ -45,18 +60,7 @@ namespace _jinja {
   }
 
   template<>
-  jinja2::ValuesList SetToVec(const std::set<std::pair<std::string, std::string>>& set) {
-    jinja2::ValuesList vl;
-    vl.reserve(set.size());
-    for (const auto& it : set) {
-      jinja2::ValuesMap vm;
-      vm["first"] = it.first;
-      vm["second"] = it.second;
-      vl.emplace_back(vm);
-    }
-    return vl;
-  }
-
+  jinja2::ValuesList SetToVec(const std::set<std::pair<std::string, std::string>>& set);
 
   template<typename T1, typename T2>
   jinja2::ValuesList MapKeys(const std::map<T1, T2>& map) {
@@ -138,11 +142,11 @@ namespace jinja2 {
     }
   };
 
-  template<> struct TypeReflection<Settings> : TypeReflected<Settings> {
+  template<> struct TypeReflection<txtad::Settings> : TypeReflected<txtad::Settings> {
     static auto& GetAccessors() {
       static std::unordered_map<std::string, FieldAccessor> acc = {
-        {"initial_events", [](const Settings& settings) { return settings.initial_events(); }},
-        {"initial_contexts", [](const Settings& settings) { return _jinja::Vec(settings.initial_ctx_ids()); }},
+        {"initial_events", [](const txtad::Settings& settings) { return settings.initial_events(); }},
+        {"initial_contexts", [](const txtad::Settings& settings) { return _jinja::Vec(settings.initial_ctx_ids()); }},
       };
       return acc;
     }

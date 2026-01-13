@@ -23,8 +23,8 @@
     {% include "layout/navbar.html" %}
     <div class="container-md main bg-light-80">
       {% if path %}
-        <div class="back-btn-float btn btn-secondary"> 
-          <a id="back-btn" href="/{{game.name}}?path={{back}}&type={{all_paths[back]}}">back</a>
+        <div class="back-btn-float btn-lg btn-success save-btn"> 
+          <a id="back-btn" style="color: white;" href="/{{game.name}}?path={{back}}&type={{all_paths[back]}}">back</a>
         </div>
       {% endif %}
 

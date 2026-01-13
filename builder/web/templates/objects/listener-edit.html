@@ -1,0 +1,51 @@
+<form 
+  action="/{{game.name}}/save/ctx/listener?ctx_id={{ctx.id}}&id={{listener_id}}"
+  method="POST" 
+  enctype="multipart/form-data"
+> 
+  <div class="input-group mb-3">
+    <span class="input-group-text" id="id">listener ID (used for execution order):</span>
+    <input type="text" class="form-control" placeholder="text" aria-describedby="id" 
+      name="id" value="{{listener.id}}" required>
+  </div>
+  <div class="input-group mb-3">
+    <span class="input-group-text" id="event">In-Event:</span>
+    <input type="text" class="form-control" placeholder="..." name="event"
+      aria-describedby="event" value="{{listener.event}}">
+  </div>
+  <div class="input-group mb-3">
+    <span class="input-group-text" id="arguments">Out-Event:</span>
+    <input type="text" class="form-control" placeholder="..." name="arguments" 
+      aria-describedby="arguments" value="{{listener.arguments}}">
+  </div>
+  <div class="input-group mb-3">
+    <span class="input-group-text" id="logic">Logic:</span>
+    <input type="text" class="form-control" placeholder="..." name="logic" 
+      aria-describedby="logic" value="{{listener.logic}}">
+  </div>
+  <div class="input-group mb-3">
+    <span class="input-group-text" id="context">Context:</span>
+    <input type="text" class="form-control" placeholder="..." name="context" 
+      aria-describedby="context" value="{{listener.ctx}}">
+  </div>
+  <div class="input-group mb-3">
+    <span class="input-group-text" id="permeable">Permeable:</span>
+    <div class="input-group-text">
+      <input class="form-check-input mt-0" type="checkbox" name="permeable" value=""
+          {{ "checked" if listener.permeable else ""}}>
+    </div>
+  </div>
+  <div class="input-group mb-3">
+    <span class="input-group-text" id="exec">Exec:</span>
+    <div class="input-group-text">
+      <input class="form-check-input mt-0" type="checkbox" name="exec" value="" 
+          {{ "checked" if listener.exec else ""}}>
+    </div>
+  </div>
+
+  <button 
+    type="submit" 
+    class="btn btn-primary"
+    onclick="SaveListener('{{ctx.id}}', '{{listener.id}}');"
+  >save</button>
+</form>

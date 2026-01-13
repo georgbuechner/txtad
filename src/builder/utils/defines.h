@@ -18,6 +18,8 @@ namespace builder {
   const std::string COOKIE_NAME = "SESSID";
   const int COOKIE_NAME_LEN = 6;
 
+  const std::string NEW_LISTENER = "[new_listener]";
+
   struct Settings {
     const std::string _description;
     Settings() : _description("") {}
