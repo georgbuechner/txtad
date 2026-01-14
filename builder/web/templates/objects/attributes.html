@@ -1,13 +1,11 @@
 {% if atts %} 
-  Attributes:<br>
+  <h5>Attributes:</h5>
   <ul class="list-group text-start">
   {% for attribute in atts|dictsort %} 
     <li class="list-group-item">
-      <span class="brand">{{attribute.key}}</span>: {{attribute.value}}<br>
+      <span class="">{{attribute.key}}</span>: {{attribute.value}}<br>
     </li>
   {% endfor %}
   </ul>
+  <br>
 {% endif %}
-<br>
-
-

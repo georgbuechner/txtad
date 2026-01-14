@@ -1,14 +1,18 @@
 
 #include "builder/utils/jinja_helpers.h"
+#include "builder/utils/defines.h"
 #include <stdexcept>
 
 _jinja::Env::Env(std::string template_path) : _fs{template_path} {
   _env.AddFilesystemHandler("", _fs);
 
   _env.AddGlobal("NEW_LISTENER", builder::NEW_LISTENER);
+  _env.AddGlobal("NEW_ATTRIBUTE", builder::NEW_ATTRIBUTE);
 
   _env.AddGlobal("starts_with", jinja2::UserCallable(
       [](auto& params)->jinja2::Value {
+        std::cout << params["s1"].asString() << " starts_with " << params["s2"].asString() 
+          << params["s1"].asString().find(params["s2"].asString()) << std::endl;
         return params["s1"].asString().find(params["s2"].asString()) == 0;
       }, std::vector<jinja2::ArgInfo>({jinja2::ArgInfo{"s1"}, jinja2::ArgInfo{"s2"}})
     ));

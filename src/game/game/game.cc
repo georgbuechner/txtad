@@ -22,7 +22,7 @@ namespace fs = std::filesystem;
 Game::MsgFn Game::_global_cout= nullptr;
 
 Game::Game(std::string path, std::string name) : _cout(_global_cout), _path(path), _name(name), 
-    _cur_user(nullptr), _running(false), _modified(false),
+    _cur_user(nullptr), _running(false), _modified(std::vector<std::string>()),
     _parser(std::bind(&Game::t_substitue_fn, this, std::placeholders::_1)),
     _settings(*util::LoadJsonFromDisc(_path + "/" + txtad::GAME_SETTINGS)),
     _builder_settings(util::LoadJsonFromDisc(_path + "/" + txtad::BUILDER_EXTENSION).value_or(nlohmann::json::object())) {
@@ -102,8 +102,8 @@ const txtad::Settings& Game::settings() const { return _settings; }
 const builder::Settings& Game::builder_settings() const { return _builder_settings; }
 const std::shared_ptr<User>& Game::cur_user() { return _cur_user; }
 bool Game::running() const { return _running; }
-bool Game::modified() const { return _modified; }
 const ExpressionParser& Game::parser() const { return _parser; }
+const std::vector<std::string>& Game::modified() const { return _modified; }
 
 // setter
 void Game::set_global_msg_fn(Game::MsgFn fn) { _global_cout = fn; }
@@ -112,7 +112,6 @@ void Game::set_msg_fn(MsgFn fn) {
   _cout = fn; 
 }
 void Game::set_running(bool status) { _running = status; }
-void Game::set_modified(bool modified) { _modified = modified; }
 void Game::set_settings(txtad::Settings&& settings) { _settings = std::move(settings); }
 
 // methods 
@@ -146,6 +145,14 @@ void Game::HandleEvent(const std::string& user_id, const std::string& event) {
         user_id);
     }
   }
+}
+
+void Game::ResetModified() {
+  _modified.clear();
+}
+
+void Game::AddModified(std::string mod) {
+  _modified.push_back(mod);
 }
 
 std::shared_ptr<User> Game::CreateNewUser(std::string user_id) {
@@ -435,7 +442,7 @@ void Game::StoreGame(std::string path) {
 }
 
 void Game::CreateListenerInPlace(const std::string& listener_id, const nlohmann::json& json_listener, 
-        const std::string& ctx_id) {
+        const std::string& ctx_id, bool added) {
   if (!_contexts.contains(ctx_id)) {
     throw std::invalid_argument("Game::CreateListenerInPlace: context " + ctx_id + " not found!");
   }
@@ -448,6 +455,12 @@ void Game::CreateListenerInPlace(const std::string& listener_id, const nlohmann:
   _contexts.at(ctx_id)->AddListener(new_listener);
   if (listener_id != new_listener->id()) {
     _contexts.at(ctx_id)->RemoveListener(listener_id);
+    AddModified(fmt::format("Removed listener {} for ctx: {}", listener_id, ctx_id));
+    AddModified(fmt::format("Added listener {} for ctx: {}", new_listener->id(), ctx_id));
+  } else if (added) {
+    AddModified(fmt::format("Added listener {} for ctx: {}", new_listener->id(), ctx_id));
+  } else {
+    AddModified(fmt::format("Updated listener {} for ctx: {}", listener_id, ctx_id));
   }
 }
 

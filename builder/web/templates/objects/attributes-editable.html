@@ -5,14 +5,17 @@
     {% set atts = default_attributes() %} 
   {% endif %} 
 
-  {% for attribute in atts %}
+  {% for attribute in atts|dictsort %}
     <div class="accordion-item">
-      <h2 class="accordion-header" id="headingattribute{{loop.index}}">
-        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" 
+      <h2 class="accordion-header d-flex align-items-center" id="headingattribute{{loop.index}}">
+        <form class="" action="/{{game.name}}/remove/ctx/attribute?ctx_id={{ctx.id}}&id={{attribute.key}}" method="POST">
+          <button type="submit" class="btn btn-light btn-sm text-danger">X</button>
+        </form>
+        <button class="accordion-button collapsed flex-grow-1" type="button" data-bs-toggle="collapse" 
             data-bs-target="#collapseattribute{{loop.index}}" aria-expanded="false" 
             aria-controls="collapseattribute{{loop.index}}">
           {% if attributes %}
-            {{attribute}}: {{atts[attribute]}}
+            {{attribute.key}}: {{attribute.value}}
           {% else %}
             ...
           {% endif %}
@@ -21,20 +24,20 @@
       <div id="collapseattribute{{loop.index}}" class="accordion-collapse collapse" 
           aria-labelledby="headingattribute{{loop.index}}" data-bs-parent="#accordionExample">
         <div class="accordion-body">
-            <form> 
-              <div class="input-group mb-3">
-                <input type="text" class="form-control" placeholder="key" name="key"
-                  aria-label="" aria-describedby="txt" value="{{attribute}}">
-                <input type="text" class="form-control" placeholder="value" name="value"
-                  aria-label="" aria-describedby="txt" value="{{atts[attribute]}}">
-                <button type="submit" class="btn btn-primary">save</button>
-              </div>
-              <button type="button" class="btn btn-secondary">remove</button>
-              <button type="button" class="btn btn-secondary">insert before</button>
-              <button type="button" class="btn btn-secondary">insert after</button>
-            </form>
+          <br>
+          {% set attribute_id = attribute.key %}
+          {% include "objects/attribute-edit.html" %}
         </div>
       </div>
     </div>
   {% endfor %}
 </div>
+
+<br>
+
+<button 
+  type="button" 
+  class="btn btn-primary"
+  data-bs-toggle="modal"
+  data-bs-target="#attributeAddModal"
+>New Attribute</button>

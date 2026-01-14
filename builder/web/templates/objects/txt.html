@@ -4,9 +4,8 @@
 {% endif %}
 
 {% for txt in text %}
-  <i>{{txt.txt}}</i> 
+  <p class="text-primary"><i>{{txt.txt}}</i></p>
   {% if txt.one_time_events or txt.peranent_events %}
     (events: {{txt.one_time_events}} {{txt.peranent_events}})
   {% endif %}
 {% endfor %}
-<br>

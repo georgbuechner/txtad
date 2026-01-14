@@ -23,7 +23,7 @@
     {% include "layout/navbar.html" %}
     <div class="container-md main bg-light-80">
       {% if path %}
-        <div class="back-btn-float btn-lg btn-success save-btn"> 
+        <div class="back-btn-float btn-lg btn-plum save-btn"> 
           <a id="back-btn" style="color: white;" href="/{{game.name}}?path={{back}}&type={{all_paths[back]}}">back</a>
         </div>
       {% endif %}
@@ -85,6 +85,20 @@
         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
       <div class="modal-body">
+        Modifications:
+        <ul class="list-group text-start">
+          {% for mod in modified %}
+            {% set m = ""+mod %}
+            {% if m|starts_with("Added") %}
+              <li class="list-group-item list-group-item-success">
+            {% elif m|starts_with("Removed") %}
+              <li class="list-group-item list-group-item-danger">
+            {% else %}
+              <li class="list-group-item list-group-item-info">
+            {% endif %}
+            {{mod}}</li>
+          {% endfor %}
+        </ul>
         <p id="save_test_results"></p>
         <p id="save_results"></p>
         <button type="button" class="btn btn-primary" onclick="SaveContent('{{game.name}}');">

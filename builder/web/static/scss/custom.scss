@@ -1,60 +1,75 @@
 @use "sass:color";
 
-// 1) Your palette tokens
-$brand-primary:   #906e55;
-$brand-secondary: #80868c;
-$brand-danger:    #4b3022;
-$brand-light:     #96999a;
-$brand-dark:      #160c08;
+// Core brand tones
+$fresco-umber:    #291A13;
+$fresco-charcoal: #393C42;
+$fresco-stone:    #9C8774;
+$fresco-taupe:    #8E705A;
+$fresco-slate:    #576B73;
+$fresco-slate-2:  #79858F;
+$fresco-cloud:    #E6E1DB; // #DED8D0; // #F1F1F1;
+$fresco-ochre:    #D58142;
+$fresco-terracotta:#A44616;
+$fresco-sage:     #5D934B;
 
-$cadet-gray: #879098ff;
-$licorice: #150904ff;
-$gray: #7F8183ff;
-$bistre: #462B1Aff;
-$battleship-gray: #9D938Aff;
-$blood-red: #693a1e;
+// Optional extra accent from the painting’s shadows
+$fresco-plum:     #473D42;
+
+$primary:   $fresco-slate;
+$secondary: $fresco-stone;
+$success:   $fresco-sage;
+$info:      $fresco-slate-2;
+$warning:   $fresco-ochre;
+$danger:    $fresco-terracotta;
+$light:     $fresco-cloud;
+$dark:      $fresco-umber;
 
 // 2) Load & configure Bootstrap in one go
 @use "bootstrap/scss/bootstrap" with (
-  // Theme tokens Bootstrap reads
-  $primary:   $brand-primary,
-  $secondary: $brand-secondary,
-  $danger:    $brand-danger,
-  $light:     $brand-light,
-  $dark:      $brand-dark,
 
-  // Theme color map (drives .bg-*, .text-*, .btn-*)
+  $primary:   $fresco-slate,
+  $secondary: $fresco-stone,
+  $success:   $fresco-sage,
+  $info:      $fresco-slate-2,
+  $warning:   $fresco-ochre,
+  $danger:    $fresco-terracotta,
+  $light:     $fresco-cloud,
+  $dark:      $fresco-umber,
+
   $theme-colors: (
-    "primary":   $brand-primary,
-    "secondary": $brand-secondary,
-    "danger":    $brand-danger,
-    "light":     $brand-light,
-    "dark":      $brand-dark
+    "primary":   $primary,
+    "secondary": $secondary,
+    "success":   $success,
+    "info":      $info,
+    "warning":   $warning,
+    "danger":    $danger,
+    "light":     $light,
+    "dark":      $dark,
+
+    // Custom utility (optional)
+    "plum":      $fresco-plum
   ),
 
   // Component backgrounds (default is white; set to your $brand-light)
-  $body-bg:       $brand-light,
-  $card-bg:       $brand-light,
-  $dropdown-bg:   $brand-light,
-  $accordion-bg:  $brand-light,
-  $list-group-bg: $brand-light,
+  $body-bg:       $light,
+  $input-bg:       $light,
+  $card-bg:       $light,
+  $dropdown-bg:   $light,
+  $accordion-bg:  $light,
+  $list-group-bg: $light,
 );
 
 // 3) Your own extras (can come after)
 .bg-light-80 {
-  background-color: color.scale($brand-light, $alpha: -40%) !important;
+  background-color: color.scale($light, $alpha: -50%) !important;
 }
 
 .DIR {
-  color: $brand-primary;
+  color: $primary;
 }
 .CTX {
-  color: $gray;
+  color: $secondary;
 }
 .TXT {
-  color: $gray;
-}
-
-.brand {
-  color: $brand-primary;
+  color: $secondary;
 }

@@ -30,14 +30,13 @@ class Game {
     const builder::Settings& builder_settings() const;
     const std::shared_ptr<User>& cur_user();
     bool running() const;
-    bool modified() const;
     const ExpressionParser& parser() const;
+    const std::vector<std::string>& modified() const;
     
     // setter 
     static void set_global_msg_fn(MsgFn fn);
     void set_msg_fn(MsgFn fn);
     void set_running(bool status);
-    void set_modified(bool modified);
 
     void set_settings(txtad::Settings&& settings);
 
@@ -47,11 +46,14 @@ class Game {
     std::string CheckLogic(const std::string& logic);
     void StoreGame(std::string path = "");
 
+    void ResetModified(); 
+    void AddModified(std::string mod);
+
     /**
      * Creates/Updates/Replaces listener while game is running
      */
     void CreateListenerInPlace(const std::string& listener_id, const nlohmann::json& json_listener, 
-        const std::string& ctx_id);
+        const std::string& ctx_id, bool added);
     void RemoveListener(const std::string& listener_id, const std::string& ctx_id);
 
   private: 
@@ -64,7 +66,7 @@ class Game {
     std::map<std::string, std::shared_ptr<User>> _users;
     std::shared_ptr<User> _cur_user;
     bool _running;
-    bool _modified;
+    std::vector<std::string> _modified;
 
     ExpressionParser _parser;
 

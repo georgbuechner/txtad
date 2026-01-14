@@ -19,6 +19,7 @@ namespace builder {
   const int COOKIE_NAME_LEN = 6;
 
   const std::string NEW_LISTENER = "[new_listener]";
+  const std::string NEW_ATTRIBUTE = "[new_attribute]";
 
   struct Settings {
     const std::string _description;

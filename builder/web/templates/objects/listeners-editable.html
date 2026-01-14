@@ -4,7 +4,7 @@
     <div class="accordion-item">
       <h2 class="accordion-header d-flex align-items-center" id="headinglistener{{label}}{{loop.index}}">
         <form class="" action="/{{game.name}}/remove/ctx/listener?ctx_id={{ctx.id}}&id={{listener.id}}" method="POST">
-          <button type="submit" class="btn btn-success btn-sm">X</button>
+          <button type="submit" class="btn btn-light btn-sm text-danger">X</button>
         </form>
         <button class="accordion-button collapsed flex-grow-1" type="button" data-bs-toggle="collapse" 
             data-bs-target="#collapselistener{{label}}{{loop.index}}" aria-expanded="false" 
@@ -32,5 +32,3 @@
   data-bs-toggle="modal"
   data-bs-target="#listenerAddModal"
 >New Listener</button>
-
-

@@ -55,9 +55,25 @@
 {% include "objects/attributes-editable.html" %}
 
 <br>
+<br>
 <h4>Listeners</h4>
 {% set listeners=ctx.listeners%}
 {% include "objects/listeners-editable.html" %}
+
+<div class="modal fade" id="attributeAddModal" tabindex="-1" aria-labelledby="#attributeAddModal" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="attributeAddModalLabel">Add Attribute</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        {% set attribute_id = NEW_ATTRIBUTE %}
+        {% include "objects/attribute-edit.html" %}
+      </div>
+    </div>
+  </div>
+</div>
 
 <div class="modal fade" id="listenerAddModal" tabindex="-1" aria-labelledby="#listenerAddModal" aria-hidden="true">
   <div class="modal-dialog">

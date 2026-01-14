@@ -51,10 +51,12 @@ class Builder {
     // SAVE ELEMENTS 
     void SaveSettings(const httplib::Request& req, httplib::Response& resp);
     void SaveTests(const httplib::Request& req, httplib::Response& resp);
+    void SaveAttribute(const httplib::Request& req, httplib::Response& resp);
     void SaveListener(const httplib::Request& req, httplib::Response& resp);
     void SaveGame(const httplib::Request& req, httplib::Response& resp);
     
     // REMOVES ELEMENTS
+    void RemoveAttribute(const httplib::Request& req, httplib::Response& resp);
     void RemoveListener(const httplib::Request& req, httplib::Response& resp);
 };
 

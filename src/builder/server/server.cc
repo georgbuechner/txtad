@@ -88,6 +88,9 @@ void Builder::Start() {
   _srv.Post("/:game_id/save/tests", [&](const httplib::Request& req, httplib::Response& resp) {
       SaveTests(req, resp); });
 
+  _srv.Post("/:game_id/save/ctx/attribute", [&](const httplib::Request& req, httplib::Response& resp) {
+      SaveAttribute(req, resp); });
+
   _srv.Post("/:game_id/save/ctx/listener", [&](const httplib::Request& req, httplib::Response& resp) {
       SaveListener(req, resp); });
 
@@ -95,6 +98,9 @@ void Builder::Start() {
       SaveGame(req, resp); });
 
   // REMOVES ELEMENTS
+  _srv.Post("/:game_id/remove/ctx/attribute", [&](const httplib::Request& req, httplib::Response& resp) {
+      RemoveAttribute(req, resp); });
+
   _srv.Post("/:game_id/remove/ctx/listener", [&](const httplib::Request& req, httplib::Response& resp) {
       RemoveListener(req, resp); });
 
@@ -182,7 +188,7 @@ jinja2::ValuesMap Builder::CreateParams(const httplib::Request& req, std::string
     params.emplace("test_cases", _jinja::Vec(test_cases));
     params.emplace("path", path);
     params.emplace("back", (path.rfind("/") == std::string::npos) ? "" : path.substr(0, path.rfind("/")));
-    params.emplace("modified", _games.at(game_id)->modified());
+    params.emplace("modified", _jinja::Vec(_games.at(game_id)->modified()));
   }
   util::Logger()->debug(fmt::format("Builder::create_params. done"));
   return params;
@@ -344,7 +350,7 @@ void Builder::SaveSettings(const httplib::Request& req, httplib::Response& resp)
     };
     std::unique_lock ul(_mtx_games);
     _games.at(game_id)->set_settings(txtad::Settings(settings_json));
-    _games.at(game_id)->set_modified(true);
+    _games.at(game_id)->AddModified("Updated settings");
     resp.set_redirect(_http::Referer(req, "Successfully saved game settings."), 303);
   } catch (std::exception& e) {
     std::string msg = "Failed saving settings: " + std::string(e.what());
@@ -372,6 +378,43 @@ void Builder::SaveTests(const httplib::Request& req, httplib::Response& resp) {
   }
 }
 
+void Builder::SaveAttribute(const httplib::Request& req, httplib::Response& resp) {
+  const std::string game_id = req.path_params.at("game_id");
+  std::unique_lock ul(_mtx_games);
+  if (!req.has_param("ctx_id")) {
+    resp.set_redirect("/?msg=missing query-parameter: ctx_id", 303);
+    return;
+  }
+  if (!req.has_param("id")) {
+    resp.set_redirect("/?msg=missing query-parameter or field value: (attribute) id", 303);
+    return;
+  }
+  const std::string ctx_id = req.get_param_value("ctx_id");
+  const std::string attribute_id = req.get_param_value("id");
+  try {
+    const std::string key = req.form.get_field("key");
+    const std::string value = req.form.get_field("value");
+    if (attribute_id == builder::NEW_ATTRIBUTE) {
+      _games.at(game_id)->contexts().at(ctx_id)->AddAttribute(key);
+      _games.at(game_id)->AddModified(fmt::format("Added {}.{} = {}", ctx_id, key, value));
+    } else if (attribute_id != key) {
+      _games.at(game_id)->contexts().at(ctx_id)->RemoveAttribute(attribute_id);
+      _games.at(game_id)->AddModified(fmt::format("Removed {}.{}", ctx_id, attribute_id));
+      _games.at(game_id)->contexts().at(ctx_id)->AddAttribute(key);
+      _games.at(game_id)->AddModified(fmt::format("Added {}.{} = {}", ctx_id, key, value));
+    } else {
+      _games.at(game_id)->AddModified(fmt::format("Updated {}.{} = {}", ctx_id, key, value));
+    }
+    _games.at(game_id)->contexts().at(ctx_id)->SetAttribute(key, value);
+    resp.set_redirect(_http::Referer(req, "Successfully updated/added attribute"), 303);
+  } catch (std::exception& e) {
+    std::string msg = fmt::format("Failed creating attribute {} for ctx {}: {}", attribute_id, 
+        ctx_id, e.what());
+    util::Logger()->error(msg);
+    resp.set_redirect(_http::Referer(req, msg), 303);
+  }
+}
+
 void Builder::SaveListener(const httplib::Request& req, httplib::Response& resp) {
   const std::string game_id = req.path_params.at("game_id");
   std::unique_lock ul(_mtx_games);
@@ -396,8 +439,7 @@ void Builder::SaveListener(const httplib::Request& req, httplib::Response& resp)
       {"permeable", req.form.has_field("permeable")},
       {"exec", req.form.has_field("exec")}
     };
-    _games.at(game_id)->CreateListenerInPlace(listener_id, j, ctx_id);
-    _games.at(game_id)->set_modified(true);
+    _games.at(game_id)->CreateListenerInPlace(listener_id, j, ctx_id, req.get_param_value("id") == builder::NEW_LISTENER);
     resp.set_redirect(_http::Referer(req, "Successfully updated/added listener"), 303);
   } catch (std::exception& e) {
     std::string msg = fmt::format("Failed creating listener {} for ctx {}: {}", listener_id, 
@@ -423,6 +465,32 @@ void Builder::SaveGame(const httplib::Request& req, httplib::Response& resp) {
 }
 
 // REMOVES ELEMENTS
+void Builder::RemoveAttribute(const httplib::Request& req, httplib::Response& resp) {
+  const std::string game_id = req.path_params.at("game_id");
+  std::unique_lock ul(_mtx_games);
+  if (!req.has_param("ctx_id")) {
+    resp.set_redirect("/?msg=missing query-parameter: ctx_id", 303);
+    return;
+  }
+  if (!req.has_param("id")) {
+    resp.set_redirect("/?msg=missing query-parameter or field value: (listener) id", 303);
+    return;
+  }
+
+  try {
+    const std::string ctx_id = req.get_param_value("ctx_id");
+    const std::string key = req.get_param_value("id");
+    _games.at(game_id)->contexts().at(ctx_id)->RemoveAttribute(key);
+    _games.at(game_id)->AddModified(fmt::format("Removed {}.{}", ctx_id, key));
+    resp.set_redirect(_http::Referer(req, "Successfully removed listener"), 303);
+  } catch (std::exception& e) {
+    util::Logger()->error("Failed removing listener: " + std::string(e.what()));
+    resp.set_content("Failed removing listener: " + std::string(e.what()), "text/txt");
+    resp.status = 400;
+    return;
+  }
+}
+
 void Builder::RemoveListener(const httplib::Request& req, httplib::Response& resp) {
   const std::string game_id = req.path_params.at("game_id");
   std::unique_lock ul(_mtx_games);
@@ -436,8 +504,10 @@ void Builder::RemoveListener(const httplib::Request& req, httplib::Response& res
   }
 
   try {
-    _games.at(game_id)->RemoveListener(req.get_param_value("id"), req.get_param_value("ctx_id"));
-    _games.at(game_id)->set_modified(true);
+    const std::string ctx_id = req.get_param_value("ctx_id");
+    const std::string id = req.get_param_value("id");
+    _games.at(game_id)->RemoveListener(id, ctx_id);
+    _games.at(game_id)->AddModified(fmt::format("Removed listener {} for ctx: {}", id, ctx_id));
     resp.set_redirect(_http::Referer(req, "Successfully removed listener"), 303);
   } catch (std::exception& e) {
     util::Logger()->error("Failed removing listener: " + std::string(e.what()));
