@@ -175,6 +175,11 @@ namespace util
   second_t< typename tMap::value_type > second( const tMap& m ) { 
     return second_t< typename tMap::value_type >(); }
 
+  template<typename T1, typename T2> 
+  std::shared_ptr<T2> get_ptr(const std::map<T1, std::shared_ptr<T2>>& m, const T1& key) {
+    auto it = m.find(key);
+    return (it != m.end()) ? it->second : nullptr;
+  }
 }
 
 #endif

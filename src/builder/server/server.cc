@@ -5,6 +5,8 @@
 #include "shared/utils/parser/game_file_parser.h"
 #include "shared/utils/utils.h"
 #include <exception>
+#include <stdexcept>
+#include <string>
 
 using namespace std::chrono_literals;
 
@@ -94,6 +96,16 @@ void Builder::Start() {
   _srv.Post("/:game_id/save/ctx/listener", [&](const httplib::Request& req, httplib::Response& resp) {
       SaveListener(req, resp); });
 
+  _srv.Post("/:game_id/update/ctx/description", [&](const httplib::Request& req, httplib::Response& resp) {
+      SaveDescriptionElement(req, resp, false); });
+  _srv.Post("/:game_id/add/ctx/description", [&](const httplib::Request& req, httplib::Response& resp) {
+      SaveDescriptionElement(req, resp, true); });
+
+  _srv.Post("/:game_id/update/text", [&](const httplib::Request& req, httplib::Response& resp) {
+      SaveTextElement(req, resp, false); });
+  _srv.Post("/:game_id/add/text", [&](const httplib::Request& req, httplib::Response& resp) {
+      SaveTextElement(req, resp, true); });
+
   _srv.Post("/:game_id/save", [&](const httplib::Request& req, httplib::Response& resp) {
       SaveGame(req, resp); });
 
@@ -103,6 +115,12 @@ void Builder::Start() {
 
   _srv.Post("/:game_id/remove/ctx/listener", [&](const httplib::Request& req, httplib::Response& resp) {
       RemoveListener(req, resp); });
+
+  _srv.Post("/:game_id/remove/ctx/description", [&](const httplib::Request& req, httplib::Response& resp) {
+      RemoveDescriptionElement(req, resp); });
+
+  _srv.Post("/:game_id/remove/text", [&](const httplib::Request& req, httplib::Response& resp) {
+      RemoveTextElement(req, resp); });
 
   util::Logger()->info("MAIN: Successfully started http-server on port 4081");
   _srv.listen("0.0.0.0", 4081);
@@ -382,12 +400,9 @@ void Builder::SaveAttribute(const httplib::Request& req, httplib::Response& resp
   const std::string game_id = req.path_params.at("game_id");
   std::unique_lock ul(_mtx_games);
   if (!req.has_param("ctx_id")) {
-    resp.set_redirect("/?msg=missing query-parameter: ctx_id", 303);
-    return;
-  }
-  if (!req.has_param("id")) {
-    resp.set_redirect("/?msg=missing query-parameter or field value: (attribute) id", 303);
-    return;
+    throw std::invalid_argument("Missing query-parameter: (attribute) ctx_id");
+  } if (!req.has_param("id")) {
+    throw std::invalid_argument("Missing query-parameter: (attribute) id");
   }
   const std::string ctx_id = req.get_param_value("ctx_id");
   const std::string attribute_id = req.get_param_value("id");
@@ -419,12 +434,9 @@ void Builder::SaveListener(const httplib::Request& req, httplib::Response& resp)
   const std::string game_id = req.path_params.at("game_id");
   std::unique_lock ul(_mtx_games);
   if (!req.has_param("ctx_id")) {
-    resp.set_redirect("/?msg=missing query-parameter: ctx_id", 303);
-    return;
-  }
-  if (!req.has_param("id")) {
-    resp.set_redirect("/?msg=missing query-parameter or field value: (listener) id", 303);
-    return;
+    throw std::invalid_argument("Missing query-parameter: (listener) ctx_id");
+  } if (!req.has_param("id")) {
+    throw std::invalid_argument("Missing query-parameter: (listener) id");
   }
   const std::string ctx_id = req.get_param_value("ctx_id");
   const std::string listener_id = (req.get_param_value("id") == builder::NEW_LISTENER) 
@@ -444,6 +456,48 @@ void Builder::SaveListener(const httplib::Request& req, httplib::Response& resp)
   } catch (std::exception& e) {
     std::string msg = fmt::format("Failed creating listener {} for ctx {}: {}", listener_id, 
         ctx_id, e.what());
+    util::Logger()->error(msg);
+    resp.set_redirect(_http::Referer(req, msg), 303);
+  }
+}
+
+void Builder::SaveDescriptionElement(const httplib::Request& req, httplib::Response& resp, bool add_new) {
+  const std::string game_id = req.path_params.at("game_id");
+  std::unique_lock ul(_mtx_games);
+  if (!req.has_param("ctx_id")) {
+    throw std::invalid_argument("Missing query-parameter: (ctx-description) ctx_id");
+  } 
+  const std::string ctx_id = req.get_param_value("ctx_id");
+  try {
+    if (auto& ctx = _games.at(game_id)->contexts().at(ctx_id)) {
+      ctx->set_description(CreateTextElement(req, ctx->description(), add_new));
+      _games.at(game_id)->AddModified(std::string((add_new) ? "Added to" : "Updated") + " description of " + ctx_id);
+      resp.set_redirect(_http::Referer(req, "Successfully updated description"), 303);
+    } else {
+      throw std::invalid_argument("Ctx not found!");
+    }
+  } catch (std::exception& e) {
+    std::string msg = fmt::format("Failed creating text for ctx {}: {}", ctx_id, e.what());
+    util::Logger()->error(msg);
+    resp.set_redirect(_http::Referer(req, msg), 303);
+  }
+}
+
+void Builder::SaveTextElement(const httplib::Request& req, httplib::Response& resp, bool add_new) {
+  const std::string game_id = req.path_params.at("game_id");
+  std::unique_lock ul(_mtx_games);
+  if (!req.has_param("text_id")) {
+    throw std::invalid_argument("Missing query-parameter: (text) text_id");
+  } 
+  const std::string text_id = req.get_param_value("text_id");
+  try {
+    const auto& texts = _games.at(game_id)->texts();
+    auto updated_txt = CreateTextElement(req, util::get_ptr(texts, text_id), add_new);
+    _games.at(game_id)->UpdateText(text_id, updated_txt);
+    _games.at(game_id)->AddModified(std::string((add_new) ? "Added to" : "Updated") + " text " + text_id);
+    resp.set_redirect(_http::Referer(req, "Successfully " + std::string((add_new) ? "Added to" : "Updated") + " text"), 303);
+  } catch (std::exception& e) {
+    std::string msg = fmt::format("Failed creating text {}: {}", text_id, e.what());
     util::Logger()->error(msg);
     resp.set_redirect(_http::Referer(req, msg), 303);
   }
@@ -469,12 +523,9 @@ void Builder::RemoveAttribute(const httplib::Request& req, httplib::Response& re
   const std::string game_id = req.path_params.at("game_id");
   std::unique_lock ul(_mtx_games);
   if (!req.has_param("ctx_id")) {
-    resp.set_redirect("/?msg=missing query-parameter: ctx_id", 303);
-    return;
-  }
-  if (!req.has_param("id")) {
-    resp.set_redirect("/?msg=missing query-parameter or field value: (listener) id", 303);
-    return;
+    throw std::invalid_argument("Missing query-parameter: ctx_id");
+  } if (!req.has_param("id")) {
+    throw std::invalid_argument("/?msg=missing query-parameter or field value: (listener) id");
   }
 
   try {
@@ -495,12 +546,9 @@ void Builder::RemoveListener(const httplib::Request& req, httplib::Response& res
   const std::string game_id = req.path_params.at("game_id");
   std::unique_lock ul(_mtx_games);
   if (!req.has_param("ctx_id")) {
-    resp.set_redirect("/?msg=missing query-parameter: ctx_id", 303);
-    return;
-  }
-  if (!req.has_param("id")) {
-    resp.set_redirect("/?msg=missing query-parameter or field value: (listener) id", 303);
-    return;
+    throw std::invalid_argument("/?msg=missing query-parameter: ctx_id");
+  } if (!req.has_param("id")) {
+    throw std::invalid_argument("/?msg=missing query-parameter or field value: (listener) id");
   }
 
   try {
@@ -515,4 +563,100 @@ void Builder::RemoveListener(const httplib::Request& req, httplib::Response& res
     resp.status = 400;
     return;
   }
+}
+
+void Builder::RemoveDescriptionElement(const httplib::Request& req, httplib::Response& resp) {
+  const std::string game_id = req.path_params.at("game_id");
+  std::unique_lock ul(_mtx_games);
+  if (!req.has_param("ctx_id")) {
+    throw std::invalid_argument("Missing query-parameter: (ctx-description) ctx_id");
+  } 
+  const std::string ctx_id = req.get_param_value("ctx_id");
+  try {
+    if (auto& ctx = _games.at(game_id)->contexts().at(ctx_id)) {
+      ctx->set_description(RemoveTextElement(req, ctx->description()));
+      _games.at(game_id)->AddModified("Removed description element of " + ctx_id);
+      resp.set_redirect(_http::Referer(req, "Successfully removed description element"), 303);
+    } else {
+      throw std::invalid_argument("Ctx not found!");
+    }
+  } catch (std::exception& e) {
+    std::string msg = fmt::format("Failed removing description element for ctx {}: {}", ctx_id, e.what());
+    util::Logger()->error(msg);
+    resp.set_redirect(_http::Referer(req, msg), 303);
+  }
+}
+
+void Builder::RemoveTextElement(const httplib::Request& req, httplib::Response& resp) {
+  const std::string game_id = req.path_params.at("game_id");
+  std::unique_lock ul(_mtx_games);
+  if (!req.has_param("text_id")) {
+    throw std::invalid_argument("Missing query-parameter: (text) text_id");
+  } 
+  const std::string text_id = req.get_param_value("text_id");
+  try {
+    const auto& texts = _games.at(game_id)->texts();
+    _games.at(game_id)->UpdateText(text_id, RemoveTextElement(req, util::get_ptr(texts, text_id)));
+    _games.at(game_id)->AddModified("Removed text element " + text_id);
+    resp.set_redirect(_http::Referer(req, "Successfully removed text element"), 303);
+  } catch (std::exception& e) {
+    std::string msg = fmt::format("Failed removing text {}: {}", text_id, e.what());
+    util::Logger()->error(msg);
+    resp.set_redirect(_http::Referer(req, msg), 303);
+  }
+}
+
+// helper 
+
+std::shared_ptr<Text> Builder::CreateTextElement(const httplib::Request& req, std::shared_ptr<Text> text, bool add_new) {
+  if (!req.has_param("index")) {
+    throw std::invalid_argument("Missing query-parameter: (text) index");
+  }
+  const int index = std::stoi(req.get_param_value("index"));
+  if (index != 0 && !text) {
+    throw std::invalid_argument("Trying to add next text to non existing text. Index: " + std::to_string(index));
+  }
+
+  // Create new text from json
+  const nlohmann::json j = {
+    {"txt", req.form.get_field("txt")},
+    {"one_time_events", req.form.get_field("one_time_events")},
+    {"permanent_events", req.form.get_field("permanent_events")},
+    {"logic", req.form.get_field("logic")},
+    {"shared", req.form.has_field("shared")}
+  };
+  auto new_txt = std::make_shared<Text>(j);
+
+  // Text did not exist -> return new-text
+  if (!text) {
+    return new_txt;
+  } 
+  // New text shall replace first text, add following elements to new text and return
+  if (index == 0) {
+    if (add_new) {
+      new_txt->set_next(text); // inserts new before current text
+    } else {
+      new_txt->set_next(text->next()); // inserts new inplace of current text
+    }
+    return new_txt;
+  }
+  // Otherwise add new text to given index
+  if (add_new) {
+    text->InsertAt(new_txt, index);
+  } else {
+    text->ReplaceAt(new_txt, index);
+  }
+  return text;
+}
+
+std::shared_ptr<Text> Builder::RemoveTextElement(const httplib::Request& req, std::shared_ptr<Text> text) {
+  if (!req.has_param("index")) {
+    throw std::invalid_argument("Missing query-parameter: (text) index");
+  }
+  const int index = std::stoi(req.get_param_value("index"));
+  if (!text) {
+    throw std::invalid_argument("Trying to remove text from non existing text. Index: " + std::to_string(index));
+  }
+  std::cout << "Removing text @ " << index << std::endl;
+  return text->RemoveAt(index);
 }

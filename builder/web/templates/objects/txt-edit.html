@@ -1,0 +1,36 @@
+<form
+  {% if txt_parent == "text" %}
+    action="/{{game.name}}/{{txt_cmd}}/text?text_id={{path}}&index={{txt_index}}"
+  {% else %} 
+    action="/{{game.name}}/{{txt_cmd}}/ctx/description?ctx_id={{ctx.id}}&index={{txt_index}}"
+  {% endif %}
+  method="POST" 
+  enctype="multipart/form-data"
+  name="__text_form"
+>
+  <div class="input-group mb-3">
+    <span class="input-group-text" id="txt">Text:</span>
+    <textarea class="form-control" placeholder="text..." name="txt" id="txt" required>{{txt.txt}}</textarea>
+  </div>
+  <div class="input-group mb-3">
+    <span class="input-group-text" id="logic">Logic:</span>
+    <input type="text" class="form-control" placeholder="..." name="logic" id="logic" value="{{txt.logic}}">
+  </div>
+  <div class="input-group mb-3">
+    <span class="input-group-text" id="one_time_events">One-Time Events:</span>
+    <input type="text" class="form-control" placeholder="..." name="one_time_events" id="one_time_events" value="{{txt.one_time_events}}">
+  </div>
+  <div class="input-group mb-3">
+    <span class="input-group-text" id="permanent_events">Permanent Events:</span>
+    <input type="text" class="form-control" placeholder="..." name="permanent_events" id="permanent_events" value="{{txt.permanent_events}}">
+  </div>
+  <div class="input-group mb-3">
+    <span class="input-group-text" id="shared">Shared</span>
+    <div class="input-group-text">
+      <input class="form-check-input mt-0" type="checkbox" name="shared" id="shared" 
+       aria-label="Checkbox for following text input" {{ "checked" if txt.shared else ""}}>
+    </div>
+  </div>
+  <button type="submit" class="btn btn-primary">save</button>
+</form>
+

@@ -2,92 +2,111 @@
 
 {% block content %}
 
-<div class="game_header">
-  <h1>{{ctx.name}} <span class="tiny">[{{ctx.id}}]</span></h1>
-  {% if modified %}
-    <div class="modified-indicator">
-      <button 
-        type="button" 
-        class="btn btn-success btn-sm save-btn"
-        data-bs-toggle="modal" 
-        data-bs-target="#shareSaveModal"
-      >
-        <i class="bi bi-save"></i> Save Content
-      </button>
-    </div>
-  {% endif %}
-</div>
-
-<form>
-  <div class="input-group mb-3">
-    <span class="input-group-text" id="name">Name</span>
-    <input type="text" class="form-control" placeholder="..." aria-label="" aria-describedby="name" value="{{ctx.name}}">
-  </div>
-  <div class="input-group mb-3">
-    <span class="input-group-text" id="entry_condition">Entry:</span>
-    <input type="text" class="form-control" placeholder="..." aria-label="" aria-describedby="entry_condition" value="{{ctx.entry}}">
-  </div>
-  <div class="input-group mb-3">
-    <span class="input-group-text" id="entry_condition">Priority:</span>
-    <input type="number" class="form-control" aria-label="" aria-describedby="priority" value="{{ctx.priority}}">
-    <span class="input-group-text" id="shared">Permeable:</span>
-    <div class="input-group-text">
-      <input class="form-check-input mt-0" type="checkbox" value="{{ctx.permeable}}" aria-label="Checkbox for following text input">
-    </div>
-    <span class="input-group-text" id="shared">Shared</span>
-    <div class="input-group-text">
-      <input class="form-check-input mt-0" type="checkbox" value="" 
-        {% if ctx.shared %}checked{% endif %} aria-label="Checkbox for following text input">
-    </div>
-  </div>
-
-  <button type="submit" class="btn btn-primary">save</button>
-</form>
-<br>
-
-{% set texts=ctx.description %}
-{% set label="Description"%}
-{% include "objects/txt-editable.html" %}
-
-<br>
-<h4>Attributes</h4>
-{% set attributes=ctx.attributes%}
-{% include "objects/attributes-editable.html" %}
-
-<br>
-<br>
-<h4>Listeners</h4>
-{% set listeners=ctx.listeners%}
-{% include "objects/listeners-editable.html" %}
-
-<div class="modal fade" id="attributeAddModal" tabindex="-1" aria-labelledby="#attributeAddModal" aria-hidden="true">
-  <div class="modal-dialog">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h5 class="modal-title" id="attributeAddModalLabel">Add Attribute</h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+  <div class="game_header">
+    <h1>{{ctx.name}} <span class="tiny">[{{ctx.id}}]</span></h1>
+    {% if modified %}
+      <div class="modified-indicator">
+        <button 
+          type="button" 
+          class="btn btn-success btn-sm save-btn"
+          data-bs-toggle="modal" 
+          data-bs-target="#shareSaveModal"
+        >
+          <i class="bi bi-save"></i> Save Content
+        </button>
       </div>
-      <div class="modal-body">
-        {% set attribute_id = NEW_ATTRIBUTE %}
-        {% include "objects/attribute-edit.html" %}
+    {% endif %}
+  </div>
+
+  <form>
+    <div class="input-group mb-3">
+      <span class="input-group-text" id="name">Name</span>
+      <input type="text" class="form-control" placeholder="..." aria-label="" aria-describedby="name" value="{{ctx.name}}">
+    </div>
+    <div class="input-group mb-3">
+      <span class="input-group-text" id="entry_condition">Entry:</span>
+      <input type="text" class="form-control" placeholder="..." aria-label="" aria-describedby="entry_condition" value="{{ctx.entry}}">
+    </div>
+    <div class="input-group mb-3">
+      <span class="input-group-text" id="entry_condition">Priority:</span>
+      <input type="number" class="form-control" aria-label="" aria-describedby="priority" value="{{ctx.priority}}">
+      <span class="input-group-text" id="shared">Permeable:</span>
+      <div class="input-group-text">
+        <input class="form-check-input mt-0" type="checkbox" value="{{ctx.permeable}}" aria-label="Checkbox for following text input">
+      </div>
+      <span class="input-group-text" id="shared">Shared</span>
+      <div class="input-group-text">
+        <input class="form-check-input mt-0" type="checkbox" value="" 
+          {% if ctx.shared %}checked{% endif %} aria-label="Checkbox for following text input">
       </div>
     </div>
-  </div>
-</div>
 
-<div class="modal fade" id="listenerAddModal" tabindex="-1" aria-labelledby="#listenerAddModal" aria-hidden="true">
-  <div class="modal-dialog">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h5 class="modal-title" id="listenerAddModalLabel">Add Listener</h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-      </div>
-      <div class="modal-body">
-        {% set listener_id = NEW_LISTENER %}
-        {% include "objects/listener-edit.html" %}
+    <button type="submit" class="btn btn-primary">save</button>
+  </form>
+  <br>
+
+  {% set texts=ctx.description %}
+  {% set label="Description" %}
+  {% set txt_cmd = "update" %}
+  {% set txt_parent="ctx" %}
+  {% include "objects/txt-editable.html" %}
+
+  <br>
+  <h4>Attributes</h4>
+  {% set attributes=ctx.attributes%}
+  {% include "objects/attributes-editable.html" %}
+
+  <br>
+  <br>
+  <h4>Listeners</h4>
+  {% set listeners=ctx.listeners%}
+  {% include "objects/listeners-editable.html" %}
+
+  <div class="modal fade" id="attributeAddModal" tabindex="-1" aria-labelledby="#attributeAddModal" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="attributeAddModalLabel">Add Attribute</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          {% set attribute_id = NEW_ATTRIBUTE %}
+          {% include "objects/attribute-edit.html" %}
+        </div>
       </div>
     </div>
   </div>
-</div>
+
+  <div class="modal fade" id="listenerAddModal" tabindex="-1" aria-labelledby="#listenerAddModal" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="listenerAddModalLabel">Add Listener</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          {% set listener_id = NEW_LISTENER %}
+          {% include "objects/listener-edit.html" %}
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal fade" id="textAddModal" tabindex="-1" aria-labelledby="#textAddModal" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="textAddModalLabel">Add Text Element</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          {% set txt_index = "new_index" %}
+          {% set txt_cmd = "add" %}
+          {% set txt_parent="ctx" %}
+          {% include "objects/txt-edit.html" %}
+        </div>
+      </div>
+    </div>
+  </div>
 
 {% endblock %}

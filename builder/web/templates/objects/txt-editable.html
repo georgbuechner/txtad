@@ -6,8 +6,20 @@
 <div class="accordion accordion" id="accordion{{label}}">
   {% for txt in texts %}
     <div class="accordion-item">
-      <h2 class="accordion-header" id="headingtxt{{label}}{{loop.index}}">
-        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" 
+      <h2 class="accordion-header d-flex align-items-center" id="headingtxt{{label}}{{loop.index}}">
+
+        <form 
+          {% if txt_parent == "text" %}
+            action="/{{game.name}}/remove/text?text_id={{path}}&index={{loop.index0}}" 
+          {% else %} 
+            action="/{{game.name}}/remove/ctx/description?ctx_id={{ctx.id}}&index={{loop.index0}}" 
+          {% endif %}
+          method="POST"
+        >
+          <button type="submit" class="btn btn-light btn-sm text-danger">X</button>
+        </form>
+
+        <button class="accordion-button collapsed flex-grow-1" type="button" data-bs-toggle="collapse" 
             data-bs-target="#collapsetxt{{label}}{{loop.index}}" aria-expanded="false" 
             aria-controls="collapsetxt{{label}}{{loop.index}}">
           {{txt.txt}}
@@ -16,37 +28,23 @@
       <div id="collapsetxt{{label}}{{loop.index}}" class="accordion-collapse collapse" 
           aria-labelledby="headingtxt{{label}}{{loop.index}}" data-bs-parent="#accordion{{label}}">
         <div class="accordion-body">
-            <form> 
-              <div class="input-group mb-3">
-                <span class="input-group-text" id="txt">Text:</span>
-                <input type="text" class="form-control" placeholder="text" aria-label="" aria-describedby="txt" value="{{txt.txt}}">
-              </div>
-              <div class="input-group mb-3">
-                <span class="input-group-text" id="logic">Logic:</span>
-                <input type="text" class="form-control" placeholder="..." aria-label="" 
-                  aria-describedby="logic" value="{{txt.logic}}">
-              </div>
-              <div class="input-group mb-3">
-                <span class="input-group-text" id="one_time_events">One-Time Events:</span>
-                <input type="text" class="form-control" placeholder="..." aria-label="" 
-                  aria-describedby="one_time_events" value="{{txt.one_time_events}}">
-              </div>
-              <div class="input-group mb-3">
-                <span class="input-group-text" id="permanent_events">Permanent Events:</span>
-                <input type="text" class="form-control" placeholder="..." aria-label="" 
-                  aria-describedby="permanent_events" value="{{txt.permanent_events}}">
-              </div>
-              <div class="input-group mb-3">
-                <span class="input-group-text" id="shared">Shared</span>
-                <div class="input-group-text">
-                  <input class="form-check-input mt-0" type="checkbox" value="{{txt.shared}}" aria-label="Checkbox for following text input">
-                </div>
-              </div>
-              <button type="submit" class="btn btn-primary">save</button>
-              <button type="button" class="btn btn-secondary">remove</button>
-              <button type="button" class="btn btn-secondary">insert before</button>
-              <button type="button" class="btn btn-secondary">insert after</button>
-            </form>
+          {% set txt_index = loop.index0 %}
+          {% include "objects/txt-edit.html" %}
+          <br>
+          <button 
+            type="button" 
+            class="btn btn-primary"
+            data-bs-toggle="modal"
+            data-bs-target="#textAddModal"
+            onclick="SetTextIndex({{loop.index0}});"
+          >insert before</button>
+          <button 
+            type="button" 
+            class="btn btn-primary"
+            data-bs-toggle="modal"
+            data-bs-target="#textAddModal"
+            onclick="SetTextIndex({{loop.index0}}+1);"
+          >insert after</button>
         </div>
       </div>
     </div>

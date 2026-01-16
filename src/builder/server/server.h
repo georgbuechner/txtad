@@ -53,11 +53,19 @@ class Builder {
     void SaveTests(const httplib::Request& req, httplib::Response& resp);
     void SaveAttribute(const httplib::Request& req, httplib::Response& resp);
     void SaveListener(const httplib::Request& req, httplib::Response& resp);
+    void SaveDescriptionElement(const httplib::Request& req, httplib::Response& resp, bool add_new);
+    void SaveTextElement(const httplib::Request& req, httplib::Response& resp, bool add_new);
     void SaveGame(const httplib::Request& req, httplib::Response& resp);
     
     // REMOVES ELEMENTS
     void RemoveAttribute(const httplib::Request& req, httplib::Response& resp);
     void RemoveListener(const httplib::Request& req, httplib::Response& resp);
+    void RemoveDescriptionElement(const httplib::Request& req, httplib::Response& resp);
+    void RemoveTextElement(const httplib::Request& req, httplib::Response& resp);
+
+    // helper 
+    std::shared_ptr<Text> CreateTextElement(const httplib::Request& req, std::shared_ptr<Text> text, bool add_new);
+    std::shared_ptr<Text> RemoveTextElement(const httplib::Request& req, std::shared_ptr<Text> text);
 };
 
 #endif

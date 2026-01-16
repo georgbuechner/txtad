@@ -1,9 +1,42 @@
 {% extends "layout/layout.html" %}
 
 {% block content %}
-  <h4>{{path}}</h4>
+  <div class="game_header">
+    <h3>{{path}}</h3>
+    {% if modified %}
+      <div class="modified-indicator">
+        <button 
+          type="button" 
+          class="btn btn-success btn-sm save-btn"
+          data-bs-toggle="modal" 
+          data-bs-target="#shareSaveModal"
+        >
+          <i class="bi bi-save"></i> Save Content
+        </button>
+      </div>
+    {% endif %}
+  </div>
 
+  {% set txt_parent="text" %}
+  {% set txt_cmd = "update" %}
   {% include "objects/txt-editable.html" %}
+
+  <div class="modal fade" id="textAddModal" tabindex="-1" aria-labelledby="#textAddModal" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="textAddModalLabel">Add Text Element</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          {% set txt_index = "new_index" %}
+          {% set txt_cmd = "add" %}
+          {% set txt_parent="text" %}
+          {% include "objects/txt-edit.html" %}
+        </div>
+      </div>
+    </div>
+  </div>
 
 {% endblock %}
 

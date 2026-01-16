@@ -117,7 +117,7 @@ namespace jinja2 {
           auto* t = v.ptr;
           while (t) {
             list.emplace_back(jinja2::Reflect(*t));  // Text stays element-like
-            t = t->next();
+            t = t->next().get();
           }
         }
         return jinja2::Value{std::move(list)};
@@ -193,7 +193,9 @@ namespace jinja2 {
         {"priority", [](const PtrView<Context>& v) { return (v.ptr) ? v.ptr->priority() : Value{}; }},
         {"permeable", [](const PtrView<Context>& v) { return (v.ptr) ? v.ptr->permeable() : Value{}; }},
         {"shared", [](const PtrView<Context>& v) { return (v.ptr) ? v.ptr->shared() : Value{}; }},
-        {"description", [](const PtrView<Context>& v) { return (v.ptr) ? jinja2::Reflect(PtrView<Text>{&v.ptr->description()}) : Value{}; }},
+        {"description", [](const PtrView<Context>& v) { return (v.ptr) 
+              ? jinja2::Reflect(PtrView<Text>{v.ptr->description().get()}) 
+              : Value{}; }},
         {"attributes", [](const PtrView<Context>& v) { return (v.ptr) ? _jinja::Map(v.ptr->attributes()) : Value{}; }},
         {"listeners", [](const PtrView<Context>& v) { return (v.ptr) ? _jinja::Map(v.ptr->listeners()) : Value{}; }},
       };

@@ -25,3 +25,8 @@ async function SaveContent(game_id) {
     console.log("SaveContent. Some Tests failed");
   }
 }
+
+function SetTextIndex(index) {
+  let form = document.getElementById('textAddModal').getElementsByTagName("FORM")[0];
+  form.action = form.action.replace("new_index", index.toString());
+}

@@ -1,6 +1,5 @@
 #include "shared/objects/context/context.h"
 #include <catch2/catch_test_macros.hpp>
-#include <map>
 
 TEST_CASE("Test constructor", "[objects][context]") {
   // constants used across different tests
@@ -24,7 +23,7 @@ TEST_CASE("Test constructor", "[objects][context]") {
 
       REQUIRE(ctx.id() == ID);
       REQUIRE(ctx.name() == NAME);
-      REQUIRE(ctx.description().txt() == DESCRIPTION);
+      REQUIRE(ctx.description()->txt() == DESCRIPTION);
       REQUIRE(ctx.entry_condition_pattern() == ENTRY_CONDITION_PATTERN);
       REQUIRE(ctx.priority() == PRIORITY);
       REQUIRE(ctx.permeable() == PERMEABLE);
@@ -61,9 +60,9 @@ TEST_CASE("Test setters", "[objects][context]") {
 
   SECTION("Test set_description") {
     const std::string NEW_DESCRIPTION = "some new description";
-    ctx.set_description(NEW_DESCRIPTION);
-    REQUIRE(ctx.description().txt() != DESCRIPTION);
-    REQUIRE(ctx.description().txt() == NEW_DESCRIPTION);
+    ctx.set_description(std::make_shared<Text>(NEW_DESCRIPTION));
+    REQUIRE(ctx.description()->txt() != DESCRIPTION);
+    REQUIRE(ctx.description()->txt() == NEW_DESCRIPTION);
   }
 
   SECTION("Test set_entry_condition") {

@@ -5,7 +5,9 @@
 
 {% for txt in text %}
   <p class="text-primary"><i>{{txt.txt}}</i></p>
-  {% if txt.one_time_events or txt.peranent_events %}
-    (events: {{txt.one_time_events}} {{txt.peranent_events}})
+  {% if txt.one_time_events or txt.permanent_events %}
+    <p style="margin-top: -1.2em;" class="text-primary small"> 
+      (events: {{txt.one_time_events}} {{txt.permanent_events}})
+    </p>
   {% endif %}
 {% endfor %}

@@ -180,9 +180,9 @@ std::shared_ptr<Context> parser::CreateContextFromPath(std::filesystem::path pat
     path.replace_extension();
     std::string base_id = path.string().substr(id_path_offset);
     if (json->at("description").is_object())
-      return std::make_shared<Context>(base_id, *json, Text(json->at("description").get<nlohmann::json>()));
+      return std::make_shared<Context>(base_id, *json, std::make_shared<Text>(json->at("description").get<nlohmann::json>()));
     else 
-      return std::make_shared<Context>(base_id, *json, Text(json->at("description").get<std::string>()));
+      return std::make_shared<Context>(base_id, *json, std::make_shared<Text>(json->at("description").get<std::string>()));
   } 
   return nullptr;
 }

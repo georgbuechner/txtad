@@ -56,6 +56,12 @@ class Game {
         const std::string& ctx_id, bool added);
     void RemoveListener(const std::string& listener_id, const std::string& ctx_id);
 
+    /**
+     * Updates text entry at given path.
+     * If `txt` is nullptr, entry will be removed.
+     */
+    void UpdateText(std::string path, std::shared_ptr<Text> txt);
+
   private: 
     static MsgFn _global_cout;
     MsgFn _cout;

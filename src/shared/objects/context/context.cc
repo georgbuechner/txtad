@@ -1,5 +1,6 @@
 #include <fmt/core.h>
 #include <fmt/format.h>
+#include <memory>
 #include <regex>
 #include <spdlog/spdlog.h>
 #include <unistd.h>
@@ -19,7 +20,7 @@ std::string Context::name() const {
   return _name;
 }
 
-const Text& Context::description() const {
+const std::shared_ptr<Text> Context::description() const {
   return _description;
 }
 
@@ -47,7 +48,7 @@ void Context::set_name(const std::string& name) {
   _name = name;
 }
 
-void Context::set_description(const Text& txt) {
+void Context::set_description(std::shared_ptr<Text> txt) {
   _description = txt;
 }
 
@@ -57,11 +58,11 @@ void Context::set_entry_condition(const std::string& pattern) {
 
   // ***** ***** String representation of the class ***** ***** //
 std::string Context::ToString() const {
-  return "Name: " + _name + "\n" + "Description: " + _description.txt() + "\n" + "Entry Condition (regex): " + _entry_condition.str();
+  return "Name: " + _name + "\n" + "Description: " + _description->txt() + "\n" + "Entry Condition (regex): " + _entry_condition.str();
 }
 
 std::string Context::PrintDescription(std::string& event_queue, const ExpressionParser& parser) {
-  return util::Join(_description.print(event_queue, parser), txtad::WEB_CMD_ADD_PROMPT);
+  return util::Join(_description->print(event_queue, parser), txtad::WEB_CMD_ADD_PROMPT);
 }
   
   // ***** ***** Entry check ***** ***** //
@@ -141,7 +142,7 @@ std::vector<std::weak_ptr<Context>> Context::LinkedContexts(std::string type) {
 }
 
 nlohmann::json Context::json() const {
-  nlohmann::json j = {{"id", _id}, {"name", _name}, {"description", _description.json()}, 
+  nlohmann::json j = {{"id", _id}, {"name", _name}, {"description", _description->json()}, 
     {"re_entrycondition", _entry_condition.str()}, {"attributes", _attributes}, {"priority", _priority}, 
     {"permeable", _permeable}, {"shared", _shared}, {"listeners", nlohmann::json::array()} };
   for (const auto& it : _event_manager->listeners()) {

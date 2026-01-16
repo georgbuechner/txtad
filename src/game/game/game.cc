@@ -470,3 +470,13 @@ void Game::RemoveListener(const std::string& listener_id, const std::string& ctx
   }
   _contexts.at(ctx_id)->RemoveListener(listener_id);
 }
+
+void Game::UpdateText(std::string path, std::shared_ptr<Text> txt) {
+  if (txt) {
+    _texts[path] = txt;
+  } else if (_texts.contains(path)) {
+    _texts.erase(path);
+  } else {
+    util::Logger()->warn("Game::UpdateText. Updated text {} empty but also did not exist.", path);
+  }
+}

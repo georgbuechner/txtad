@@ -3,7 +3,7 @@
     {% set listener = listeners[it.key] %}
     <div class="accordion-item">
       <h2 class="accordion-header d-flex align-items-center" id="headinglistener{{label}}{{loop.index}}">
-        <form class="" action="/{{game.name}}/remove/ctx/listener?ctx_id={{ctx.id}}&id={{listener.id}}" method="POST">
+        <form action="/{{game.name}}/remove/ctx/listener?ctx_id={{ctx.id}}&id={{listener.id}}" method="POST">
           <button type="submit" class="btn btn-light btn-sm text-danger">X</button>
         </form>
         <button class="accordion-button collapsed flex-grow-1" type="button" data-bs-toggle="collapse" 
