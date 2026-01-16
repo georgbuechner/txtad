@@ -90,6 +90,9 @@ void Builder::Start() {
   _srv.Post("/:game_id/save/tests", [&](const httplib::Request& req, httplib::Response& resp) {
       SaveTests(req, resp); });
 
+  _srv.Post("/:game_id/save/ctx", [&](const httplib::Request& req, httplib::Response& resp) {
+      SaveCtxMeta(req, resp); });
+
   _srv.Post("/:game_id/save/ctx/attribute", [&](const httplib::Request& req, httplib::Response& resp) {
       SaveAttribute(req, resp); });
 
@@ -98,11 +101,13 @@ void Builder::Start() {
 
   _srv.Post("/:game_id/update/ctx/description", [&](const httplib::Request& req, httplib::Response& resp) {
       SaveDescriptionElement(req, resp, false); });
+
   _srv.Post("/:game_id/add/ctx/description", [&](const httplib::Request& req, httplib::Response& resp) {
       SaveDescriptionElement(req, resp, true); });
 
   _srv.Post("/:game_id/update/text", [&](const httplib::Request& req, httplib::Response& resp) {
       SaveTextElement(req, resp, false); });
+
   _srv.Post("/:game_id/add/text", [&](const httplib::Request& req, httplib::Response& resp) {
       SaveTextElement(req, resp, true); });
 
@@ -393,6 +398,31 @@ void Builder::SaveTests(const httplib::Request& req, httplib::Response& resp) {
   } catch (std::exception& e) {
     resp.set_content("Failed saving tests: " + (std::string)e.what(), "text/txt");
     resp.status = 400;
+  }
+}
+
+void Builder::SaveCtxMeta(const httplib::Request& req, httplib::Response& resp) {
+  const std::string game_id = req.path_params.at("game_id");
+  std::unique_lock ul(_mtx_games);
+  if (!req.has_param("ctx_id")) {
+    throw std::invalid_argument("Missing query-parameter: (attribute) ctx_id");
+  } 
+  const std::string ctx_id = req.get_param_value("ctx_id");
+  try {
+    const std::string name = req.form.get_field("name");
+    const std::string entry_condition = req.form.get_field("entry_condition");
+    const int priority = std::stoi(req.form.get_field("priority"));
+    const bool permeable = req.form.has_field("permeable");
+    const bool shared = req.form.has_field("shared");
+    if (auto ctx = util::get_ptr(_games.at(game_id)->contexts(), ctx_id)) {
+      ctx->UpdateMeta(name, entry_condition, priority, permeable, shared);
+    }
+    _games.at(game_id)->AddModified("Updated " + ctx_id);
+    resp.set_redirect(_http::Referer(req, "Successfully updated ctx meta for: " + ctx_id), 303);
+  } catch (std::exception& e) {
+    std::string msg = fmt::format("Failed saving ctx meta for ctx {}: {}", ctx_id, e.what());
+    util::Logger()->error(msg);
+    resp.set_redirect(_http::Referer(req, msg), 303);
   }
 }
 

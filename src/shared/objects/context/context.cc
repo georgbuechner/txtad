@@ -141,6 +141,14 @@ std::vector<std::weak_ptr<Context>> Context::LinkedContexts(std::string type) {
   return linked_contexts;
 }
 
+void Context::UpdateMeta(std::string name, std::string entry_condition_pattern, int priority, 
+      bool permeable, bool shared) {
+  _name = name; 
+  _entry_condition = util::Regex(entry_condition_pattern);
+  _priority = priority; 
+  _permeable = permeable; 
+  _shared = shared;
+}
 nlohmann::json Context::json() const {
   nlohmann::json j = {{"id", _id}, {"name", _name}, {"description", _description->json()}, 
     {"re_entrycondition", _entry_condition.str()}, {"attributes", _attributes}, {"priority", _priority}, 

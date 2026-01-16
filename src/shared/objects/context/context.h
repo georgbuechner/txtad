@@ -93,6 +93,8 @@ public:
 
   std::vector<std::weak_ptr<Context>> LinkedContexts(std::string type);
 
+  void UpdateMeta(std::string name, std::string entry_condition_pattern, int priority, 
+      bool permeable, bool shared);
   nlohmann::json json() const;
 
   // ***** ***** Attributes or Data Members ***** ***** //

@@ -18,25 +18,33 @@
     {% endif %}
   </div>
 
-  <form>
+  <form 
+    action="/{{game.name}}/save/ctx?ctx_id={{ctx.id}}"
+    method="POST" 
+    enctype="multipart/form-data"
+  >
     <div class="input-group mb-3">
       <span class="input-group-text" id="name">Name</span>
-      <input type="text" class="form-control" placeholder="..." aria-label="" aria-describedby="name" value="{{ctx.name}}">
+      <input type="text" class="form-control" placeholder="name..." id="name" name="name" value="{{ctx.name}}">
     </div>
     <div class="input-group mb-3">
       <span class="input-group-text" id="entry_condition">Entry:</span>
-      <input type="text" class="form-control" placeholder="..." aria-label="" aria-describedby="entry_condition" value="{{ctx.entry}}">
+      <input type="text" class="form-control" placeholder="entry condition" 
+        id="entry_condition" name="entry_condition" value="{{ctx.entry}}">
     </div>
     <div class="input-group mb-3">
-      <span class="input-group-text" id="entry_condition">Priority:</span>
-      <input type="number" class="form-control" aria-label="" aria-describedby="priority" value="{{ctx.priority}}">
+      <span class="input-group-text" id="priority">Priority:</span>
+      <input type="number" class="form-control" id="priority" name="priority" value="{{ctx.priority}}">
+
       <span class="input-group-text" id="shared">Permeable:</span>
       <div class="input-group-text">
-        <input class="form-check-input mt-0" type="checkbox" value="{{ctx.permeable}}" aria-label="Checkbox for following text input">
+        <input class="form-check-input mt-0" type="checkbox" id="permeable" name="permeable"
+          {% if ctx.permeable %}checked{% endif %} aria-label="Checkbox for following text input">
       </div>
+
       <span class="input-group-text" id="shared">Shared</span>
       <div class="input-group-text">
-        <input class="form-check-input mt-0" type="checkbox" value="" 
+        <input class="form-check-input mt-0" type="checkbox" id="shared" name="shared"
           {% if ctx.shared %}checked{% endif %} aria-label="Checkbox for following text input">
       </div>
     </div>
