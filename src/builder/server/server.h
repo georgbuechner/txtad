@@ -63,6 +63,7 @@ class Builder {
     void RemoveListener(const httplib::Request& req, httplib::Response& resp);
     void RemoveDescriptionElement(const httplib::Request& req, httplib::Response& resp);
     void RemoveTextElement(const httplib::Request& req, httplib::Response& resp);
+    void RestoreGame(const httplib::Request& req, httplib::Response& resp);
 
     // helper 
     std::shared_ptr<Text> CreateTextElement(const httplib::Request& req, std::shared_ptr<Text> text, bool add_new);

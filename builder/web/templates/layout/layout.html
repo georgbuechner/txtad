@@ -109,6 +109,23 @@
   </div>
 </div>
 
+<div class="modal fade" id="shareRestoreModal" tabindex="-1" aria-labelledby="#shareRestoreModal" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="shareRestoreModalLabel">Restore Content</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <p id="restore_content"></p>
+        <button type="button" class="btn btn-primary" onclick="RestoreContent('{{game.name}}');">
+          Restore 
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
 
   </body>
 

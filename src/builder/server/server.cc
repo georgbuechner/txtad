@@ -127,6 +127,9 @@ void Builder::Start() {
   _srv.Post("/:game_id/remove/text", [&](const httplib::Request& req, httplib::Response& resp) {
       RemoveTextElement(req, resp); });
 
+  _srv.Post("/:game_id/restore", [&](const httplib::Request& req, httplib::Response& resp) {
+      RestoreGame(req, resp); });
+
   util::Logger()->info("MAIN: Successfully started http-server on port 4081");
   _srv.listen("0.0.0.0", 4081);
 }
@@ -633,6 +636,20 @@ void Builder::RemoveTextElement(const httplib::Request& req, httplib::Response& 
     std::string msg = fmt::format("Failed removing text {}: {}", text_id, e.what());
     util::Logger()->error(msg);
     resp.set_redirect(_http::Referer(req, msg), 303);
+  }
+}
+
+void Builder::RestoreGame(const httplib::Request& req, httplib::Response& resp) {
+  std::string game_id = req.path_params.at("game_id");
+  std::unique_lock ul(_mtx_games);
+  std::string game_path = _games.at(game_id)->path();
+  try {
+    _games.erase(game_id);
+    _games[game_id] = std::make_shared<Game>(game_path, game_id);
+    resp.status = 200;
+  } catch (std::exception& e) {
+    resp.set_content("Failed restoring old game state: " + std::string(e.what()), "text/txt");
+    resp.status = 400;
   }
 }
 
