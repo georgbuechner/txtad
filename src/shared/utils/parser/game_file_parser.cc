@@ -7,9 +7,11 @@
 #include "shared/utils/parser/game_file_parser.h"
 #include "shared/utils/utils.h"
 #include <cstddef>
+#include <exception>
 #include <filesystem>
 #include <memory>
 #include <optional>
+#include <stdexcept>
 #include <string>
 #include <vector>
 
@@ -77,7 +79,9 @@ parser::ExecListeners parser::LoadGameFiles(const std::string& path,
     std::map<std::string, std::shared_ptr<Context>>& contexts, 
     std::map<std::string, std::shared_ptr<Text>>& texts) {
   std::map<std::string, nlohmann::json> listeners;
+  util::Logger()->debug("Loading game objects: " + path);
   LoadObjects(path, contexts, texts, listeners);
+  util::Logger()->debug("Loading game listeners: " + path);
   return LoadListeners(contexts, std::move(listeners));
 }
 
@@ -134,15 +138,24 @@ parser::ExecListeners parser::LoadListeners(std::map<std::string, std::shared_pt
     const std::map<std::string, nlohmann::json>& listeners) {
   ExecListeners exec_forwarders;
   for (const auto& [ctx_id, json_listeners] : listeners) {
-    for (const auto& json_listener : json_listeners.get<std::vector<nlohmann::json>>()) {
-      auto new_listener = CreateListenerFromJson(json_listener, ctx_id, contexts);
-      // Add new listener
-      if (new_listener) {
-        contexts.at(ctx_id)->AddListener(new_listener);
-        // Add to listeners for which function must be updated 
-        if (json_listener.value("exec", false))
-          exec_forwarders.push_back(new_listener);
+    try {
+      for (const auto& json_listener : json_listeners.get<std::vector<nlohmann::json>>()) {
+        try {
+          auto new_listener = CreateListenerFromJson(json_listener, ctx_id, contexts);
+          // Add new listener
+          if (new_listener) {
+            contexts.at(ctx_id)->AddListener(new_listener);
+            // Add to listeners for which function must be updated 
+            if (json_listener.value("exec", false))
+              exec_forwarders.push_back(new_listener);
+          }
+        } catch (std::exception& e) {
+          throw std::invalid_argument("Failed creating listener " + json_listener.value("id", 
+                "no-listener-id") + " for " + ctx_id + ": " + e.what());
+        }
       }
+    } catch (std::exception& e) {
+      throw std::invalid_argument("Failed creating listeners for ctx: " + ctx_id + ": " + e.what());
     }
   }
   return exec_forwarders;
@@ -153,9 +166,9 @@ std::shared_ptr<Listener> parser::CreateListenerFromJson(const nlohmann::json& o
   nlohmann::json json_listener = og_json_listener;
   // Replace "this"-field with ctx_id
   for (const auto* field : {"logic", "arguments"}) {
-    if (json_listener.contains(field))
-      json_listener[field] = util::ReplaceAll(util::ReplaceAll(json_listener[field], "_.", ctx_id + "."), 
-          "_->", ctx_id + "->");
+    if (json_listener.contains(field)) {
+      json_listener[field] = DoThisReplacement(json_listener[field], ctx_id);
+    }
   }
 
   // Create context-listener
@@ -214,4 +227,8 @@ std::vector<TestCase> parser::LoadTestCases(const std::string& game_id) {
     }
   }
   return test_cases;
+}
+
+std::string parser::DoThisReplacement(std::string original, std::string ctx_id) {
+  return util::ReplaceAll(util::ReplaceAll(original, "_.", ctx_id + "."), "_->", ctx_id + "->");
 }

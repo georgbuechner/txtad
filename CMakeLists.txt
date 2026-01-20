@@ -17,6 +17,7 @@ set(GAME_SRC_FILES
   src/game/server/websocket_server.cc 
   src/shared/objects/tests/test_case.cc
   src/shared/objects/tests/test.cc
+  src/shared/objects/text/text.cc
   src/shared/objects/context/context.cc
   src/shared/utils/eventmanager/context_stack.cc
   src/shared/utils/eventmanager/listener.cc
@@ -43,6 +44,7 @@ set(GAME_TEST_FILES
   src/shared/objects/tests/test_case.cc
   src/shared/objects/tests/test.cc
   src/shared/objects/context/context.cc
+  src/shared/objects/text/text.cc
   src/shared/utils/eventmanager/context_stack.cc
   src/shared/utils/eventmanager/listener.cc
   src/shared/utils/utils.cc
@@ -62,6 +64,7 @@ set(BUILDER_SRC_FILES
   src/shared/objects/context/context.cc
   src/shared/objects/tests/test.cc
   src/shared/objects/tests/test_case.cc
+  src/shared/objects/text/text.cc
   src/shared/utils/eventmanager/context_stack.cc
   src/shared/utils/eventmanager/listener.cc
   src/shared/utils/utils.cc

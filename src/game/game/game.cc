@@ -324,10 +324,6 @@ void Game::h_list_linked_contexts(const std::string& event, const std::string& a
     if (member_access->member_type == pattern::CtxMemberAccess::VARIABLE) {
       if (auto ctx = _cur_user->GetContext(member_access->ctx_id)) {
         if (auto nested_member_access = pattern::member_access(member_access->key)) {
-          if (nested_member_access->ctx_id == "*")
-            _cout(_cur_user->id(), "linked contexts:");
-          else
-            _cout(_cur_user->id(), nested_member_access->ctx_id.substr(1) + ":");
           for (const auto& it : ctx->LinkedContexts(nested_member_access->ctx_id.substr(1))) {
             if (auto linked_ctx = it.lock()) {
               std::string str = "";

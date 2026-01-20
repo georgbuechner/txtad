@@ -3,7 +3,6 @@
 
 #include "builder/utils/defines.h"
 #include "shared/objects/context/context.h"
-#include "shared/objects/text/text.h"
 #include "shared/utils/eventmanager/listener.h"
 #include <cstddef>
 #include <filesystem>
@@ -12,6 +11,7 @@
 class Listener;
 class Game;
 class TestCase;
+class Text;
 
 namespace parser {
   using ExecListeners = std::vector<std::shared_ptr<Listener>>;
@@ -36,6 +36,8 @@ namespace parser {
   std::optional<nlohmann::json> GetContextListener(const std::filesystem::path& path);
 
   std::vector<TestCase> LoadTestCases(const std::string& game_id);
+
+  std::string DoThisReplacement(std::string original, std::string ctx_id);
 }
 
 #endif

@@ -56,7 +56,6 @@ namespace util
    */
   std::string ReplaceAll(std::string str, const std::string& from, const std::string& to);
 
-
   /**
    * If the char at the given position is surrounded by brackets, return their 
    * start and end position.

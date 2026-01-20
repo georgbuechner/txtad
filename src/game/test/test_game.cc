@@ -495,14 +495,14 @@ TEST_CASE("Test Game handlers/mechanics", "[game]") {
     const std::string USER_ID = "0x1234";
     game.HandleEvent(USER_ID, "");
 
-    game.HandleEvent(USER_ID, "#lst ctxs rooms/room_1->*rooms->name");
-    REQUIRE(get_cout() == "rooms:\n- Room 2\n- Room 3");
-    game.HandleEvent(USER_ID, "#lst ctxs rooms/room_1->*items->name");
-    REQUIRE(get_cout() == "items:\n- Item 1");
+    game.HandleEvent(USER_ID, "#> Rooms:;#lst ctxs rooms/room_1->*rooms->name");
+    REQUIRE(get_cout() == "Rooms:\n- Room 2\n- Room 3");
+    game.HandleEvent(USER_ID, "#> Items:;#lst ctxs rooms/room_1->*items->name");
+    REQUIRE(get_cout() == "Items:\n- Item 1");
     game.HandleEvent(USER_ID, "#lst ctxs rooms/room_1->*->name");
-    REQUIRE(get_cout() == "linked contexts:\n- Room 2\n- Room 3\n- Item 1");
-    game.HandleEvent(USER_ID, "#lst ctxs *rooms->*rooms->name");
-    REQUIRE(get_cout() == "rooms:\n- Room 2\n- Room 3");
+    REQUIRE(get_cout() == "- Room 2\n- Room 3\n- Item 1");
+    game.HandleEvent(USER_ID, "#> Rooms:;#lst ctxs *rooms->*rooms->name");
+    REQUIRE(get_cout() == "Rooms:\n- Room 2\n- Room 3");
   }
 
   SECTION("Test h_print") {
@@ -579,6 +579,8 @@ TEST_CASE("Test Game handlers/mechanics", "[game]") {
     REQUIRE(get_cout() == "You can pick up Item 1");
     game.HandleEvent(USER_ID, "#> linked contexts: {*room->*->name}");
     REQUIRE(get_cout() == "linked contexts: Room 2, Room 3, Item 1");
+    game.HandleEvent(USER_ID, "#> The surrounding darkness {*room->*rooms.darkness}");
+    REQUIRE(get_cout() == "The surrounding darkness 9, 9");
   }
 }
 
@@ -729,7 +731,8 @@ TEST_CASE("Store game", "[game]") {
     {"description", "Test room no. 1"},
     {"attributes", {{"gravity", "10"}, {"darkness", "99"}}},
     {"listeners", {
-      {{"id", "L2"}, {"re_event", "go right"}, {"ctx", "rooms/room_2"}, {"arguments", "#ctx replace *rooms -> <ctx>"}, 
+      {{"id", "L2"}, {"re_event", "go right"}, {"ctx", "rooms/room_2"}, 
+        {"arguments", "#ctx replace *rooms -> <ctx>"}, 
         {"permeable", true}, {"use_ctx_regex", UseCtx::NO}}
     }},
   };
@@ -803,3 +806,85 @@ TEST_CASE("Store game", "[game]") {
   REQUIRE(util::Join(saved_game.texts().at("texts/start")->print(event_queue, parser), ", ") == txt_text_1["txt"].get<std::string>());
   REQUIRE(event_queue == txt_text_1["permanent_events"].get<std::string>());
 }
+
+TEST_CASE("Test Game example dialog", "[game]") {
+  const nlohmann::json settings = {
+    {"initial_events", ""},
+    {"initial_contexts", {"general", "dialogs/state_1"}}
+  };
+
+  const nlohmann::json ctx_general = {
+    {"id", "general"},
+    {"name", "General"},
+    {"description", "Some general handlers"},
+    {"permeable", true},
+    {"listeners", {
+      {{"id", "L1"}, {"re_event", "increase-counter"}, {"arguments", 
+        "#sa general.counter++"}, {"permeable", true}},
+      {{"id", "L2"}, {"re_event", "#ctx replace *dialogs -> (.*)"}, {"arguments", 
+        "#> {*dialogs->description}"}, {"permeable", true}}
+    }},
+  };
+
+  const nlohmann::json dialog_state_1 = {
+    {"id", "state_1"},
+    {"name", "Dialog 1"},
+    {"description", { 
+      {"txt", "Hello sir, how are you?"},
+      {"permanent_events", "#> Options:; #lst ctxs dialogs/state_1->*dialogs.preview"},
+    }},
+    {"listeners", {
+      {{"id", "D1"}, {"re_event", "g"}, {"ctx", "dialogs/state_2"}, 
+        {"arguments", "#ctx replace *dialogs -> <ctx>"}, {"use_ctx_regex", UseCtx::NO},
+        {"permeable", false}},
+      {{"id", "D2"}, {"re_event", "b"}, {"ctx", "dialogs/state_3"}, 
+        {"arguments", "#ctx replace *dialogs -> <ctx>"}, {"use_ctx_regex", UseCtx::NO},
+        {"permeable", false}}
+    }},
+  };
+
+  const nlohmann::json dialog_state_2 = {
+    {"id", "state_2"},
+    {"name", "Dialog 2"},
+    {"description", { 
+      {"txt", "Oh that is splendid to here!"},
+      {"permanent_events", ""},
+    }},
+    {"attributes", { {"preview", "[g]ood sir!"}}}
+  };
+
+  const nlohmann::json dialog_state_3 = {
+    {"id", "state_3"},
+    {"name", "Dialog 3"},
+    {"description", { 
+      {"txt", "Oh what a pity!"},
+      {"permanent_events", ""},
+    }},
+    {"attributes", { {"preview", "[b]ad sir!"} } }
+  };
+
+  std::string cout = "";
+  Game::set_global_msg_fn([&cout](std::string id, std::string txt) { 
+      cout += ((cout != "") ? "\n" : "") + txt; });
+  auto get_cout = [&cout]() { 
+    std::string str = cout;
+    cout = "";
+    return str; 
+  };
+
+  const std::string GAME_NAME = "test_game_dialogs";
+  const std::string GAME_PATH = txtad::GAMES_PATH + GAME_NAME;
+  TestGameWrapper test_game_wrapper(GAME_NAME, settings, {{"", {ctx_general}},
+      {"dialogs", {dialog_state_1, dialog_state_2, dialog_state_3}}}, {});
+  Game game(GAME_PATH, GAME_NAME);
+
+  // Create users
+  const std::string USER_ID = "0x1234";
+  game.HandleEvent(USER_ID, "");
+
+  game.HandleEvent(USER_ID, "#> {*dialogs->desc}");
+  REQUIRE(get_cout() == "Hello sir, how are you?\nOptions:\n- [g]ood sir!\n- [b]ad sir!");
+  game.HandleEvent(USER_ID, "g");
+  REQUIRE(get_cout() == dialog_state_2["description"]["txt"].get<std::string>());
+}
+
