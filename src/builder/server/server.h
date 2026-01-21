@@ -63,6 +63,11 @@ class Builder {
     void RemoveListener(const httplib::Request& req, httplib::Response& resp);
     void RemoveDescriptionElement(const httplib::Request& req, httplib::Response& resp);
     void RemoveTextElement(const httplib::Request& req, httplib::Response& resp);
+
+    void RemoveText(const httplib::Request& req, httplib::Response& resp);
+    void RemoveContext(const httplib::Request& req, httplib::Response& resp);
+    void RemoveDirectory(const httplib::Request& req, httplib::Response& resp);
+
     void RestoreGame(const httplib::Request& req, httplib::Response& resp);
 
     // helper 

@@ -53,16 +53,20 @@
   {% for s in selections %} 
     {% set type=selections[s] %}
     <div class="accordion-item">
-      <div class="accordion-header d-flex justify-content-between align-items-center" id="flush-heading{{loop.index}}">
+      <div class="accordion-header d-flex justify-content-between align-items-center" 
+          id="flush-heading{{loop.index}}">
+        <form action="/{{game.name}}/remove/{{type|lower}}?path={{path}}/{{s}}" method="POST">
+          <button type="submit" class="btn btn-light btn-sm text-danger">X</button>
+        </form>
         <span>
           <a 
-            class="{{type}}" style="margin-left: 1em;"
+            class="{{type}} flex-grow-1" style="margin-left: 1em;"
             href="/{{game.name}}?path={{path}}/{{s}}&type={{type}}"
           >{{s}}</a>
           <span class="{{type}} note">[{{type}}]: </span> 
         </span>
         <button 
-          class="accordion-button collapsed" 
+          class="accordion-button collapsed flex-grow-1" 
           {% if type != "DIR" %}
             style="width: auto" 
           {% else %}

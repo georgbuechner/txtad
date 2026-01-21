@@ -127,6 +127,11 @@ void Builder::Start() {
   _srv.Post("/:game_id/remove/text", [&](const httplib::Request& req, httplib::Response& resp) {
       RemoveTextElement(req, resp); });
 
+  _srv.Post("/:game_id/remove/txt", [&](const httplib::Request& req, httplib::Response& resp) {
+      RemoveText(req, resp); });
+  _srv.Post("/:game_id/remove/ctx", [&](const httplib::Request& req, httplib::Response& resp) {
+      RemoveText(req, resp); });
+
   _srv.Post("/:game_id/restore", [&](const httplib::Request& req, httplib::Response& resp) {
       RestoreGame(req, resp); });
 
