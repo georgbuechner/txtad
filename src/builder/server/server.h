@@ -45,6 +45,21 @@ class Builder {
     void ApiStopGame(const httplib::Request& req, httplib::Response& resp);
     void ApiRunGame(const httplib::Request& req, httplib::Response& resp);
 
+    ///< list of IDs from all contexts
+    void ApiContextIDs(const httplib::Request& req, httplib::Response& resp);
+    ///< list of IDs from all tests
+    void ApiTextIDs(const httplib::Request& req, httplib::Response& resp);
+    ///< list of IDs from all contexts and tests
+    void ApiIDs(const httplib::Request& req, httplib::Response& resp);
+    ///< list of Types (path elements) from contexts
+    void ApiTypes(const httplib::Request& req, httplib::Response& resp);
+    ///< list of Types (path elements) AND IDs from alls contexts 
+    void ApiContextTypes(const httplib::Request& req, httplib::Response& resp);
+    ///< map of contexts and their attributes 
+    void ApiContextAttributes(const httplib::Request& req, httplib::Response& resp);
+    ///< map of types and the attributes that belong to ALL contexts of this type
+    void ApiTypesAttributes(const httplib::Request& req, httplib::Response& resp);
+
     // PAGES 
     void PagesGame(const httplib::Request& req, httplib::Response& resp);
 
@@ -64,14 +79,15 @@ class Builder {
     void RemoveDescriptionElement(const httplib::Request& req, httplib::Response& resp);
     void RemoveTextElement(const httplib::Request& req, httplib::Response& resp);
 
-    void RemoveText(const httplib::Request& req, httplib::Response& resp);
-    void RemoveContext(const httplib::Request& req, httplib::Response& resp);
-    void RemoveDirectory(const httplib::Request& req, httplib::Response& resp);
+    void RemoveText(const httplib::Request& req, httplib::Response& resp) {}
+    void RemoveContext(const httplib::Request& req, httplib::Response& resp) {}
+    void RemoveDirectory(const httplib::Request& req, httplib::Response& resp) {}
 
     void RestoreGame(const httplib::Request& req, httplib::Response& resp);
 
     // helper 
-    std::shared_ptr<Text> CreateTextElement(const httplib::Request& req, std::shared_ptr<Text> text, bool add_new);
+    std::shared_ptr<Text> CreateTextElement(const httplib::Request& req, std::shared_ptr<Text> text, 
+        bool add_new);
     std::shared_ptr<Text> RemoveTextElement(const httplib::Request& req, std::shared_ptr<Text> text);
 };
 

@@ -63,4 +63,50 @@ function clearInputs(root) {
   });
 }
 
+function addAccordionItem({
+  accordionId,
+  itemId,
+  title,
+  bodyHtml,
+  error,
+  open = false
+}) {
+  const accordion = document.getElementById(accordionId);
+  if (!accordion) {
+    throw new Error(`Accordion not found: #${accordionId}`);
+  }
 
+  const headerId = `${itemId}-header`;
+  const collapseId = `${itemId}-collapse`;
+
+  const item = document.createElement("div");
+  item.className = "accordion-item";
+  if (error) {
+    item.classList.add("border");
+    item.classList.add("border-danger");
+  }
+
+  item.innerHTML = `
+    <h2 class="accordion-header" id="${headerId}">
+      <button class="accordion-button ${open ? "" : "collapsed"}"
+              type="button"
+              data-bs-toggle="collapse"
+              data-bs-target="#${collapseId}"
+              aria-expanded="${open}"
+              aria-controls="${collapseId}">
+        ${title}
+      </button>
+    </h2>
+
+    <div id="${collapseId}"
+         class="accordion-collapse collapse ${open ? "show" : ""}"
+         aria-labelledby="${headerId}"
+         data-bs-parent="#${accordionId}">
+      <div class="accordion-body">
+        ${bodyHtml}
+      </div>
+    </div>
+  `;
+
+  accordion.appendChild(item);
+}

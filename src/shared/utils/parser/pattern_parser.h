@@ -40,9 +40,6 @@ namespace pattern {
     const std::string key;
   };
   std::optional<CtxMemberAccess> member_access(const std::string& inp);
-
-
-
 }
 
 #endif

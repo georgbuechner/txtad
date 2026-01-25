@@ -11,6 +11,7 @@
 #include <filesystem>
 #include <memory>
 #include <optional>
+#include <set>
 #include <stdexcept>
 #include <string>
 #include <vector>
@@ -231,4 +232,19 @@ std::vector<TestCase> parser::LoadTestCases(const std::string& game_id) {
 
 std::string parser::DoThisReplacement(std::string original, std::string ctx_id) {
   return util::ReplaceAll(util::ReplaceAll(original, "_.", ctx_id + "."), "_->", ctx_id + "->");
+}
+
+std::vector<std::string> parser::GetTypesFromIDs(const std::vector<std::string>& ids) {
+  std::set<std::string> dirs = {"*"}; 
+  for (const auto& id : ids) {
+    std::string path = id;
+    while(path.find("/") != std::string::npos) {
+      path = path.substr(0, path.rfind("/"));
+      if (dirs.contains(path)) 
+        break;
+      dirs.insert("*" + path);
+    } 
+  }
+  std::vector<std::string> vec{dirs.begin(), dirs.end()};
+  return vec;
 }

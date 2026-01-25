@@ -27,6 +27,7 @@ void LHandler::set_fn(Fn fn) {
 
 // methods 
 bool LHandler::Test(const std::string& event, const ExpressionParser& parser) const {
+  util::Logger()->info(fmt::format("LHandler::Test: {}, {}, {}", _id, _event.str(), event));
   std::smatch base_match;
   return (std::regex_match(event, base_match, static_cast<const std::regex&>(_event)));
 }

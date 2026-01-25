@@ -28,6 +28,9 @@ class User {
 
     // methods 
     void HandleEvent(const std::string& event, const ExpressionParser& parser);
+    /**
+     * Accepts *<type> syntax, but expects the result to be a single context.
+     */
     std::shared_ptr<Context> GetContext(const std::string& ctx_id);
 
     // Actions

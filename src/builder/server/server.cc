@@ -5,6 +5,7 @@
 #include "shared/utils/parser/game_file_parser.h"
 #include "shared/utils/utils.h"
 #include <exception>
+#include <ranges>
 #include <stdexcept>
 #include <string>
 
@@ -65,6 +66,27 @@ void Builder::Start() {
 
   _srv.Get("/api/tests/run/:game_id", [&](const httplib::Request& req, httplib::Response& resp) {
       ApiRunGame(req, resp); });
+
+  _srv.Get("/api/data/ctx-ids/:game_id", [&](const httplib::Request& req, httplib::Response& resp) {
+      ApiContextIDs(req, resp); });
+
+  _srv.Get("/api/data/text-ids/:game_id", [&](const httplib::Request& req, httplib::Response& resp) {
+      ApiTextIDs(req, resp); });
+
+  _srv.Get("/api/data/ids/:game_id", [&](const httplib::Request& req, httplib::Response& resp) {
+      ApiIDs(req, resp); });
+
+  _srv.Get("/api/data/types/:game_id", [&](const httplib::Request& req, httplib::Response& resp) {
+      ApiTypes(req, resp); });
+
+  _srv.Get("/api/data/ctx-types/:game_id", [&](const httplib::Request& req, httplib::Response& resp) {
+      ApiContextTypes(req, resp); });
+
+  _srv.Get("/api/data/ctx-attributes/:game_id", [&](const httplib::Request& req, httplib::Response& resp) {
+      ApiContextAttributes(req, resp); });
+
+  _srv.Get("/api/data/type-attributes/:game_id", [&](const httplib::Request& req, httplib::Response& resp) {
+      ApiTypesAttributes(req, resp); });
 
   // PAGES 
   _srv.Get("/", [&](const httplib::Request& req, httplib::Response& resp) {
@@ -326,18 +348,160 @@ void Builder::ApiRunGame(const httplib::Request& req, httplib::Response& resp) {
   std::string game_id = req.path_params.at("game_id");
   auto test_cases = parser::LoadTestCases(game_id);
   std::vector<nlohmann::json> result = nlohmann::json::array();
-  util::Logger()->info("/api/tests/run/" + game_id + ": running test-cases");
-  for (const auto& test_case : test_cases) {
-    std::unique_lock ul(_mtx_games);
-    std::string test_result = test_case.Run(_games.at(game_id));
-    util::Logger()->info("/api/tests/run/" + game_id + ": - result: " + test_result);
-    if (test_result != "") {
-      result.push_back({{"desc", test_case.desc()}, {"success", false}, {"error", test_result}});
-    } else {
-      result.push_back({{"desc", test_case.desc()}, {"success", true}});
+  if (test_cases.empty()) {
+    result.push_back({{"desc", "Run Tests"}, {"success", false}, {"error", "No tests listed"}});
+  }  else {
+    util::Logger()->info("/api/tests/run/" + game_id + ": running test-cases");
+    for (const auto& test_case : test_cases) {
+      std::unique_lock ul(_mtx_games);
+      std::string test_result = test_case.Run(_games.at(game_id));
+      util::Logger()->info("/api/tests/run/" + game_id + ": - result: " + test_result);
+      if (test_result != "") {
+        result.push_back({{"desc", test_case.desc()}, {"success", false}, {"error", test_result}});
+      } else {
+        result.push_back({{"desc", test_case.desc()}, {"success", true}});
+      }
     }
   }
   resp.set_content(nlohmann::json(result).dump(), "application/json");
+  resp.status = 200;
+}
+
+void Builder::ApiContextIDs(const httplib::Request& req, httplib::Response& resp) {
+  std::string game_id = req.path_params.at("game_id");
+  std::unique_lock ul(_mtx_games);
+  
+  // Get context IDs 
+  auto ks = std::views::keys(_games.at(game_id)->contexts());
+  std::vector<std::string> ctx_ids{ks.begin(), ks.end()};
+
+  // Return as JSON
+  resp.set_content(nlohmann::json(ctx_ids).dump(), "application/json");
+  resp.status = 200;
+}
+
+void Builder::ApiTextIDs(const httplib::Request& req, httplib::Response& resp) {
+  std::string game_id = req.path_params.at("game_id");
+  std::unique_lock ul(_mtx_games);
+
+  // Get text IDs 
+  auto ks = std::views::keys(_games.at(game_id)->texts());
+  std::vector<std::string> txt_ids{ks.begin(), ks.end()};
+
+  // return as json
+  resp.set_content(nlohmann::json(txt_ids).dump(), "application/json");
+  resp.status = 200;
+}
+
+void Builder::ApiIDs(const httplib::Request& req, httplib::Response& resp) {
+  std::string game_id = req.path_params.at("game_id");
+  std::unique_lock ul(_mtx_games);
+  
+  // Get text and context IDs 
+  auto txt_ks = std::views::keys(_games.at(game_id)->texts());
+  auto ctx_ks = std::views::keys(_games.at(game_id)->contexts());
+
+  // Join into one vector
+  std::vector<std::string> ids{txt_ks.begin(), txt_ks.end()};
+  ids.insert(ids.end(), ctx_ks.begin(), ctx_ks.end());
+
+  // Return as json
+  resp.set_content(nlohmann::json(ids).dump(), "application/json");
+  resp.status = 200;
+}
+
+void Builder::ApiTypes(const httplib::Request& req, httplib::Response& resp) {
+  std::string game_id = req.path_params.at("game_id");
+  std::unique_lock ul(_mtx_games);
+  
+  // Get context IDs 
+  auto ks = std::views::keys(_games.at(game_id)->contexts());
+  std::vector<std::string> ctx_ids{ks.begin(), ks.end()};
+
+  // Generate types from ids 
+  auto types = parser::GetTypesFromIDs(ctx_ids);
+
+  // Return as json
+  resp.set_content(nlohmann::json(types).dump(), "application/json");
+  resp.status = 200;
+}
+
+void Builder::ApiContextTypes(const httplib::Request& req, httplib::Response& resp) {
+  std::string game_id = req.path_params.at("game_id");
+  std::unique_lock ul(_mtx_games);
+  
+  // Get context IDs 
+  auto ks = std::views::keys(_games.at(game_id)->contexts());
+  std::vector<std::string> ctx_ids{ks.begin(), ks.end()};
+
+  // Generate types from ids 
+  auto types = parser::GetTypesFromIDs(ctx_ids);
+  // Append context-ids to types 
+  types.insert(types.end(), ks.begin(), ks.end());
+
+  // Return as json
+  resp.set_content(nlohmann::json(types).dump(), "application/json");
+  resp.status = 200;
+}
+
+void Builder::ApiContextAttributes(const httplib::Request& req, httplib::Response& resp) {
+  std::string game_id = req.path_params.at("game_id");
+  std::unique_lock ul(_mtx_games);
+
+  std::map<std::string, std::vector<std::string>> ctx_attribute_mapping;
+  for (const auto& it : _games.at(game_id)->contexts()) {
+    auto ks = std::views::keys(it.second->attributes());
+    ctx_attribute_mapping[it.first] = std::vector<std::string>{ks.begin(), ks.end()};
+  }
+
+   // Return as json
+  resp.set_content(nlohmann::json(ctx_attribute_mapping).dump(), "application/json");
+  resp.status = 200;
+}
+
+void Builder::ApiTypesAttributes(const httplib::Request& req, httplib::Response& resp) {
+  std::string game_id = req.path_params.at("game_id");
+  std::unique_lock ul(_mtx_games);
+  // Get all types first
+  auto ks = std::views::keys(_games.at(game_id)->contexts());
+  std::vector<std::string> ctx_ids{ks.begin(), ks.end()};
+  auto types = parser::GetTypesFromIDs(ctx_ids);
+
+  // Create map: type -> common attributes
+  std::map<std::string, std::vector<std::string>> type_attribute_mapping;
+  for (const auto& type : types) {
+    std::vector<std::string> common_attributes;
+    std::vector<std::string> remove;
+    bool init = false;
+    for (const auto& [ctx_id, ctx] : _games.at(game_id)->contexts()) {
+      // Only context of current type
+      if (ctx_id.find(type.substr(1)) == 0) {
+        // In init phase add all attributes
+        if (!init) {
+          for (const auto& [key, attr] : ctx->attributes()) {
+            common_attributes.push_back(key);
+          } 
+          init = true;
+        } else {
+          for (const auto& attr : common_attributes) {
+            if (!ctx->attributes().contains(attr)) {
+              remove.push_back(attr);
+            }
+          }
+        }
+      }
+    }
+    for (const auto& it : remove) {
+      auto el = std::find(common_attributes.begin(), common_attributes.end(), it);
+      if (el != common_attributes.end()) {
+        common_attributes.erase(el);
+      }
+    }
+    type_attribute_mapping[type] = common_attributes;
+  }
+
+  // Return as json
+  resp.set_content(nlohmann::json(type_attribute_mapping).dump(), "application/json");
   resp.status = 200;
 }
 

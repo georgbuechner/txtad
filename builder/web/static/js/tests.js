@@ -57,7 +57,7 @@ async function RunTests(game_id, results_container) {
     }
     const json = await response.json();
     displayTestResults(json, results_container);
-    return json.every(test => test.success === true);
+    return (json.length = 1 && json[0]["desc"] == "Run Tests") || json.every(test => test.success === true);
   } catch (error) {
     container.innerHTML = error.message;
     return false;

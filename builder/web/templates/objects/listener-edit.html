@@ -13,11 +13,13 @@
     <input type="text" class="form-control" placeholder="..." name="event"
       aria-describedby="event" value="{{listener.event}}">
   </div>
-  <div class="input-group mb-3">
-    <span class="input-group-text" id="arguments">Out-Event:</span>
-    <input type="text" class="form-control" placeholder="..." name="arguments" 
-      aria-describedby="arguments" value="{{listener.arguments}}">
-  </div>
+
+  {% set event_id = ctx.id + "_" + listener.id + "arguments" %}
+  {% set event_name = "arguments" %}
+  {% set event_label = "Out-Event" %}
+  {% set events = listener.arguments %}
+  {% include "forms/event-inp.html" %}
+
   <div class="input-group mb-3">
     <span class="input-group-text" id="logic">Logic:</span>
     <input type="text" class="form-control" placeholder="..." name="logic" 

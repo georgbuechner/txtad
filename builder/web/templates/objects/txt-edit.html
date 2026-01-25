@@ -16,14 +16,19 @@
     <span class="input-group-text" id="logic">Logic:</span>
     <input type="text" class="form-control" placeholder="..." name="logic" id="logic" value="{{txt.logic}}">
   </div>
-  <div class="input-group mb-3">
-    <span class="input-group-text" id="one_time_events">One-Time Events:</span>
-    <input type="text" class="form-control" placeholder="..." name="one_time_events" id="one_time_events" value="{{txt.one_time_events}}">
-  </div>
-  <div class="input-group mb-3">
-    <span class="input-group-text" id="permanent_events">Permanent Events:</span>
-    <input type="text" class="form-control" placeholder="..." name="permanent_events" id="permanent_events" value="{{txt.permanent_events}}">
-  </div>
+
+  {% set event_id = path ~ "_" ~ loop.index ~ "one_time_events" %}
+  {% set event_name = "one_time_events" %}
+  {% set event_label = "One-Time Events:" %}
+  {% set events = txt.one_time_events %}
+  {% include "forms/event-inp.html" %}
+
+  {% set event_id = path ~ "_" ~ loop.index ~ "permanent_events" %}
+  {% set event_name = "permanent_events" %}
+  {% set event_label = "Permanent Events:" %}
+  {% set events = txt.permanent_events%}
+  {% include "forms/event-inp.html" %}
+
   <div class="input-group mb-3">
     <span class="input-group-text" id="shared">Shared</span>
     <div class="input-group-text">

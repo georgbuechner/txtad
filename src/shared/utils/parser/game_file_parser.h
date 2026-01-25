@@ -37,7 +37,17 @@ namespace parser {
 
   std::vector<TestCase> LoadTestCases(const std::string& game_id);
 
+  // Helper
   std::string DoThisReplacement(std::string original, std::string ctx_id);
+
+  /**
+   * Extracts types from IDs: 
+   * f.e. [general, rooms/freedom, items/potions/healing] 
+   * => ["*rooms", "*items", "*items/potions"]
+   * @param[in] ids 
+   * @return types: path elements of IDs with prefixed "*"
+   */
+  std::vector<std::string> GetTypesFromIDs(const std::vector<std::string>& ids);
 }
 
 #endif

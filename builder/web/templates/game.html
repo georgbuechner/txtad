@@ -129,11 +129,13 @@
       </div>
       <div class="modal-body">
         <form action="/{{game.name}}/save/settings" method="POST" enctype="multipart/form-data">
-          <div class="input-group mb-3">
-            <span class="input-group-text" id="initial_events">Inital Events:</span>
-            <input type="text" class="form-control" placeholder="text" aria-label="" aria-describedby="id" 
-              id="initial_events" name="initial_events" value="{{game.settings.initial_events}}">
-          </div>
+
+          {% set event_id = "settings_initial_events" %}
+          {% set event_name = "initial_events" %}
+          {% set event_label = "Inital Events:" %}
+          {% set events = game.settings.initial_events %}
+          {% include "forms/event-inp.html" %}
+
           <h4 title="Max allowed entries: 1000">Initial contexts:</h4>
           {% set list_id = "initial_contexts" %}
           {% set list_elements = game.settings.initial_contexts %}
