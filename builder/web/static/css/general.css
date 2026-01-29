@@ -42,3 +42,14 @@ h1 {
   font-style: italic;
   margin-bottom: 2em;
 }
+
+.th_sel {
+  text-decoration-line: underline;
+  text-decoration-color: blue;
+}
+
+.overflow {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}

@@ -20,11 +20,12 @@
   {% set events = listener.arguments %}
   {% include "forms/event-inp.html" %}
 
-  <div class="input-group mb-3">
-    <span class="input-group-text" id="logic">Logic:</span>
-    <input type="text" class="form-control" placeholder="..." name="logic" 
-      aria-describedby="logic" value="{{listener.logic}}">
-  </div>
+  {% set inp_id = ctx.id + "_" + listener.id + "_logic" %}
+  {% set inp_name = "logic" %} 
+  {% set inp_label = "Logic" %} 
+  {% set inp_value = listener.logic %}
+  {% include "forms/free-inp.html" %}
+
   <div class="input-group mb-3">
     <span class="input-group-text" id="context">Context:</span>
     <input type="text" class="form-control" placeholder="..." name="context" 

@@ -320,7 +320,6 @@ function setAttribute(inp) {
   const dot = tmp_attribute.lastIndexOf(".");
   if (dot === -1) {
     console.warn(`setAttribute: invalid attribute id: ${tmp_attribute}`);
-    return null;
     return ["", "", opt, expression];
   }
 
