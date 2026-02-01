@@ -1,3 +1,4 @@
+#include "builder/game/builder_game.h"
 #include "game/game/game.h"
 #include "test.h"
 
@@ -16,7 +17,7 @@ const std::vector<std::string>& Test::checks() const {
 }
 
 // Methods
-Test::_t_test_result Test::Run(Game& game, const std::string& user_id, std::string& res) const {
+Test::_t_test_result Test::Run(BuilderGame& game, const std::string& user_id, std::string& res) const {
   try {
     game.HandleEvent(user_id, _cmd);
   } catch (std::exception& e) {

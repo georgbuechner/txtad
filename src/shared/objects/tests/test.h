@@ -1,11 +1,12 @@
 #ifndef SRC_SHARED_OBJECTS_TESTS_TEST_H_
 #define SRC_SHARED_OBJECTS_TESTS_TEST_H_
 
+#include "builder/game/builder_game.h"
 #include <vector>
 #include <nlohmann/json.hpp>
 #include <string>
 
-class Game;
+class BuilderGame;
 
 class Test {
   public: 
@@ -20,7 +21,7 @@ class Test {
     const std::vector<std::string>& checks() const;
 
     // Methods
-    _t_test_result Run(Game& game, const std::string& user_id, std::string& res) const;
+    _t_test_result Run(BuilderGame& game, const std::string& user_id, std::string& res) const;
   
   private: 
     const std::string _cmd;

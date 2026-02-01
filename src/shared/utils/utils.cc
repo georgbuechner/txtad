@@ -6,6 +6,7 @@
 #include <nlohmann/json.hpp>
 #include <optional>
 #include <random>
+#include <set>
 #include <spdlog/spdlog.h>
 #include <spdlog/common.h>
 #include <spdlog/sinks/daily_file_sink.h>
@@ -257,4 +258,19 @@ std::string util::GetPage(const std::string& path) {
   // Delete file-end marker
   page.pop_back();
   return page;
+}
+
+std::vector<std::string> util::GetSubpaths(const std::vector<std::string>& ids) {
+  std::set<std::string> sub_paths = {}; 
+  for (const auto& id : ids) {
+    std::string path = id;
+    while(path.find("/") != std::string::npos) {
+      path = path.substr(0, path.rfind("/"));
+      if (sub_paths.contains(path)) 
+        break;
+      sub_paths.insert(path);
+    } 
+  }
+  std::vector<std::string> vec{sub_paths.begin(), sub_paths.end()};
+  return vec;
 }

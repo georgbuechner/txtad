@@ -68,7 +68,7 @@ TEST_CASE("Test GetDirsFromIDs", "[parser]") {
   std::vector<std::string> ids = {
     "general", "rooms/freedom", "rooms/darkness", "items/potions/healing", "items/potions/poison"
   };
-  std::vector<std::string> expected_types = { "*rooms", "*items", "*items/potions" };
+  std::vector<std::string> expected_types = { "*", "*rooms", "*items", "*items/potions" };
   auto types = parser::GetTypesFromIDs(ids);
   
   REQUIRE(types.size() == expected_types.size());

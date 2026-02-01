@@ -7,7 +7,7 @@
 #include "jinja2cpp/template.h"
 #include "jinja2cpp/template_env.h"
 #include "jinja2cpp/value.h"
-#include "game/game/game.h"
+#include "builder/game/builder_game.h"
 #include "jinja2cpp/reflected_value.h"
 #include "shared/objects/context/context.h"
 #include "shared/objects/settings/settings.h"
@@ -127,16 +127,16 @@ namespace jinja2 {
 }
 
 namespace jinja2 {
-  template<> struct TypeReflection<PtrView<Game>> : TypeReflected<PtrView<Game>> {
+  template<> struct TypeReflection<PtrView<BuilderGame>> : TypeReflected<PtrView<BuilderGame>> {
     static auto& GetAccessors() {
       static std::unordered_map<std::string, FieldAccessor> acc = {
-        {"settings", [](const PtrView<Game>& v){ return (v.ptr) ? jinja2::Reflect(v.ptr->settings()) : Value{}; }},
-        {"name", [](const PtrView<Game>& v){ return (v.ptr) ? v.ptr->name() : Value{}; }},
-        {"path", [](const PtrView<Game>& v){ return (v.ptr) ? v.ptr->path() : Value{}; }},
-        {"contexts", [](const PtrView<Game>& v){ return (v.ptr) ? _jinja::Map(v.ptr->contexts()) : Value{}; }},
-        {"texts", [](const PtrView<Game>& v){ return (v.ptr) ? _jinja::Map(v.ptr->texts()) : Value{}; }},
-        {"description", [](const PtrView<Game>& v){ return (v.ptr) ? v.ptr->builder_settings()._description : Value{}; }},
-        {"running", [](const PtrView<Game>& v){ return (v.ptr) ? v.ptr->running() : Value{}; }},
+        {"settings", [](const PtrView<BuilderGame>& v){ return (v.ptr) ? jinja2::Reflect(v.ptr->settings()) : Value{}; }},
+        {"name", [](const PtrView<BuilderGame>& v){ return (v.ptr) ? v.ptr->name() : Value{}; }},
+        {"path", [](const PtrView<BuilderGame>& v){ return (v.ptr) ? v.ptr->path() : Value{}; }},
+        {"contexts", [](const PtrView<BuilderGame>& v){ return (v.ptr) ? _jinja::Map(v.ptr->contexts()) : Value{}; }},
+        {"texts", [](const PtrView<BuilderGame>& v){ return (v.ptr) ? _jinja::Map(v.ptr->texts()) : Value{}; }},
+        {"description", [](const PtrView<BuilderGame>& v){ return (v.ptr) ? v.ptr->builder_settings()._description : Value{}; }},
+        {"running", [](const PtrView<BuilderGame>& v){ return (v.ptr) ? v.ptr->running() : Value{}; }},
       };
       return acc;
     }

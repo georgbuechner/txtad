@@ -1,8 +1,11 @@
 #include "builder/server/server.h" 
+#include "builder/game/builder_game.h"
 #include "builder/utils/defines.h"
+#include "builder/utils/http_helpers.h"
 #include "builder/utils/jinja_helpers.h"
 #include "game/utils/defines.h"
 #include "shared/utils/parser/game_file_parser.h"
+#include "shared/utils/parser/test_file_parser.h"
 #include "shared/utils/utils.h"
 #include <exception>
 #include <ranges>
@@ -13,7 +16,7 @@ using namespace std::chrono_literals;
 
 Builder::Builder(int port, std::string cli_address, int cli_port) : _cli(cli_address, cli_port), _env(builder::TEMPLATE_PATH) {
   // init games
-  _games = parser::InitGames(txtad::GAMES_PATH);
+  _games = parser::InitGames<BuilderGame>(txtad::GAMES_PATH);
 
   // init game-server client
   _cli.set_connection_timeout(0, 200000);
@@ -31,7 +34,7 @@ void Builder::Start() {
     try {
       std::rethrow_exception(ep);
     } catch (std::exception &e) {
-      util::Logger()->error(e.what());
+      util::Logger()->error(fmt::format("path: {}, error: {}", req.path, e.what()));
       resp.set_redirect(_http::Referer(req, e.what()), 303);
     } catch (...) { // See the following NOTE
       util::Logger()->error("unkwon Error (500)");
@@ -87,6 +90,12 @@ void Builder::Start() {
 
   _srv.Get("/api/data/type-attributes/:game_id", [&](const httplib::Request& req, httplib::Response& resp) {
       ApiTypesAttributes(req, resp); });
+
+  _srv.Get("/api/ctx/references/:game_id", [&](const httplib::Request& req, httplib::Response& resp) {
+      ApiCtxReferences(req, resp); });
+
+  _srv.Get("/api/txt/references/:game_id", [&](const httplib::Request& req, httplib::Response& resp) {
+      ApiTxtReferences(req, resp); });
 
   // PAGES 
   _srv.Get("/", [&](const httplib::Request& req, httplib::Response& resp) {
@@ -152,7 +161,9 @@ void Builder::Start() {
   _srv.Post("/:game_id/remove/txt", [&](const httplib::Request& req, httplib::Response& resp) {
       RemoveText(req, resp); });
   _srv.Post("/:game_id/remove/ctx", [&](const httplib::Request& req, httplib::Response& resp) {
-      RemoveText(req, resp); });
+      RemoveContext(req, resp); });
+  _srv.Post("/:game_id/remove/dir", [&](const httplib::Request& req, httplib::Response& resp) {
+      RemoveDirectory(req, resp); });
 
   _srv.Post("/:game_id/restore", [&](const httplib::Request& req, httplib::Response& resp) {
       RestoreGame(req, resp); });
@@ -222,26 +233,30 @@ jinja2::ValuesMap Builder::CreateParams(const httplib::Request& req, std::string
   if (req.get_param_value_count("msg") > 0) {
     params.emplace("msg", req.get_param_value("msg"));
   }
+  if (req.get_param_value_count("open") > 0) {
+    params.emplace("open", req.get_param_value("open"));
+  }
 
   // Add Game Information
   if (game_id != "" && _games.contains(game_id)) {
     std::string path = (req.has_param("path")) ? util::Strip(req.get_param_value("path"), '/') : "";
+    const auto& game = _games.at(game_id);
     util::Logger()->debug(fmt::format("Builder::create_params. Got path: {}", path));
-    params.emplace("game", jinja2::Reflect(PtrView<Game>{_games.at(game_id).get()}));
-    params.emplace("all_paths", _jinja::Map(parser::GetPaths(txtad::GAMES_PATH + game_id)));
-    params.emplace("selections", _jinja::Map(parser::GetPaths(txtad::GAMES_PATH + game_id, path)));
+    params.emplace("game", jinja2::Reflect(PtrView<BuilderGame>{game.get()}));
+    params.emplace("all_paths", _jinja::Map(game->GetPaths()));
+    params.emplace("selections", _jinja::Map(game->GetPaths(path)));
     if (req.has_param("type") && builder::REVERSE_FILE_TYPE_MAP.contains(type)) {
       auto t_type = builder::REVERSE_FILE_TYPE_MAP.at(type);
       if (t_type == builder::FileType::CTX) {
-        params.emplace("ctx", jinja2::Reflect(PtrView<Context>{_games.at(game_id)->contexts().at(path).get()}));
+        params.emplace("ctx", jinja2::Reflect(PtrView<Context>{game->contexts().at(path).get()}));
       } else if (t_type == builder::FileType::TXT) {
-        params.emplace("texts", jinja2::Reflect(PtrView<Text>{_games.at(game_id)->texts().at(path).get()}));
+        params.emplace("texts", jinja2::Reflect(PtrView<Text>{game->texts().at(path).get()}));
       }
     }
     params.emplace("test_cases", _jinja::Vec(test_cases));
     params.emplace("path", path);
     params.emplace("back", (path.rfind("/") == std::string::npos) ? "" : path.substr(0, path.rfind("/")));
-    params.emplace("modified", _jinja::Vec(_games.at(game_id)->modified()));
+    params.emplace("modified", _jinja::Vec(game->modified()));
   }
   util::Logger()->debug(fmt::format("Builder::create_params. done"));
   return params;
@@ -346,7 +361,7 @@ void Builder::ApiStopGame(const httplib::Request& req, httplib::Response& resp) 
 void Builder::ApiRunGame(const httplib::Request& req, httplib::Response& resp) {
   util::Logger()->info("/api/tests/run/:game_id");
   std::string game_id = req.path_params.at("game_id");
-  auto test_cases = parser::LoadTestCases(game_id);
+  auto test_cases = test_parser::LoadTestCases(game_id);
   std::vector<nlohmann::json> result = nlohmann::json::array();
   if (test_cases.empty()) {
     result.push_back({{"desc", "Run Tests"}, {"success", false}, {"error", "No tests listed"}});
@@ -505,6 +520,26 @@ void Builder::ApiTypesAttributes(const httplib::Request& req, httplib::Response&
   resp.status = 200;
 }
 
+void Builder::ApiCtxReferences(const httplib::Request& req, httplib::Response& resp) {
+  std::string game_id = req.path_params.at("game_id");
+  if (!req.has_param("path")) {
+    throw std::invalid_argument("Missing query-parameter: (api-ctx-references) path");
+  } 
+  nlohmann::json references = _games.at(game_id)->GetCtxReferences(req.get_param_value("path"));
+  resp.status = 200;
+  resp.set_content(references.dump(), "application/json");
+}
+
+void Builder::ApiTxtReferences(const httplib::Request& req, httplib::Response& resp) {
+  std::string game_id = req.path_params.at("game_id");
+  if (!req.has_param("path")) {
+    throw std::invalid_argument("Missing query-parameter: (api-txt-references) path");
+  } 
+  nlohmann::json references = _games.at(game_id)->GetTextReferences(req.get_param_value("path"));
+  resp.status = 200;
+  resp.set_content(references.dump(), "application/json");
+}
+
 // PAGES 
 
 void Builder::PagesGame(const httplib::Request& req, httplib::Response& resp) {
@@ -518,7 +553,7 @@ void Builder::PagesGame(const httplib::Request& req, httplib::Response& resp) {
     } else if (type == "TXT") {
       LoadTemplate(resp, "txt-edit.html", CreateParams(req, game_id, type));
     } else {
-      auto test_cases = parser::LoadTestCases(game_id);
+      auto test_cases = test_parser::LoadTestCases(game_id);
       if (test_cases.size() == 0) {
         test_cases.push_back(TestCase());
       }
@@ -712,7 +747,7 @@ void Builder::SaveGame(const httplib::Request& req, httplib::Response& resp) {
   try {
     _games.at(game_id)->StoreGame();
     _games.erase(game_id);
-    _games[game_id] = std::make_shared<Game>(game_path, game_id);
+    _games[game_id] = std::make_shared<BuilderGame>(game_path, game_id);
     resp.status = 200;
   } catch (std::exception& e) {
     resp.set_content("Failed storing game: " + std::string(e.what()), "text/txt");
@@ -808,13 +843,37 @@ void Builder::RemoveTextElement(const httplib::Request& req, httplib::Response& 
   }
 }
 
+void Builder::RemoveText(const httplib::Request& req, httplib::Response& resp) {
+  std::string game_id = req.path_params.at("game_id");
+  if (!req.has_param("path")) {
+    throw std::invalid_argument("Missing query-parameter: (remove-ctx) path");
+  } 
+  const std::string txt_id = req.get_param_value("path");
+  _games.at(game_id)->RemoveText(txt_id);
+  resp.set_redirect(_http::Referer(req, "Successfully removed text: " + txt_id), 303);
+}
+
+void Builder::RemoveContext(const httplib::Request& req, httplib::Response& resp) {
+  std::string game_id = req.path_params.at("game_id");
+  if (!req.has_param("path")) {
+    throw std::invalid_argument("Missing query-parameter: (remove-ctx) path");
+  } 
+  const std::string ctx_id = req.get_param_value("path");
+  _games.at(game_id)->RemoveContext(ctx_id);
+  resp.set_redirect(_http::Referer(req, "Successfully removed context: " + ctx_id), 303);
+}
+
+void Builder::RemoveDirectory(const httplib::Request& req, httplib::Response& resp) {
+  resp.set_redirect(_http::Referer(req, "RemoveDirectory not implemented."));
+}
+
 void Builder::RestoreGame(const httplib::Request& req, httplib::Response& resp) {
   std::string game_id = req.path_params.at("game_id");
   std::unique_lock ul(_mtx_games);
   std::string game_path = _games.at(game_id)->path();
   try {
     _games.erase(game_id);
-    _games[game_id] = std::make_shared<Game>(game_path, game_id);
+    _games[game_id] = std::make_shared<BuilderGame>(game_path, game_id);
     resp.status = 200;
   } catch (std::exception& e) {
     resp.set_content("Failed restoring old game state: " + std::string(e.what()), "text/txt");

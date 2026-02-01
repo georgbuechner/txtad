@@ -119,6 +119,8 @@ namespace util
 
   std::string GetPage(const std::string& path);
 
+  std::vector<std::string> GetSubpaths(const std::vector<std::string>& ids);
+
   class TmpPath {
     public: 
       TmpPath(const std::vector<std::string>& dirs = {}) : _path("data/tmp/" + CreateRandomString(8)) {

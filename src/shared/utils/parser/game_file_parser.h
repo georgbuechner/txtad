@@ -9,8 +9,6 @@
 #include <memory>
 
 class Listener;
-class Game;
-class TestCase;
 class Text;
 
 namespace parser {
@@ -18,7 +16,19 @@ namespace parser {
 
   std::map<std::string, builder::FileType> GetPaths(const std::string& game_path);
   std::map<std::string, builder::FileType> GetPaths(const std::string& game_path, const std::string path);
-  std::map<std::string, std::shared_ptr<Game>> InitGames(const std::string& path);
+
+  template <class G>
+  std::map<std::string, std::shared_ptr<G>> InitGames(const std::string& path) {
+    std::map<std::string, std::shared_ptr<G>> games;
+    for (const auto& dir : std::filesystem::directory_iterator(path)) {
+      const std::string filename = dir.path().filename();
+      if (filename.front() == '.')
+        continue;
+      games[filename] = std::make_shared<G>(dir.path(), filename);
+      util::Logger()->info("MAIN:InitGames: Created game *{}* @{}", filename, dir.path().string());
+    }
+    return games;
+  }
 
   ExecListeners LoadGameFiles(const std::string& path, 
       std::map<std::string, std::shared_ptr<Context>>& contexts, 
@@ -34,8 +44,6 @@ namespace parser {
   std::shared_ptr<Text> CreateTextFromPath(std::filesystem::path path, size_t id_path_offset, 
       std::string& txt_id);
   std::optional<nlohmann::json> GetContextListener(const std::filesystem::path& path);
-
-  std::vector<TestCase> LoadTestCases(const std::string& game_id);
 
   // Helper
   std::string DoThisReplacement(std::string original, std::string ctx_id);

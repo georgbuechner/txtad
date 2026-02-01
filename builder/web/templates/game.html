@@ -55,9 +55,11 @@
     <div class="accordion-item">
       <div class="accordion-header d-flex justify-content-between align-items-center" 
           id="flush-heading{{loop.index}}">
-        <form action="/{{game.name}}/remove/{{type|lower}}?path={{path}}/{{s}}" method="POST">
-          <button type="submit" class="btn btn-light btn-sm text-danger">X</button>
-        </form>
+        <button 
+          type="button" 
+          class="btn btn-light btn-sm text-danger"
+          onclick="RemoveElement('{{game.name}}', '{{type|lower}}', '{{path}}/{{s}}');"
+        >X</button>
         <span>
           <a 
             class="{{type}} flex-grow-1" style="margin-left: 1em;"
@@ -143,6 +145,32 @@
           {% include "forms/str_list.html" %}
           <br><br>
           <button type="submit" class="btn btn-primary">save</button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal fade" id="shareRemoveElemModal" tabindex="-1" aria-labelledby="#shareRemoveElemModal" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="shareRemoveElemModalLabel">Remove</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <p id="references_content"></p>
+        <ul id="references-list" class="mb-2 list-group list-group-flush"></ul>
+        <p id="remove_element_notice" class="text-danger mb-2">Can't be removed unitl all references are removed.</p>
+        <form id="remove_element_form" action="/{{game.name}}/remove/" method="POST">
+          <button 
+            type="submit" 
+            id="remove_element_button"
+            class="btn btn-primary" 
+            disabled
+          >
+            Remove
+          </button>
         </form>
       </div>
     </div>

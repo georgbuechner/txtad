@@ -3,7 +3,7 @@
 
 #include "builder/creator/manager.h"
 #include "builder/utils/jinja_helpers.h"
-#include "game/game/game.h"
+#include "builder/game/builder_game.h"
 #include "httplib.h"
 #include "shared/objects/tests/test_case.h"
 #include <memory>
@@ -25,7 +25,7 @@ class Builder {
     CreatorManager _manager;
 
     std::shared_mutex _mtx_games;
-    std::map<std::string, std::shared_ptr<Game>> _games;
+    std::map<std::string, std::shared_ptr<BuilderGame>> _games;
 
     // methods 
     void LoadTemplate(httplib::Response& resp, const std::string& page, 
@@ -60,6 +60,9 @@ class Builder {
     ///< map of types and the attributes that belong to ALL contexts of this type
     void ApiTypesAttributes(const httplib::Request& req, httplib::Response& resp);
 
+    void ApiCtxReferences(const httplib::Request& req, httplib::Response& resp);
+    void ApiTxtReferences(const httplib::Request& req, httplib::Response& resp);
+
     // PAGES 
     void PagesGame(const httplib::Request& req, httplib::Response& resp);
 
@@ -79,9 +82,9 @@ class Builder {
     void RemoveDescriptionElement(const httplib::Request& req, httplib::Response& resp);
     void RemoveTextElement(const httplib::Request& req, httplib::Response& resp);
 
-    void RemoveText(const httplib::Request& req, httplib::Response& resp) {}
-    void RemoveContext(const httplib::Request& req, httplib::Response& resp) {}
-    void RemoveDirectory(const httplib::Request& req, httplib::Response& resp) {}
+    void RemoveText(const httplib::Request& req, httplib::Response& resp);
+    void RemoveContext(const httplib::Request& req, httplib::Response& resp);
+    void RemoveDirectory(const httplib::Request& req, httplib::Response& resp);
 
     void RestoreGame(const httplib::Request& req, httplib::Response& resp);
 

@@ -1,8 +1,10 @@
+#include "builder/game/builder_game.h"
 #include "game/game/game.h"
 #include "game/utils/defines.h"
 #include "shared/utils/defines.h"
 #include "shared/utils/parser/expression_parser.h"
 #include "shared/utils/parser/game_file_parser.h"
+#include "shared/utils/parser/test_file_parser.h"
 #include "shared/utils/utils.h"
 #include "shared/objects/tests/test_case.h"
 #include <catch2/catch_test_macros.hpp>
@@ -699,10 +701,10 @@ TEST_CASE("Test game-tests", "[game]") {
   TestGameWrapper test_game_wrapper(GAME_NAME, settings, {{"", {ctx_general}}, {"rooms", {ctx_room_1, 
       ctx_room_2, ctx_room_3}}}, {{"texts/start", txt_text_1}}, tests);
 
-  std::shared_ptr<Game> game = std::make_shared<Game>(GAME_PATH, GAME_NAME);
+  std::shared_ptr<BuilderGame> game = std::make_shared<BuilderGame>(GAME_PATH, GAME_NAME);
 
   // Run tests
-  auto test_cases = parser::LoadTestCases(GAME_NAME); 
+  auto test_cases = test_parser::LoadTestCases(GAME_NAME); 
   for (const auto& test_case : test_cases) {
     REQUIRE(test_case.Run(game) == "");
   }
@@ -758,7 +760,7 @@ TEST_CASE("Store game", "[game]") {
   const std::string GAME_PATH = txtad::GAMES_PATH + GAME_NAME;
   TestGameWrapper test_game_wrapper(GAME_NAME, settings, {{"", {ctx_general}}, {"rooms", {ctx_room_1, ctx_room_2}}}, 
       {{"texts/start", txt_text_1}});
-  Game game(GAME_PATH, GAME_NAME);
+  BuilderGame game(GAME_PATH, GAME_NAME);
 
   // Store game 
   game.StoreGame(tmp_path.get());

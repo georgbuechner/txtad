@@ -135,7 +135,7 @@ void Context::RemoveListener(const std::string& id) {
 std::vector<std::weak_ptr<Context>> Context::LinkedContexts(std::string type) {
   std::vector<std::weak_ptr<Context>> linked_contexts;
   for (const auto& it : _event_manager->listeners()) {
-    if (type == "" || it.second->ctx_id().find(type) != std::string::npos)
+    if (type == "" || it.second->ctx_id().find(type) == 0)
       linked_contexts.push_back(it.second->ctx());
   }
   return linked_contexts;

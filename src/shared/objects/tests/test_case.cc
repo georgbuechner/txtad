@@ -1,9 +1,10 @@
-#include "game/game/game.h"
+#include "builder/game/builder_game.h"
 #include "game/utils/defines.h"
 #include "shared/utils/utils.h"
 #include <exception>
 #include <vector>
 #include "shared/objects/tests/test_case.h"
+#include "builder/game/builder_game.h"
 
 
 TestCase::TestCase() : _desc(""), _tests(std::vector<Test>()) {
@@ -26,7 +27,7 @@ const std::vector<Test>& TestCase::tests() const {
 
 // methods 
 
-std::string TestCase::Run(std::shared_ptr<Game> game) const {
+std::string TestCase::Run(std::shared_ptr<BuilderGame> game) const {
   static const std::string user_id = "XX";
   std::string res = "";
 
@@ -34,7 +35,7 @@ std::string TestCase::Run(std::shared_ptr<Game> game) const {
   game->StoreGame(tmp_path.get());
 
   try {
-    Game tmp_game(tmp_path.get(), "tmp_game");
+    BuilderGame tmp_game(tmp_path.get(), "tmp_game");
     tmp_game.set_msg_fn([&res](const std::string&, const std::string& msg) { res = msg; });
 
     // Create test-user 

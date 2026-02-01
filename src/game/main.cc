@@ -31,7 +31,7 @@ int main() {
   });
 
   // Create games
-  auto games = parser::InitGames(txtad::GAMES_PATH);
+  auto games = parser::InitGames<Game>(txtad::GAMES_PATH);
   for (auto& [_, game]: games) {
     game->set_running(true);
   }

@@ -3,6 +3,7 @@
 
 #include <nlohmann/json.hpp>
 #include <vector>
+#include "builder/game/builder_game.h"
 #include "shared/objects/tests/test.h"
 
 class game;
@@ -21,7 +22,7 @@ class TestCase {
     /** 
      * Initial connection (f.e. "#new_connection" not automatically run!
      */
-    std::string Run(std::shared_ptr<Game> game) const;
+    std::string Run(std::shared_ptr<BuilderGame> game) const;
 
   private: 
     const std::string _desc;

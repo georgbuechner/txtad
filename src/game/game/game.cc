@@ -8,7 +8,6 @@
 #include "shared/utils/utils.h"
 #include <exception>
 #include <fmt/core.h>
-#include <filesystem>
 #include <functional>
 #include <memory>
 #include <mutex>
@@ -17,13 +16,10 @@
 #include <stdexcept>
 #include <string>
 
-namespace fs = std::filesystem;
-
 Game::MsgFn Game::_global_cout= nullptr;
 
 Game::Game(std::string path, std::string name) : _cout(_global_cout), _path(path), _name(name), 
-    _cur_user(nullptr), _running(false), _modified(std::vector<std::string>()),
-    _parser(std::bind(&Game::t_substitue_fn, this, std::placeholders::_1)),
+    _cur_user(nullptr), _running(false), _parser(std::bind(&Game::t_substitue_fn, this, std::placeholders::_1)),
     _settings(*util::LoadJsonFromDisc(_path + "/" + txtad::GAME_SETTINGS)),
     _builder_settings(util::LoadJsonFromDisc(_path + "/" + txtad::BUILDER_EXTENSION).value_or(nlohmann::json::object())) {
   util::SetUpLogger(txtad::FILES_PATH, _name, util::Logger()->level());
@@ -103,7 +99,6 @@ const builder::Settings& Game::builder_settings() const { return _builder_settin
 const std::shared_ptr<User>& Game::cur_user() { return _cur_user; }
 bool Game::running() const { return _running; }
 const ExpressionParser& Game::parser() const { return _parser; }
-const std::vector<std::string>& Game::modified() const { return _modified; }
 
 // setter
 void Game::set_global_msg_fn(Game::MsgFn fn) { _global_cout = fn; }
@@ -145,14 +140,6 @@ void Game::HandleEvent(const std::string& user_id, const std::string& event) {
         user_id);
     }
   }
-}
-
-void Game::ResetModified() {
-  _modified.clear();
-}
-
-void Game::AddModified(std::string mod) {
-  _modified.push_back(mod);
 }
 
 std::shared_ptr<User> Game::CreateNewUser(std::string user_id) {
@@ -419,60 +406,4 @@ std::string Game::GetText(std::string event, std::string args) {
     }
   }
   return txt;
-}
-
-void Game::StoreGame(std::string path) {
-  path = (path != "") ? path : _path;
-  util::WriteJsonToDisc(path + "/" + txtad::GAME_SETTINGS, _settings.ToJson());
-  util::WriteJsonToDisc(path + "/" + txtad::BUILDER_EXTENSION, _settings.ToJson());
-  for (const auto& ctx : _contexts) {
-    fs::path p(path + "/" + txtad::GAME_FILES + ctx.first + txtad::CONTEXT_EXTENSION);
-    fs::create_directories(p.parent_path());
-    util::WriteJsonToDisc(p.string(), ctx.second->json());
-  }
-  for (const auto& txt : _texts) {
-    fs::path p(path + "/" + txtad::GAME_FILES + txt.first + txtad::TEXT_EXTENSION);
-    fs::create_directories(p.parent_path());
-    util::WriteJsonToDisc(p.string(), txt.second->json());
-  }
-}
-
-void Game::CreateListenerInPlace(const std::string& listener_id, const nlohmann::json& json_listener, 
-        const std::string& ctx_id, bool added) {
-  if (!_contexts.contains(ctx_id)) {
-    throw std::invalid_argument("Game::CreateListenerInPlace: context " + ctx_id + " not found!");
-  }
-  // Create listener from json
-  auto new_listener = parser::CreateListenerFromJson(json_listener, ctx_id, _contexts);
-  // If contains exec (direct execution), set exec function
-  if (json_listener.contains("exec")) {
-    new_listener->set_fn(std::bind(&Game::h_exec, this, std::placeholders::_1, std::placeholders::_2));
-  }
-  _contexts.at(ctx_id)->AddListener(new_listener);
-  if (listener_id != new_listener->id()) {
-    _contexts.at(ctx_id)->RemoveListener(listener_id);
-    AddModified(fmt::format("Removed listener {} for ctx: {}", listener_id, ctx_id));
-    AddModified(fmt::format("Added listener {} for ctx: {}", new_listener->id(), ctx_id));
-  } else if (added) {
-    AddModified(fmt::format("Added listener {} for ctx: {}", new_listener->id(), ctx_id));
-  } else {
-    AddModified(fmt::format("Updated listener {} for ctx: {}", listener_id, ctx_id));
-  }
-}
-
-void Game::RemoveListener(const std::string& listener_id, const std::string& ctx_id) {
-  if (!_contexts.contains(ctx_id)) {
-    throw std::invalid_argument("Game::CreateListenerInPlace: context " + ctx_id + " not found!");
-  }
-  _contexts.at(ctx_id)->RemoveListener(listener_id);
-}
-
-void Game::UpdateText(std::string path, std::shared_ptr<Text> txt) {
-  if (txt) {
-    _texts[path] = txt;
-  } else if (_texts.contains(path)) {
-    _texts.erase(path);
-  } else {
-    util::Logger()->warn("Game::UpdateText. Updated text {} empty but also did not exist.", path);
-  }
 }

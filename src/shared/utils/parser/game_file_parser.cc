@@ -1,34 +1,22 @@
 #include "builder/utils/defines.h"
-#include "game/game/game.h"
 #include "game/utils/defines.h"
 #include "shared/objects/text/text.h"
 #include "shared/objects/tests/test_case.h"
 #include "shared/utils/eventmanager/listener.h"
 #include "shared/utils/parser/game_file_parser.h"
 #include "shared/utils/utils.h"
+#include <algorithm>
 #include <cstddef>
 #include <exception>
 #include <filesystem>
+#include <iterator>
 #include <memory>
 #include <optional>
-#include <set>
 #include <stdexcept>
 #include <string>
 #include <vector>
 
 namespace fs = std::filesystem;
-
-std::map<std::string, std::shared_ptr<Game>> parser::InitGames(const std::string& path) {
-  std::map<std::string, std::shared_ptr<Game>> games;
-  for (const auto& dir : std::filesystem::directory_iterator(path)) {
-    const std::string filename = dir.path().filename();
-    if (filename.front() == '.')
-      continue;
-    games[filename] = std::make_shared<Game>(dir.path(), filename);
-    util::Logger()->info("MAIN:InitGames: Created game *{}* @{}", filename, dir.path().string());
-  }
-  return games;
-}
 
 std::map<std::string, builder::FileType> parser::GetPaths(const std::string& game_path) {
   const std::string game_files_path = game_path + "/" + txtad::GAME_FILES;
@@ -219,32 +207,13 @@ std::optional<nlohmann::json> parser::GetContextListener(const std::filesystem::
   return std::nullopt;
 }
 
-std::vector<TestCase> parser::LoadTestCases(const std::string& game_id) {
-  util::Logger()->info("parser:LoadTestCases: path {}", txtad::GAMES_PATH + game_id + "/" + txtad::GAME_TESTS);
-  std::vector<TestCase> test_cases;
-  if (auto j_test_cases = util::LoadJsonFromDisc(txtad::GAMES_PATH + game_id + "/" + txtad::GAME_TESTS)) {
-    for (const auto& test_case : j_test_cases->get<std::vector<nlohmann::json>>()) {
-      test_cases.push_back(TestCase(test_case));
-    }
-  }
-  return test_cases;
-}
-
 std::string parser::DoThisReplacement(std::string original, std::string ctx_id) {
   return util::ReplaceAll(util::ReplaceAll(original, "_.", ctx_id + "."), "_->", ctx_id + "->");
 }
 
 std::vector<std::string> parser::GetTypesFromIDs(const std::vector<std::string>& ids) {
-  std::set<std::string> dirs = {"*"}; 
-  for (const auto& id : ids) {
-    std::string path = id;
-    while(path.find("/") != std::string::npos) {
-      path = path.substr(0, path.rfind("/"));
-      if (dirs.contains(path)) 
-        break;
-      dirs.insert("*" + path);
-    } 
-  }
-  std::vector<std::string> vec{dirs.begin(), dirs.end()};
+  auto elements = util::GetSubpaths(ids);
+  std::vector<std::string> vec = {"*"};
+  std::transform(elements.begin(), elements.end(), std::back_inserter(vec), [](const auto& e) { return "*" + e; });
   return vec;
 }

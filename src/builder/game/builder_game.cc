@@ -1,0 +1,213 @@
+#include "builder/game/builder_game.h"
+#include <filesystem>
+#include <format>
+#include "builder/utils/defines.h"
+#include "game/utils/defines.h"
+#include "shared/utils/parser/game_file_parser.h"
+#include "shared/utils/utils.h"
+
+namespace fs = std::filesystem;
+
+// getter
+const std::vector<std::string>& BuilderGame::modified() const { return _modified; }
+
+// methods
+
+void BuilderGame::ResetModified() {
+  _modified.clear();
+}
+
+void BuilderGame::AddModified(std::string mod) {
+  _modified.push_back(mod);
+}
+
+void BuilderGame::StoreGame(std::string path) {
+  path = (path != "") ? path : _path;
+  util::WriteJsonToDisc(path + "/" + txtad::GAME_SETTINGS, _settings.ToJson());
+  util::WriteJsonToDisc(path + "/" + txtad::BUILDER_EXTENSION, _settings.ToJson());
+  // Remove everything first
+  for (const auto& entry : std::filesystem::directory_iterator(path + "/" + txtad::GAME_FILES)) 
+    std::filesystem::remove_all(entry.path());
+  // Save current state
+  for (const auto& ctx : _contexts) {
+    fs::path p(path + "/" + txtad::GAME_FILES + ctx.first + txtad::CONTEXT_EXTENSION);
+    fs::create_directories(p.parent_path());
+    util::WriteJsonToDisc(p.string(), ctx.second->json());
+  }
+  for (const auto& txt : _texts) {
+    fs::path p(path + "/" + txtad::GAME_FILES + txt.first + txtad::TEXT_EXTENSION);
+    fs::create_directories(p.parent_path());
+    util::WriteJsonToDisc(p.string(), txt.second->json());
+  }
+}
+
+void BuilderGame::CreateListenerInPlace(const std::string& listener_id, const nlohmann::json& json_listener, 
+        const std::string& ctx_id, bool added) {
+  if (!_contexts.contains(ctx_id)) {
+    throw std::invalid_argument("Game::CreateListenerInPlace: context " + ctx_id + " not found!");
+  }
+  // Create listener from json
+  auto new_listener = parser::CreateListenerFromJson(json_listener, ctx_id, _contexts);
+  // If contains exec (direct execution), set exec function
+  if (json_listener.contains("exec")) {
+    new_listener->set_fn(std::bind(&BuilderGame::h_exec, this, std::placeholders::_1, std::placeholders::_2));
+  }
+  _contexts.at(ctx_id)->AddListener(new_listener);
+  if (listener_id != new_listener->id()) {
+    _contexts.at(ctx_id)->RemoveListener(listener_id);
+    AddModified(fmt::format("Removed listener {} for ctx: {}", listener_id, ctx_id));
+    AddModified(fmt::format("Added listener {} for ctx: {}", new_listener->id(), ctx_id));
+  } else if (added) {
+    AddModified(fmt::format("Added listener {} for ctx: {}", new_listener->id(), ctx_id));
+  } else {
+    AddModified(fmt::format("Updated listener {} for ctx: {}", listener_id, ctx_id));
+  }
+}
+
+void BuilderGame::RemoveListener(const std::string& listener_id, const std::string& ctx_id) {
+  if (!_contexts.contains(ctx_id)) {
+    throw std::invalid_argument("Game::CreateListenerInPlace: context " + ctx_id + " not found!");
+  }
+  _contexts.at(ctx_id)->RemoveListener(listener_id);
+}
+
+void BuilderGame::RemoveContext(const std::string& ctx_id) {
+  if (!_contexts.contains(ctx_id)) {
+    throw std::invalid_argument("Game::RemoveContext: context " + ctx_id + " not found!");
+  }
+  _contexts.erase(ctx_id);
+  AddModified(fmt::format("Removed ctx {}.", ctx_id));
+}
+
+void BuilderGame::RemoveText(const std::string& txt_id) {
+  if (!_texts.contains(txt_id)) {
+    throw std::invalid_argument("Game::RemoveText: text " + txt_id + " not found!");
+  }
+  _texts.erase(txt_id);
+  AddModified(fmt::format("Removed txt {}.", txt_id));
+}
+
+void BuilderGame::UpdateText(std::string path, std::shared_ptr<Text> txt) {
+  if (txt) {
+    _texts[path] = txt;
+  } else if (_texts.contains(path)) {
+    _texts.erase(path);
+  } else {
+    util::Logger()->warn("Game::UpdateText. Updated text {} empty but also did not exist.", path);
+  }
+}
+
+std::vector<std::string> BuilderGame::GetCtxReferences(const std::string& ctx_id) const {
+  std::vector<std::string> refs;
+  
+  // settings
+  AddRefsFoundInEvents(refs, ctx_id, _settings.initial_events(), "SETTINGS -> initial_events: ");
+  for (const auto& inital_ctx : _settings.initial_ctx_ids()) {
+    if (inital_ctx == ctx_id) {
+      refs.push_back(fmt::format("SETTINGS -> initial_contexts")); 
+    }
+  }
+
+  // contexts
+  for (const auto& [id, ctx] : _contexts) {
+    for (const auto& [listener_id, listener] : ctx->listeners()) {
+      if (listener->ctx_id() == ctx_id) {
+        refs.push_back(fmt::format("CTX: {} -> Listener {} (linked-ctx)", id, listener_id)); 
+      } 
+      AddRefsFoundInString(refs, ctx_id, listener->arguments(), fmt::format("CTX: {} -> Listener {} (arguments: {})", id, listener_id, "{}"));
+      AddRefsFoundInString(refs, ctx_id, listener->logic(), fmt::format("CTX: {} -> Listener {} (logic: {})", id, listener_id, "{}"));
+    }
+  }
+  
+  // texts
+  for (const auto& it : _texts) {
+    std::shared_ptr<Text> txt = it.second;
+    int index = 0;
+    do {
+      AddRefsFoundInString(refs, "{" + ctx_id, txt->txt(), fmt::format("TXT {}[{}] -> text: {}", it.first, index, "{}"));
+      AddRefsFoundInString(refs, ctx_id, txt->logic(), fmt::format("TXT {}[{}] -> logic: {}", it.first, index, "{}"));
+      AddRefsFoundInEvents(refs, ctx_id, txt->permanent_events(), fmt::format("TXT {}[{}] -> permanent_events: ", it.first, index));
+      AddRefsFoundInEvents(refs, ctx_id, txt->one_time_events(), fmt::format("TXT {}[{}] -> one_time_events: ", it.first, index));
+      txt = txt->next();
+      index++;
+    } while(txt != nullptr);
+  }
+  return refs;
+}
+
+std::vector<std::string> BuilderGame::GetTextReferences(const std::string& text_id) const {
+  std::vector<std::string> refs;
+  
+  // settings
+  AddRefsFoundInEvents(refs, text_id, _settings.initial_events(), "SETTINGS -> initial_events: ");
+
+  // contexts
+  for (const auto& [id, ctx] : _contexts) {
+    for (const auto& [listener_id, listener] : ctx->listeners()) {
+      AddRefsFoundInString(refs, text_id, listener->arguments(), fmt::format("CTX: {} -> Listener {} (arguments: {})", id, listener_id, "{}"));
+    }
+  }
+
+  // texts
+  for (const auto& it : _texts) {
+    std::shared_ptr<Text> txt = it.second;
+    int index = 0;
+    do {
+      AddRefsFoundInString(refs, "{" + text_id, txt->txt(), fmt::format("TXT {}[{}] -> text: {}", it.first, index, "{}"));
+      AddRefsFoundInEvents(refs, text_id, txt->permanent_events(), fmt::format("TXT {}[{}] -> permanent_events: ", it.first, index));
+      AddRefsFoundInEvents(refs, text_id, txt->one_time_events(), fmt::format("TXT {}[{}] -> one_time_events: ", it.first, index));
+      txt = txt->next();
+      index++;
+    } while(txt != nullptr);
+  }
+  return refs;
+}
+
+void BuilderGame::AddRefsFoundInEvents(std::vector<std::string>& refs, const std::string& id, const std::string& events, std::string&& msg) {
+  for (const auto& event : util::Split(events, ";")) {
+    if (event.find(id) != std::string::npos) {
+      refs.push_back(msg + event);
+    }
+  }
+}
+
+void BuilderGame::AddRefsFoundInString(std::vector<std::string>& refs, const std::string& id, const std::string& str, const std::string& msg) {
+  if (str.find(id) != std::string::npos) {
+    refs.push_back(std::vformat(msg, std::make_format_args(str)));
+  }
+}
+
+std::map<std::string, builder::FileType> BuilderGame::GetPaths() const {
+  std::map<std::string, builder::FileType> paths;
+  
+  auto cs = std::views::keys(_contexts);
+  for (const auto& it : util::GetSubpaths((std::vector<std::string>){cs.begin(), cs.end()})) {
+    // This implies that there cannot be a context and a (sub-)dir with the same name
+    paths.emplace(it, builder::FileType::DIR);
+  }
+  for (const auto& it : _contexts) {
+    paths.emplace(it.first, builder::FileType::CTX);
+  }
+  // TODO (fux): account for identical text and context names?
+  auto ts = std::views::keys(_texts);
+  for (const auto& it : util::GetSubpaths((std::vector<std::string>){ts.begin(), ts.end()})) {
+    paths.emplace(it, builder::FileType::DIR);
+  }
+  for (const auto& it : _texts) {
+    paths.emplace(it.first, builder::FileType::TXT);
+  }
+  return paths;
+}
+
+std::map<std::string, builder::FileType> BuilderGame::GetPaths(const std::string& sub_path) const {
+  std::map<std::string, builder::FileType> paths; 
+  for (const auto& [path, type] : GetPaths()) {
+    if (path.find(sub_path) == 0 && path.length() != sub_path.length()) {
+      std::string name = (sub_path.empty()) ? path : path.substr(sub_path.length()+1);
+      // We only want depth=1
+      if (name.find("/") == std::string::npos)
+        paths.emplace(name, type);
+    }
+  }
+  return paths;
+}

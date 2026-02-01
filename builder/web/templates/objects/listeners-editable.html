@@ -6,14 +6,25 @@
         <form action="/{{game.name}}/remove/ctx/listener?ctx_id={{ctx.id}}&id={{listener.id}}" method="POST">
           <button type="submit" class="btn btn-light btn-sm text-danger">X</button>
         </form>
-        <button class="accordion-button collapsed flex-grow-1" type="button" data-bs-toggle="collapse" 
-            data-bs-target="#collapselistener{{label}}{{loop.index}}" aria-expanded="false" 
+        <button 
+           {% if listener.id==open %}
+            class="accordion-button flex-grow-1" 
+          {% else %}
+            class="accordion-button collapsed flex-grow-1" 
+          {% endif %}
+            type="button" data-bs-toggle="collapse" 
+            data-bs-target="#collapselistener{{label}}{{loop.index}}" aria-expanded="true" 
             aria-controls="collapselistener{{label}}{{loop.index}}">
           {% include "objects/listener-summary.html" %}
         </button>
       </h2>
-      <div id="collapselistener{{label}}{{loop.index}}" class="accordion-collapse collapse" 
-          aria-labelledby="headinglistener{{label}}{{loop.index}}" data-bs-parent="#accordionExample">
+      <div id="collapselistener{{label}}{{loop.index}}" 
+           {% if listener.id==open %}
+            class="accordion-collapse collapse show"
+          {% else %}
+            class="accordion-collapse collapse"
+          {% endif %}
+           aria-labelledby="headinglistener{{label}}{{loop.index}}" data-bs-parent="#accordionExample">
         <div class="accordion-body">
           <br>
           {% set listener_id = listener.id %}

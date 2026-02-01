@@ -1,0 +1,79 @@
+#ifndef SRC_GAME_BUILDER_GAME_H
+#define SRC_GAME_BUILDER_GAME_H 
+
+#include "game/game/game.h"
+
+class BuilderGame : public Game {
+  public: 
+    /**
+     * @param[in] path 
+     * @param[in] name
+     */
+    BuilderGame(std::string path, std::string name) : Game(path, name), _modified(false) {}
+
+    const std::vector<std::string>& modified() const;
+    
+    // Medthods
+    void StoreGame(std::string path = "");
+
+    void ResetModified(); 
+
+    void AddModified(std::string mod);
+
+    /**
+     * Creates/Updates/Replaces listener while game is running
+     */
+    void CreateListenerInPlace(const std::string& listener_id, const nlohmann::json& json_listener, 
+        const std::string& ctx_id, bool added);
+    void RemoveListener(const std::string& listener_id, const std::string& ctx_id);
+    void RemoveContext(const std::string& ctx_id);
+    void RemoveText(const std::string& ctx_id);
+
+    /**
+     * Updates text entry at given path.
+     * If `txt` is nullptr, entry will be removed.
+     */
+    void UpdateText(std::string path, std::shared_ptr<Text> txt);
+
+    /**
+     * Tries to find all references to given context. 
+     * - settings (inital events and contexts)
+     * - listeners (arguments, logic)
+     * - ctx-listeners 
+     * - texts (text, events, logic)
+     * @param[in] ctx_id
+     * @return list of references
+     */
+    std::vector<std::string> GetCtxReferences(const std::string& ctx_id) const;
+
+    /**
+     * Tries to find all references to given text. 
+     * - settings (inital events)
+     * - listeners (arguments)
+     * - texts (text, events)
+     * @param[in] text_id
+     * @return list of references
+     */
+    std::vector<std::string> GetTextReferences(const std::string& text_id) const;
+
+    /**
+     * Gets paths and sub paths to all contexts and texts including type-info
+     * (CTX, TXT, DIR)
+     */
+    std::map<std::string, builder::FileType> GetPaths() const;
+
+    /**
+     * Gets alls sub-paths to given path of all contexts and texts including type-info
+     * (CTX, TXT, DIR)
+     * @param path
+     */
+    std::map<std::string, builder::FileType> GetPaths(const std::string& path) const;
+
+  private:
+    std::vector<std::string> _modified;
+
+    static void AddRefsFoundInEvents(std::vector<std::string>& refs, const std::string& id, const std::string& events, std::string&& msg);
+    static void AddRefsFoundInString(std::vector<std::string>& refs, const std::string& id, const std::string& events, const std::string& msg);
+};
+
+#endif

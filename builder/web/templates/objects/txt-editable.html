@@ -19,14 +19,29 @@
           <button type="submit" class="btn btn-light btn-sm text-danger">X</button>
         </form>
 
-        <button class="accordion-button collapsed flex-grow-1" type="button" data-bs-toggle="collapse" 
+        <button 
+            {% if loop.index0 == open|int %}
+              class="accordion-button flex-grow-1" 
+            {% else %}
+              class="accordion-button collapsed flex-grow-1" 
+            {% endif %}
+            type="button" 
+            data-bs-toggle="collapse" 
             data-bs-target="#collapsetxt{{label}}{{loop.index}}" aria-expanded="false" 
             aria-controls="collapsetxt{{label}}{{loop.index}}">
           {{txt.txt}}
         </button>
       </h2>
-      <div id="collapsetxt{{label}}{{loop.index}}" class="accordion-collapse collapse" 
-          aria-labelledby="headingtxt{{label}}{{loop.index}}" data-bs-parent="#accordion{{label}}">
+      <div 
+        id="collapsetxt{{label}}{{loop.index}}" 
+        {% if loop.index0 == open|int %}
+          class="accordion-collapse collapse show" 
+        {% else %}
+          class="accordion-collapse collapse" 
+        {% endif %}
+        aria-labelledby="headingtxt{{label}}{{loop.index}}" 
+        data-bs-parent="#accordion{{label}}"
+      >
         <div class="accordion-body">
           {% set txt_index = loop.index0 %}
           {% include "objects/txt-edit.html" %}

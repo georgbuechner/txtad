@@ -15,8 +15,6 @@ set(GAME_SRC_FILES
   src/game/game/game.cc 
   src/game/game/user.cc 
   src/game/server/websocket_server.cc 
-  src/shared/objects/tests/test_case.cc
-  src/shared/objects/tests/test.cc
   src/shared/objects/text/text.cc
   src/shared/objects/context/context.cc
   src/shared/utils/eventmanager/context_stack.cc
@@ -41,6 +39,7 @@ set(GAME_TEST_FILES
   src/game/test/helpers.cc
   src/game/game/game.cc
   src/game/game/user.cc
+  src/builder/game/builder_game.cc
   src/shared/objects/tests/test_case.cc
   src/shared/objects/tests/test.cc
   src/shared/objects/context/context.cc
@@ -50,6 +49,7 @@ set(GAME_TEST_FILES
   src/shared/utils/utils.cc
   src/shared/utils/parser/expression_parser.cc
   src/shared/utils/parser/game_file_parser.cc
+  src/shared/utils/parser/test_file_parser.cc
   src/shared/utils/parser/pattern_parser.cc
   src/shared/utils/fuzzy_search/fuzzy.cc
 )
@@ -59,6 +59,7 @@ set(BUILDER_SRC_FILES
   src/builder/server/server.cc
   src/builder/utils/http_helpers.cc
   src/builder/utils/jinja_helpers.cc
+  src/builder/game/builder_game.cc
   src/game/game/game.cc 
   src/game/game/user.cc 
   src/shared/objects/context/context.cc
@@ -70,6 +71,7 @@ set(BUILDER_SRC_FILES
   src/shared/utils/utils.cc
   src/shared/utils/parser/expression_parser.cc
   src/shared/utils/parser/game_file_parser.cc
+  src/shared/utils/parser/test_file_parser.cc
   src/shared/utils/parser/pattern_parser.cc
   src/shared/utils/fuzzy_search/fuzzy.cc
 )
