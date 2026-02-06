@@ -43,7 +43,7 @@ class REP extends State {
       }
     } else if (e.key == "ArrowDown") {
       e.preventDefault();
-      if (this.index <= this.suggestions.length) {
+      if (this.index < this.suggestions.length-1) {
         this.index++;
       }
     } else if (e.key == "ArrowUp") {
@@ -75,12 +75,12 @@ class REP extends State {
       if (i>0) suggestions_str += ", ";
 
       if (i === this.index) {
-        suggestions_str += "<i>" + this.suggestions[i] + "</i>";
+        suggestions_str += "<span class='th_sel'>" + this.suggestions[i] + "</span>";
       } else {
         suggestions_str += this.suggestions[i];
       }
     }
-    StateMaschine.hints_container.innerHTML = suggestions_str;
+    PrintHints(suggestions_str, this.index);
   }
 };
 
@@ -130,23 +130,35 @@ class REP_VAR extends REP {
   }
   handler(e) {
     if (this.full && e.key == "*") {
-      const new_state = new REP_TYPE();
-      new_state.inp = "*";
-      StateMaschine.transition(new_state);
+      this.transition_type()
     } else if (e.key == "Enter") {
       e.preventDefault();
       if (REP.ApplySuggestion(this)) {
-        StateMaschine.event_container.value += "} ";
-        StateMaschine.transition(new STD());
+        if (this.index < this.suggestions.length && this.suggestions[this.index] == "*") {
+          this.transition_type();
+        } else {
+          this.transition_std();
+        }
       }
     } else {
       super.handler(e);
     }
   }
+
+  transition_type() {
+    const new_state = new REP_TYPE();
+    new_state.inp = "*";
+    StateMaschine.transition(new_state);
+  }
+
+  transition_std() {
+    StateMaschine.event_container.value += "} ";
+    StateMaschine.transition(new STD());
+  }
 };
 
 class REP_TYPE extends REP {
-  constructor(ctx_id, prev) {
+  constructor() {
     super("TYPE", types());
   }
   handler(e) {
@@ -181,7 +193,7 @@ class OPT extends State {
     }
   }
   render() { 
-    StateMaschine.hints_container.innerHTML = OPERATORS_HINT; 
+    PrintHints(OPERATORS_HINT); 
   }
 }
 
@@ -219,6 +231,29 @@ const StateMaschine = {
     }
   },
 };
+
+function PrintHints(hinst_str, index=-1) {
+  const view = parseInt(StateMaschine.event_container.offsetWidth/8);
+  console.log(hinst_str, view, index);
+  let print = hinst_str;
+  if (view < hinst_str.length) {
+    const hints = hinst_str.split(", ");
+    const left_elems = hints.slice(0, index);
+    const cur_str_pos = left_elems.join().length + left_elems.length*2 + hints[index].length/2;
+
+    let start = Math.max(0, cur_str_pos-parseInt(view/2));
+    if (start + view > hinst_str.length) {
+      rest = hinst_str.length-1;
+      start -= (start+view)-hinst_str.length;
+    }
+    print = (start > 0) ? "..." : "";
+    print += hinst_str.substr(start, view);
+    if (start + view < hinst_str.length) {
+      print += "...";
+    }
+  }
+  StateMaschine.hints_container.innerHTML = print;
+}
 
 function SetUpTypeahead(id) {
   StateMaschine.init(id);
