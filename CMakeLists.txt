@@ -28,6 +28,7 @@ set(GAME_SRC_FILES
 
 set(GAME_TEST_FILES 
   src/game/test/main.cc 
+  src/builder/test_builder.cc
   src/game/test/test_context.cc
   src/game/test/test_context_stack.cc
   src/game/test/test_eventmanager.cc
@@ -36,7 +37,7 @@ set(GAME_TEST_FILES
   src/game/test/test_game_file_parser.cc
   src/game/test/test_text.cc
   src/game/test/test_utils.cc
-  src/game/test/helpers.cc
+  src/shared/utils/test_helpers.cc
   src/game/game/game.cc
   src/game/game/user.cc
   src/builder/game/builder_game.cc

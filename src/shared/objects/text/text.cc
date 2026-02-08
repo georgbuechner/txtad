@@ -1,6 +1,7 @@
 #include "shared/objects/text/text.h"
 #include "shared/utils/utils.h"
 #include "shared/utils/parser/game_file_parser.h"
+#include <iostream>
 #include <nlohmann/json.hpp>
 
 Text::Text(std::string txt, std::string one_time_events, std::string permanent_events, bool shared, 
@@ -35,6 +36,10 @@ Text::Text(nlohmann::json json, std::string ctx_id) {
     _permanent_events = parser::DoThisReplacement(_permanent_events, ctx_id);
   }
   _logic = json.value("logic", "");
+}
+
+Text::~Text() { 
+  std::cout << "Text::~Text: Deleting text: " << _txt << std::endl; 
 }
 
 // getter 

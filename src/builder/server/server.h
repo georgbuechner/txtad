@@ -62,6 +62,7 @@ class Builder {
 
     void ApiCtxReferences(const httplib::Request& req, httplib::Response& resp);
     void ApiTxtReferences(const httplib::Request& req, httplib::Response& resp);
+    void ApiDirReferences(const httplib::Request& req, httplib::Response& resp);
 
     // PAGES 
     void PagesGame(const httplib::Request& req, httplib::Response& resp);

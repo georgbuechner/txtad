@@ -22,6 +22,7 @@ class Text : public std::enable_shared_from_this<Text> {
      * events)
      */
     Text(nlohmann::json json, std::string ctx_id="");
+    ~Text();
 
     // getter 
     bool shared() const;

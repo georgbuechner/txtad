@@ -44,7 +44,7 @@ class BuilderGame : public Game {
      * @param[in] ctx_id
      * @return list of references
      */
-    std::vector<std::string> GetCtxReferences(const std::string& ctx_id) const;
+    std::vector<std::string> GetCtxReferences(const std::string& ctx_id, const std::string& sub="") const;
 
     /**
      * Tries to find all references to given text. 
@@ -54,7 +54,7 @@ class BuilderGame : public Game {
      * @param[in] text_id
      * @return list of references
      */
-    std::vector<std::string> GetTextReferences(const std::string& text_id) const;
+    std::vector<std::string> GetTextReferences(const std::string& text_id, const std::string& sub="") const;
 
     /**
      * Gets paths and sub paths to all contexts and texts including type-info

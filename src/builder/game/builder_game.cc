@@ -97,7 +97,7 @@ void BuilderGame::UpdateText(std::string path, std::shared_ptr<Text> txt) {
   }
 }
 
-std::vector<std::string> BuilderGame::GetCtxReferences(const std::string& ctx_id) const {
+std::vector<std::string> BuilderGame::GetCtxReferences(const std::string& ctx_id, const std::string& sub) const {
   std::vector<std::string> refs;
   
   // settings
@@ -110,10 +110,17 @@ std::vector<std::string> BuilderGame::GetCtxReferences(const std::string& ctx_id
 
   // contexts
   for (const auto& [id, ctx] : _contexts) {
+    // If sub defined ignore all internal - references
+    if (!sub.empty() && id.find(sub) == 0) {
+      continue;
+    }
+
     for (const auto& [listener_id, listener] : ctx->listeners()) {
-      if (listener->ctx_id() == ctx_id) {
-        refs.push_back(fmt::format("CTX: {} -> Listener {} (linked-ctx)", id, listener_id)); 
-      } 
+      try {
+        if (listener->ctx_id() == ctx_id) {
+          refs.push_back(fmt::format("CTX: {} -> Listener {} (linked-ctx)", id, listener_id)); 
+        } 
+      } catch (util::invalid_base_class_call&) {}
       AddRefsFoundInString(refs, ctx_id, listener->arguments(), fmt::format("CTX: {} -> Listener {} (arguments: {})", id, listener_id, "{}"));
       AddRefsFoundInString(refs, ctx_id, listener->logic(), fmt::format("CTX: {} -> Listener {} (logic: {})", id, listener_id, "{}"));
     }
@@ -121,6 +128,11 @@ std::vector<std::string> BuilderGame::GetCtxReferences(const std::string& ctx_id
   
   // texts
   for (const auto& it : _texts) {
+    // If sub defined ignore all internal - references
+    if (!sub.empty() && it.first.find(sub) == 0) {
+      continue;
+    }
+
     std::shared_ptr<Text> txt = it.second;
     int index = 0;
     do {
@@ -135,7 +147,7 @@ std::vector<std::string> BuilderGame::GetCtxReferences(const std::string& ctx_id
   return refs;
 }
 
-std::vector<std::string> BuilderGame::GetTextReferences(const std::string& text_id) const {
+std::vector<std::string> BuilderGame::GetTextReferences(const std::string& text_id, const std::string& sub) const {
   std::vector<std::string> refs;
   
   // settings
@@ -143,13 +155,24 @@ std::vector<std::string> BuilderGame::GetTextReferences(const std::string& text_
 
   // contexts
   for (const auto& [id, ctx] : _contexts) {
+    // If sub defined ignore all internal - references
+    if (!sub.empty() && id.find(sub) == 0) {
+      continue;
+    }
+
     for (const auto& [listener_id, listener] : ctx->listeners()) {
-      AddRefsFoundInString(refs, text_id, listener->arguments(), fmt::format("CTX: {} -> Listener {} (arguments: {})", id, listener_id, "{}"));
+      AddRefsFoundInString(refs, text_id, listener->arguments(), 
+          fmt::format("CTX: {} -> Listener {} (arguments: {})", id, listener_id, "{}"));
     }
   }
 
   // texts
   for (const auto& it : _texts) {
+    // If sub defined ignore all internal - references
+    if (!sub.empty() && it.first.find(sub) == 0) {
+      continue;
+    }
+
     std::shared_ptr<Text> txt = it.second;
     int index = 0;
     do {

@@ -1,4 +1,4 @@
-#include "game/test/helpers.h"
+#include "shared/utils/test_helpers.h"
 #include "shared/objects/context/context.h"
 #include "shared/utils/defines.h"
 #include "shared/utils/eventmanager/context_stack.h"
@@ -80,7 +80,7 @@ TEST_CASE("Test throwing events", "[stack]") {
   
   // define basic handlers
   Listener::Fn set_attribute = [&attributes, &parser](std::string event, std::string args) {
-    helpers::SetAttribute(attributes, args, parser);
+    test::SetAttribute(attributes, args, parser);
   };
   
   Listener::Fn add_ctx = [&contexts, &stack](std::string event, std::string ctx_id) {
@@ -186,7 +186,7 @@ TEST_CASE("Test throwing events (with context-listener)", "[stack]") {
   
   // difine basic handlers
   Listener::Fn set_attribute = [&attributes, &parser](std::string event, std::string args) {
-    helpers::SetAttribute(attributes, args, parser);
+    test::SetAttribute(attributes, args, parser);
   };
   
   Listener::Fn add_ctx = [&contexts, &stack](std::string event, std::string ctx_id) {

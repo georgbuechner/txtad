@@ -5,6 +5,7 @@
 #define SHARED_UTILS_UTIL_H
 
 #include "game/utils/defines.h"
+#include <exception>
 #include <filesystem>
 #include <nlohmann/json_fwd.hpp>
 #include <optional>
@@ -16,6 +17,17 @@
 namespace util
 {
   namespace fs = std::filesystem;
+
+  class invalid_base_class_call : public std::exception {
+    private: 
+      std::string _msg; 
+    public: 
+      invalid_base_class_call(const char* msg) : _msg(msg) { }
+
+      const char* what() const noexcept {
+        return _msg.c_str();
+      }
+  };
 
   void SetUpLogger(const std::string& main_path, const std::string& name, spdlog::level::level_enum log_level);
   std::shared_ptr<spdlog::logger> Logger();

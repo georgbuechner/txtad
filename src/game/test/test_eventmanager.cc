@@ -1,4 +1,4 @@
-#include "game/test/helpers.h"
+#include "shared/utils/test_helpers.h"
 #include "game/utils/defines.h"
 #include "shared/utils/eventmanager/eventmanager.h"
 #include "shared/utils/eventmanager/listener.h"
@@ -35,7 +35,7 @@ TEST_CASE("Test eventmanager basic use", "[eventmanager]") {
   std::string event_queue = "";
 
   Listener::Fn set_attribute = [&attributes, &parser](std::string event, std::string args) {
-    helpers::SetAttribute(attributes, args, parser);
+    test::SetAttribute(attributes, args, parser);
   };
 
   Listener::Fn add_to_eventqueue = [&event_queue](std::string event, std::string args) {
@@ -136,7 +136,7 @@ TEST_CASE("Test eventmanager: SetAttribute", "[eventmanager]") {
   std::string event_queue = "";
 
   Listener::Fn set_attribute = [&attributes, &parser](std::string event, std::string args) {
-    helpers::SetAttribute(attributes, args, parser);
+    test::SetAttribute(attributes, args, parser);
   };
 
   Listener::Fn add_to_eventqueue = [&event_queue](std::string event, std::string args) {
@@ -193,7 +193,7 @@ TEST_CASE("Test permeability", "[eventmanager]") {
   std::string event_queue = "";
 
   Listener::Fn set_attribute = [&attributes, &parser](std::string event, std::string args) {
-    helpers::SetAttribute(attributes, args, parser);
+    test::SetAttribute(attributes, args, parser);
   };
   Listener::Fn add_to_eventqueue = [&event_queue](std::string event, std::string args) {
     event_queue += ((event_queue != "") ? ";" : "") + args;
@@ -226,7 +226,7 @@ TEST_CASE("Test logic", "[eventmanager]") {
   std::string event_queue = "";
 
   Listener::Fn set_attribute = [&attributes, &parser](std::string event, std::string args) {
-    helpers::SetAttribute(attributes, args, parser);
+    test::SetAttribute(attributes, args, parser);
   };
   Listener::Fn add_to_eventqueue = [&event_queue](std::string event, std::string args) {
     event_queue += ((event_queue != "") ? ";" : "") + args;

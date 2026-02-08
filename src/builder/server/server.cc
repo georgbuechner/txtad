@@ -8,9 +8,11 @@
 #include "shared/utils/parser/test_file_parser.h"
 #include "shared/utils/utils.h"
 #include <exception>
+#include <nlohmann/json_fwd.hpp>
 #include <ranges>
 #include <stdexcept>
 #include <string>
+#include <vector>
 
 using namespace std::chrono_literals;
 
@@ -96,6 +98,9 @@ void Builder::Start() {
 
   _srv.Get("/api/txt/references/:game_id", [&](const httplib::Request& req, httplib::Response& resp) {
       ApiTxtReferences(req, resp); });
+
+  _srv.Get("/api/dir/references/:game_id", [&](const httplib::Request& req, httplib::Response& resp) {
+      ApiDirReferences(req, resp); });
 
   // PAGES 
   _srv.Get("/", [&](const httplib::Request& req, httplib::Response& resp) {
@@ -540,6 +545,29 @@ void Builder::ApiTxtReferences(const httplib::Request& req, httplib::Response& r
   resp.set_content(references.dump(), "application/json");
 }
 
+void Builder::ApiDirReferences(const httplib::Request& req, httplib::Response& resp) {
+  std::string game_id = req.path_params.at("game_id");
+  if (!req.has_param("path")) {
+    throw std::invalid_argument("Missing query-parameter: (api-txt-references) path");
+  } 
+  const std::string path = req.get_param_value("path");
+  std::vector<std::string> references;
+  for (const auto& it : _games.at(game_id)->texts()) {
+    if (it.first.find(path) == 0) {
+      const auto& refs = _games.at(game_id)->GetTextReferences(it.first, path);
+      references.insert(references.end(), refs.begin(), refs.end());
+    }
+  }
+  for (const auto& it : _games.at(game_id)->contexts()) {
+    if (it.first.find(path) == 0) {
+      const auto& refs = _games.at(game_id)->GetCtxReferences(it.first, path);
+      references.insert(references.end(), refs.begin(), refs.end());
+    }
+  }
+  resp.status = 200;
+  resp.set_content(nlohmann::json(references).dump(), "application/json");
+}
+
 // PAGES 
 
 void Builder::PagesGame(const httplib::Request& req, httplib::Response& resp) {
@@ -568,11 +596,6 @@ void Builder::PagesGame(const httplib::Request& req, httplib::Response& resp) {
 
 void Builder::SaveSettings(const httplib::Request& req, httplib::Response& resp) {
   std::string game_id = req.path_params.at("game_id");
-  if (req.form.has_field("initial_contexts") > 0) {
-    auto ctxs = req.form.get_fields("initial_contexts");
-    for (const auto& ctx : ctxs) 
-      std::cout << "- " << ctx << std::endl;
-  } 
   try {
     nlohmann::json settings_json = {
       {"initial_events", req.form.get_field("initial_events")},
@@ -864,7 +887,29 @@ void Builder::RemoveContext(const httplib::Request& req, httplib::Response& resp
 }
 
 void Builder::RemoveDirectory(const httplib::Request& req, httplib::Response& resp) {
-  resp.set_redirect(_http::Referer(req, "RemoveDirectory not implemented."));
+  std::string game_id = req.path_params.at("game_id");
+  if (!req.has_param("path")) {
+    throw std::invalid_argument("Missing query-parameter: (remove-ctx) path");
+  } 
+  const std::string path = req.get_param_value("path");
+
+  auto txt_ks = std::views::keys(_games.at(game_id)->texts());
+  for (const auto& it : std::vector<std::string>(txt_ks.begin(), txt_ks.end())) {
+    if (it.find(path) == 0) {
+      std::cout << "Deleting txt: " << it << std::endl;
+      _games.at(game_id)->RemoveText(it);
+    }
+  }
+  auto ctx_ks = std::views::keys(_games.at(game_id)->contexts());
+  for (const auto& it : std::vector<std::string>(ctx_ks.begin(), ctx_ks.end())) {
+    if (it.find(path) == 0) {
+      std::cout << "Deleting ctx: " << it << std::endl;
+      _games.at(game_id)->RemoveContext(it);
+    }
+  }
+
+  resp.set_redirect(_http::Referer(req, "Successfully removed directory: " + path), 303);
+
 }
 
 void Builder::RestoreGame(const httplib::Request& req, httplib::Response& resp) {

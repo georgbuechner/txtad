@@ -176,8 +176,18 @@ namespace jinja2 {
             ? v.ptr->original_json().at("arguments").get<std::string>() 
             : Value{}; }}, 
         {"logic", [](const PtrView<Listener> v) { return (v.ptr) ? v.ptr->original_json().value("logic", "") : Value{}; }}, 
-        {"ctx", [](const PtrView<Listener> v) { return (v.ptr) ? v.ptr->ctx_id() : Value{}; }}, 
-        {"exec", [](const PtrView<Listener> v) { return (v.ptr) ? v.ptr->original_json().value("exec", false) : Value{}; }}, 
+        {"ctx", [](const PtrView<Listener> v) { 
+          if (v.ptr) {
+            try {
+              const std::string linked_ctx = v.ptr->ctx_id();
+              return Value(linked_ctx);
+            } catch (util::invalid_base_class_call&) { 
+              std::cout << "invalid_base_class_call in TypeReflection (listener) \n";
+            }
+          }
+          return Value{};
+        }}, 
+        {"exec", [](const PtrView<Listener> v) { return (v.ptr) ? v.ptr->original_json().value("exec", false) : Value{}; } }, 
       };
       return acc;
     }

@@ -5,7 +5,6 @@
 #include "shared/utils/parser/expression_parser.h"
 #include "shared/utils/utils.h"
 #include <functional>
-#include <iostream>
 #include <memory>
 #include <nlohmann/json.hpp>
 #include <string>
@@ -22,19 +21,29 @@ class Listener {
     virtual bool permeable() const = 0;
     virtual std::string arguments() const = 0;
     virtual std::string logic() const { 
-      util::Logger()->error("Listener::logic(): Invalid Base Class call!");
-      return "";
+      throw util::invalid_base_class_call("Listener::logic");
     }
-    virtual std::string ctx_id () const { return ""; }
-    virtual std::weak_ptr<Context> ctx() const { return {}; }
-    virtual const nlohmann::json& original_json() const { return nlohmann::json(); }
+    virtual std::string ctx_id () const { 
+      throw util::invalid_base_class_call("invalid_base_class_call: Listener::ctx_id");
+    }
+    virtual std::weak_ptr<Context> ctx() const { 
+      throw util::invalid_base_class_call("Listener::ctx");
+    }
+    virtual const nlohmann::json& original_json() const { 
+      throw util::invalid_base_class_call("Listener::original_json");
+    }
 
     // setter
-    virtual void set_fn(Fn fn) {}
+    virtual void set_fn(Fn fn) {
+      throw util::invalid_base_class_call("Listener::set_fn");
+    }
 
+    // methods
     virtual bool Test(const std::string& event, const ExpressionParser& parser) const = 0;
     virtual void Execute(std::string event) const = 0;
-    virtual nlohmann::json json() const { std::cout << "INVALID BASE CALL CLASS!!" << std::endl; return ""; }
+    virtual nlohmann::json json() const { 
+      throw util::invalid_base_class_call("Listener::json");
+    }
 };
 
 class LHandler : public Listener {
