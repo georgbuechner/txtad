@@ -14,10 +14,7 @@ BuilderGame::BuilderGame(std::string path, std::string name) : Game(path, name),
   if (!git::is_initialized(path)) {
     git::commit_on_save(path, {}, "initial_commit", "fux");
   }
-
-  for (const auto& it : git::get_all_branches(_path)) {
-    _backup_infos[it] = git::get_commits_of_branch(_path, it);
-  }
+  UpdateBackupInfos();
 }
 
 // getter
@@ -32,6 +29,13 @@ void BuilderGame::ResetModified() {
 
 void BuilderGame::AddModified(std::string mod) {
   _modified.push_back(mod);
+}
+
+void BuilderGame::UpdateBackupInfos() {
+  _backup_infos.clear();
+  for (const auto& it : git::get_all_branches(_path)) {
+    _backup_infos[it] = git::get_commits_of_branch(_path, it);
+  }
 }
 
 void BuilderGame::StoreGame(std::string path) {

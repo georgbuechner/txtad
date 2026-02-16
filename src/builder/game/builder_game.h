@@ -23,6 +23,8 @@ class BuilderGame : public Game {
 
     void AddModified(std::string mod);
 
+    void UpdateBackupInfos();
+
     /**
      * Creates/Updates/Replaces listener while game is running
      */

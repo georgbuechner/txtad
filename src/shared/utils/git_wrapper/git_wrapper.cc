@@ -1,4 +1,3 @@
-
 #include "shared/utils/utils.h"
 #include "shared/utils/git_wrapper/git_wrapper.h"
 #include <ctime>
@@ -218,24 +217,24 @@ static bool local_branch_exists(git_repository* repo, const std::string& branch_
 }
 
 static std::string make_unique_restore_branch(git_repository* repo) {
-    // Try restore/<timestamp>, then restore/<timestamp>-N
-    const std::string base = "restore/" + timestamp_utc_compact();
-    std::string candidate = base;
+  // Try restore/<timestamp>, then restore/<timestamp>-N
+  const std::string base = "restore/" + timestamp_utc_compact();
+  std::string candidate = base;
 
-    int suffix = 1;
-    while (local_branch_exists(repo, candidate)) {
-        candidate = base + "-" + std::to_string(suffix++);
-        if (suffix > 10000) {
-            throw std::runtime_error("Failed to generate unique restore branch name.");
-        }
+  int suffix = 1;
+  while (local_branch_exists(repo, candidate)) {
+    candidate = base + "-" + std::to_string(suffix++);
+    if (suffix > 10000) {
+      throw std::runtime_error("Failed to generate unique restore branch name.");
     }
+  }
 
-    // Validate refname according to Git rules
-    const std::string full_ref = "refs/heads/" + candidate;
-    if (!git_reference_is_valid_name(full_ref.c_str())) {
-        throw std::runtime_error("Generated invalid restore branch name: " + candidate);
-    }
-    return candidate;
+  // Validate refname according to Git rules
+  const std::string full_ref = "refs/heads/" + candidate;
+  if (!git_reference_is_valid_name(full_ref.c_str())) {
+    throw std::runtime_error("Generated invalid restore branch name: " + candidate);
+  }
+  return candidate;
 }
 
 static git_commit* lookup_commit(git_repository* repo, const std::string& sha) {
@@ -500,4 +499,63 @@ std::string git::restore_to_commit_always_branch(const std::filesystem::path& re
   git_repository_free(repo);
 
   return branch_name;
+}
+
+// Deletes a local branch unless it's the currently checked-out branch.
+void git::delete_branch(const std::filesystem::path& repo_dir, const std::string& name) {
+  git_repository* repo = nullptr;
+  throw_git(git_repository_open(&repo, repo_dir.c_str()), "git_repository_open");
+
+  const std::string cur = get_current_branch(repo_dir);
+  if (!cur.empty() && cur == name) {
+    git_repository_free(repo);
+    throw std::runtime_error("Cannot delete current branch: " + name);
+  }
+
+  git_reference* br = nullptr;
+  int err = git_branch_lookup(&br, repo, name.c_str(), GIT_BRANCH_LOCAL);
+  if (err == GIT_ENOTFOUND) {
+    git_repository_free(repo);
+    throw std::runtime_error("Branch not found: " + name);
+  }
+  throw_git(err, "git_branch_lookup(delete)");
+
+  throw_git(git_branch_delete(br), "git_branch_delete");
+
+  git_reference_free(br);
+  git_repository_free(repo);
+}
+
+// Renames (moves) a local branch. Errors if `new_name` already exists.
+void git::rename_branch(const std::filesystem::path& repo_dir, const std::string& old_name, const std::string& new_name) {
+  git_repository* repo = nullptr;
+  throw_git(git_repository_open(&repo, repo_dir.c_str()), "git_repository_open");
+
+  // Validate new name per git ref rules
+  const std::string full_ref = "refs/heads/" + new_name;
+  if (!git_reference_is_valid_name(full_ref.c_str())) {
+    git_repository_free(repo);
+    throw std::runtime_error("Invalid branch name: " + new_name);
+  }
+
+  if (branch_exists(repo, new_name)) {
+    git_repository_free(repo);
+    throw std::runtime_error("Branch already exists: " + new_name);
+  }
+
+  git_reference* old_ref = nullptr;
+  int err = git_branch_lookup(&old_ref, repo, old_name.c_str(), GIT_BRANCH_LOCAL);
+  if (err == GIT_ENOTFOUND) {
+    git_repository_free(repo);
+    throw std::runtime_error("Branch not found: " + old_name);
+  }
+  throw_git(err, "git_branch_lookup(rename)");
+
+  git_reference* new_ref = nullptr;
+  // force = 0 because you said "if name does not already exist"
+  throw_git(git_branch_move(&new_ref, old_ref, new_name.c_str(), /*force*/0), "git_branch_move");
+
+  git_reference_free(new_ref);
+  git_reference_free(old_ref);
+  git_repository_free(repo);
 }

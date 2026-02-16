@@ -179,6 +179,12 @@ void Builder::Start() {
   _srv.Post("/:game_id/archive/restore", [&](const httplib::Request& req, httplib::Response& resp) {
       RestoreArchive(req, resp); });
 
+  _srv.Post("/:game_id/archive/delete", [&](const httplib::Request& req, httplib::Response& resp) {
+      DeleteArchive(req, resp); });
+
+  _srv.Post("/:game_id/archive/rename", [&](const httplib::Request& req, httplib::Response& resp) {
+      RenameArchive(req, resp); });
+
   util::Logger()->info("MAIN: Successfully started http-server on port 4081");
   _srv.listen("0.0.0.0", 4081);
 }
@@ -785,10 +791,7 @@ void Builder::SaveGame(const httplib::Request& req, httplib::Response& resp) {
 
     const std::string username = _manager.CreatorFromCookie(req)->username();
     if (const auto& branch_name = _http::GetField(req, "branch_name")) {
-      std::string iso_utc_now = util::iso_utc_now();
-      std::string date = iso_utc_now.substr(iso_utc_now.find(" "));
-      std::string full_branch_name = username + "/" + *branch_name + date;
-      git::switch_to_new_branch(game_path, full_branch_name);
+      git::switch_to_new_branch(game_path, CreateUserBranchname(username, *branch_name));
     }
     git::commit_on_save(game_path, changes, _http::GetField(req, "commit_message"), username);
 
@@ -934,7 +937,6 @@ void Builder::RemoveDirectory(const httplib::Request& req, httplib::Response& re
   }
 
   resp.set_redirect(_http::Referer(req, "Successfully removed directory: " + path), 303);
-
 }
 
 void Builder::RestoreGame(const httplib::Request& req, httplib::Response& resp) {
@@ -968,6 +970,35 @@ void Builder::RestoreArchive(const httplib::Request& req, httplib::Response& res
   } catch (std::exception& e) {
     resp.set_content("Failed restoring archive (" + commit_sha + "): " + std::string(e.what()), "text/txt");
     resp.status = 400;
+  }
+}
+
+void Builder::DeleteArchive(const httplib::Request& req, httplib::Response& resp) {
+  std::string game_id = req.path_params.at("game_id");
+  if (!req.has_param("archive")) {
+    throw std::invalid_argument("Missing query-parameter: (restore-archive) archive");
+  }
+  const std::string branch_name = req.get_param_value("archive");
+  std::unique_lock sl(_mtx_games);
+  git::delete_branch(_games.at(game_id)->path(), branch_name);
+  _games.at(game_id)->UpdateBackupInfos();
+  resp.set_redirect(_http::Referer(req, "Successfully deleted archive: " + branch_name), 303);
+}
+
+void Builder::RenameArchive(const httplib::Request& req, httplib::Response& resp) {
+  std::string game_id = req.path_params.at("game_id");
+  if (!req.has_param("archive")) {
+    throw std::invalid_argument("Missing query-parameter: (restore-archive) archive");
+  }
+  const std::string old = req.get_param_value("archive");
+  if (auto new_archive = _http::GetField(req, "new_archive")) {
+    const std::string username = _manager.CreatorFromCookie(req)->username();
+    std::unique_lock ul(_mtx_games);
+    git::rename_branch(_games.at(game_id)->path(), old, CreateUserBranchname(username, *new_archive));
+    _games.at(game_id)->UpdateBackupInfos();
+    resp.set_redirect(_http::Referer(req, "Successfully renamed archive " + old + " -> " + *new_archive), 303);
+  } else {
+    resp.set_redirect(_http::Referer(req, "Failed renaming archive. Field \"new-archive\" not found!"), 303);
   }
 }
 
@@ -1022,6 +1053,11 @@ std::shared_ptr<Text> Builder::RemoveTextElement(const httplib::Request& req, st
   if (!text) {
     throw std::invalid_argument("Trying to remove text from non existing text. Index: " + std::to_string(index));
   }
-  std::cout << "Removing text @ " << index << std::endl;
   return text->RemoveAt(index);
+}
+
+std::string Builder::CreateUserBranchname(const std::string& username, const std::string& branch_name) {
+  std::string iso_utc_now = util::iso_utc_now();
+  std::string date = iso_utc_now.substr(0, iso_utc_now.find(" "));
+  return username + "/" + date + "--" + branch_name;
 }

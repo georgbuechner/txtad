@@ -159,12 +159,12 @@
             {% set commits = backup_infos[branch] %}
             <div class="accordion-item">
               <h2 class="accordion-header d-flex align-items-center" id="headingBranch{{branch}}">
-                <form action="/{{game.name}}/remove/branch?branch_name={{branch}}" method="POST">
+                <form action="/{{game.name}}/archive/delete?archive={{branch}}" method="POST">
                   <button 
                     type="submit" 
                     class="btn btn-light btn-sm text-danger" 
-                    {% if branch == "main" %}
-                      title="Cannot remove main branch"
+                    {% if branch == current_branch %}
+                      title="Cannot remove current branch"
                       disabled
                     {% else %}
                       title="Remove branch"
@@ -207,6 +207,17 @@
                       </li>
                     {% endfor %}
                   </ul>
+                  <form 
+                    action="/{{game.name}}/archive/rename?archive={{branch}}" 
+                    method="POST"
+                    enctype="multipart/form-data"
+                  >
+                    <div class="input-group mb-3">
+                      <span class="input-group-text" id="basic-addon1"><i class="bi bi-pen"></i></span>
+                      <input type="text" class="form-control" placeholder="new archive name" id="new_archive" name="new_archive">
+                      <button class="btn btn-outline-secondary" type="submit">Rename Archive</button>
+                    </div>
+                  </form>
                 </div>
               </div>
             </div>

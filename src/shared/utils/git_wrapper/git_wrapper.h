@@ -30,6 +30,10 @@ namespace git {
       const std::string& branch_name, size_t limit = 200);
 
   std::string restore_to_commit_always_branch(const std::filesystem::path& repo_dir, const std::string& commit_sha);
+
+  void delete_branch(const std::filesystem::path& repo_dir, const std::string& name);
+
+  void rename_branch(const std::filesystem::path& repo_dir, const std::string& old_name, const std::string& new_name);
 }
 
 #endif

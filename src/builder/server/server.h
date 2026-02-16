@@ -88,12 +88,20 @@ class Builder {
     void RemoveDirectory(const httplib::Request& req, httplib::Response& resp);
 
     void RestoreGame(const httplib::Request& req, httplib::Response& resp);
+
+    ///< restores game state to givent archive (commit)
     void RestoreArchive(const httplib::Request& req, httplib::Response& resp);
+    ///< delete given archive (branch)
+    void DeleteArchive(const httplib::Request& req, httplib::Response& resp);
+    ///< rename given archive (branch)
+    void RenameArchive(const httplib::Request& req, httplib::Response& resp);
 
     // helper 
     std::shared_ptr<Text> CreateTextElement(const httplib::Request& req, std::shared_ptr<Text> text, 
         bool add_new);
     std::shared_ptr<Text> RemoveTextElement(const httplib::Request& req, std::shared_ptr<Text> text);
+
+    static std::string CreateUserBranchname(const std::string& username, const std::string& branch_name);
 };
 
 #endif
