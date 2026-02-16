@@ -8,8 +8,8 @@
     <h1>{{game.name}}</h1>
   {% endif %}
 
-  {% if modified %}
-    <div class="modified-indicator">
+  <div class="modified-indicator">
+    {% if modified %}
       <button 
         type="button" 
         class="btn btn-success btn-sm save-btn"
@@ -28,8 +28,16 @@
         <i class="bi bi-trash"></i> 
       </button>
 
-    </div>
-  {% endif %}
+    {% endif %}
+    <button 
+      type="submit" 
+      class="btn btn-primary btn-sm save-btn"
+      data-bs-toggle="modal" 
+      data-bs-target="#shareArchiveModal"
+    >
+      <i class="bi bi-archive"></i>
+    </button>
+  </div>
 </div>
 
 <div class="game-desc">

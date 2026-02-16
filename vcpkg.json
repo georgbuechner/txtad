@@ -6,6 +6,7 @@
     "expected-lite",
     "fmt",
     "nlohmann-json",
+    "libgit2",
     "optional-lite",
     "spdlog",
     "string-view-lite",

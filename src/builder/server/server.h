@@ -88,6 +88,7 @@ class Builder {
     void RemoveDirectory(const httplib::Request& req, httplib::Response& resp);
 
     void RestoreGame(const httplib::Request& req, httplib::Response& resp);
+    void RestoreArchive(const httplib::Request& req, httplib::Response& resp);
 
     // helper 
     std::shared_ptr<Text> CreateTextElement(const httplib::Request& req, std::shared_ptr<Text> text, 

@@ -1,6 +1,7 @@
 #ifndef SRC_BUILDER_UTILS_HTTP_HELPERS_H
 #define SRC_BUILDER_UTILS_HTTP_HELPERS_H
 
+#include <optional>
 #include <string>
 #include "httplib.h"
 #include <utility>
@@ -13,6 +14,8 @@ namespace _http {
 
   std::string UrlPath(const std::string& url);
   std::string UrlQuery(const std::string& url);
+
+  std::optional<std::string> GetField(const httplib::Request& req, const std::string& field);
 }
 
 #endif

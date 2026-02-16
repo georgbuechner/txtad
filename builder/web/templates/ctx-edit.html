@@ -4,8 +4,9 @@
 
   <div class="game_header">
     <h1>{{ctx.name}} <span class="tiny">[{{ctx.id}}]</span></h1>
-    {% if modified %}
-      <div class="modified-indicator">
+
+    <div class="modified-indicator">
+      {% if modified %}
         <button 
           type="button" 
           class="btn btn-success btn-sm save-btn"
@@ -22,8 +23,16 @@
         >
           <i class="bi bi-trash"></i> 
         </button>
-      </div>
-    {% endif %}
+      {% endif %}
+      <button 
+        type="submit" 
+        class="btn btn-primary btn-sm save-btn"
+        data-bs-toggle="modal" 
+        data-bs-target="#shareBackupModal"
+      >
+        <i class="bi bi-archive"></i>
+      </button>
+    </div>
   </div>
 
   <form 

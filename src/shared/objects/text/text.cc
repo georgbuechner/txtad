@@ -2,6 +2,7 @@
 #include "shared/utils/utils.h"
 #include "shared/utils/parser/game_file_parser.h"
 #include <iostream>
+#include <memory>
 #include <nlohmann/json.hpp>
 
 Text::Text(std::string txt, std::string one_time_events, std::string permanent_events, bool shared, 
@@ -39,7 +40,7 @@ Text::Text(nlohmann::json json, std::string ctx_id) {
 }
 
 Text::~Text() { 
-  std::cout << "Text::~Text: Deleting text: " << _txt << std::endl; 
+  // std::cout << "Text::~Text: Deleting text: " << _txt << std::endl; 
 }
 
 // getter 
@@ -113,7 +114,7 @@ std::shared_ptr<Text> Text::RemoveAt(int index) {
     if (_next) {
       return _next;
     } 
-    return nullptr;
+    return std::make_shared<Text>(std::string(""));
   }
   _next = _next->RemoveAt(--index);
   return shared_from_this();

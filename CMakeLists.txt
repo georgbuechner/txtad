@@ -40,6 +40,7 @@ set(GAME_TEST_FILES
   src/shared/utils/test_helpers.cc
   src/game/game/game.cc
   src/game/game/user.cc
+  src/shared/utils/git_wrapper/git_wrapper.cc
   src/builder/game/builder_game.cc
   src/shared/objects/tests/test_case.cc
   src/shared/objects/tests/test.cc
@@ -70,6 +71,7 @@ set(BUILDER_SRC_FILES
   src/shared/utils/eventmanager/context_stack.cc
   src/shared/utils/eventmanager/listener.cc
   src/shared/utils/utils.cc
+  src/shared/utils/git_wrapper/git_wrapper.cc
   src/shared/utils/parser/expression_parser.cc
   src/shared/utils/parser/game_file_parser.cc
   src/shared/utils/parser/test_file_parser.cc
@@ -82,6 +84,7 @@ find_package(spdlog CONFIG REQUIRED)
 find_package(websocketpp CONFIG REQUIRED)
 find_package(Catch2 CONFIG REQUIRED)
 find_package(CURL CONFIG REQUIRED)
+find_package(unofficial-libgit2 CONFIG REQUIRED)
 
 # Jinja2 dependencies
 
@@ -161,6 +164,7 @@ target_link_libraries(txtad_test.o PRIVATE
   websocketpp::websocketpp 
   Catch2::Catch2
   CURL::libcurl
+  unofficial::libgit2::libgit2
 )
 
 target_link_libraries(builder.o PRIVATE
@@ -169,6 +173,7 @@ target_link_libraries(builder.o PRIVATE
   CURL::libcurl
   jinja2cpp 
   fmt::fmt
+  unofficial::libgit2::libgit2
 )
 
 target_include_directories(txtad.o PUBLIC "src" "src/shared/libraries")

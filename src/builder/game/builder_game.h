@@ -2,6 +2,7 @@
 #define SRC_GAME_BUILDER_GAME_H 
 
 #include "game/game/game.h"
+#include "shared/utils/git_wrapper/git_wrapper.h"
 
 class BuilderGame : public Game {
   public: 
@@ -9,9 +10,11 @@ class BuilderGame : public Game {
      * @param[in] path 
      * @param[in] name
      */
-    BuilderGame(std::string path, std::string name) : Game(path, name), _modified(false) {}
+    BuilderGame(std::string path, std::string name);
 
+    // getter
     const std::vector<std::string>& modified() const;
+    const std::map<std::string, std::vector<git::CommitInfo>>& backup_infos();
     
     // Medthods
     void StoreGame(std::string path = "");
@@ -71,9 +74,12 @@ class BuilderGame : public Game {
 
   private:
     std::vector<std::string> _modified;
+    std::map<std::string, std::vector<git::CommitInfo>> _backup_infos;
 
-    static void AddRefsFoundInEvents(std::vector<std::string>& refs, const std::string& id, const std::string& events, std::string&& msg);
-    static void AddRefsFoundInString(std::vector<std::string>& refs, const std::string& id, const std::string& events, const std::string& msg);
+    static void AddRefsFoundInEvents(std::vector<std::string>& refs, const std::string& id, const std::string& events, 
+        std::string&& msg);
+    static void AddRefsFoundInString(std::vector<std::string>& refs, const std::string& id, const std::string& events, 
+        const std::string& msg);
 };
 
 #endif

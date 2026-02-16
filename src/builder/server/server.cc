@@ -6,9 +6,12 @@
 #include "game/utils/defines.h"
 #include "shared/utils/parser/game_file_parser.h"
 #include "shared/utils/parser/test_file_parser.h"
+#include "shared/utils/git_wrapper/git_wrapper.h"
 #include "shared/utils/utils.h"
 #include <exception>
+#include <filesystem>
 #include <nlohmann/json_fwd.hpp>
+#include <optional>
 #include <ranges>
 #include <stdexcept>
 #include <string>
@@ -173,6 +176,9 @@ void Builder::Start() {
   _srv.Post("/:game_id/restore", [&](const httplib::Request& req, httplib::Response& resp) {
       RestoreGame(req, resp); });
 
+  _srv.Post("/:game_id/archive/restore", [&](const httplib::Request& req, httplib::Response& resp) {
+      RestoreArchive(req, resp); });
+
   util::Logger()->info("MAIN: Successfully started http-server on port 4081");
   _srv.listen("0.0.0.0", 4081);
 }
@@ -262,6 +268,8 @@ jinja2::ValuesMap Builder::CreateParams(const httplib::Request& req, std::string
     params.emplace("path", path);
     params.emplace("back", (path.rfind("/") == std::string::npos) ? "" : path.substr(0, path.rfind("/")));
     params.emplace("modified", _jinja::Vec(game->modified()));
+    params.emplace("backup_infos", _jinja::Map(game->backup_infos()));
+    params.emplace("current_branch", git::get_current_branch(game->path()));
   }
   util::Logger()->debug(fmt::format("Builder::create_params. done"));
   return params;
@@ -282,7 +290,7 @@ void Builder::ApiLogout(const httplib::Request& req, httplib::Response& resp) {
 }
 
 void Builder::ApiAddRequest(const httplib::Request& req, httplib::Response& resp) {
-  try{
+  try {
     const std::string game_id = _http::Get(req, "game_id");
     auto creator = _manager.CreatorFromCookie(req);
     if (auto owner = _manager.CreatorFromUsername(_manager.GetUserForGame(game_id))) {
@@ -389,7 +397,7 @@ void Builder::ApiRunGame(const httplib::Request& req, httplib::Response& resp) {
 
 void Builder::ApiContextIDs(const httplib::Request& req, httplib::Response& resp) {
   std::string game_id = req.path_params.at("game_id");
-  std::unique_lock ul(_mtx_games);
+  std::shared_lock sl(_mtx_games);
   
   // Get context IDs 
   auto ks = std::views::keys(_games.at(game_id)->contexts());
@@ -402,7 +410,7 @@ void Builder::ApiContextIDs(const httplib::Request& req, httplib::Response& resp
 
 void Builder::ApiTextIDs(const httplib::Request& req, httplib::Response& resp) {
   std::string game_id = req.path_params.at("game_id");
-  std::unique_lock ul(_mtx_games);
+  std::shared_lock sl(_mtx_games);
 
   // Get text IDs 
   auto ks = std::views::keys(_games.at(game_id)->texts());
@@ -415,7 +423,7 @@ void Builder::ApiTextIDs(const httplib::Request& req, httplib::Response& resp) {
 
 void Builder::ApiIDs(const httplib::Request& req, httplib::Response& resp) {
   std::string game_id = req.path_params.at("game_id");
-  std::unique_lock ul(_mtx_games);
+  std::shared_lock sl(_mtx_games);
   
   // Get text and context IDs 
   auto txt_ks = std::views::keys(_games.at(game_id)->texts());
@@ -432,7 +440,7 @@ void Builder::ApiIDs(const httplib::Request& req, httplib::Response& resp) {
 
 void Builder::ApiTypes(const httplib::Request& req, httplib::Response& resp) {
   std::string game_id = req.path_params.at("game_id");
-  std::unique_lock ul(_mtx_games);
+  std::shared_lock sl(_mtx_games);
   
   // Get context IDs 
   auto ks = std::views::keys(_games.at(game_id)->contexts());
@@ -448,7 +456,7 @@ void Builder::ApiTypes(const httplib::Request& req, httplib::Response& resp) {
 
 void Builder::ApiContextTypes(const httplib::Request& req, httplib::Response& resp) {
   std::string game_id = req.path_params.at("game_id");
-  std::unique_lock ul(_mtx_games);
+  std::shared_lock sl(_mtx_games);
   
   // Get context IDs 
   auto ks = std::views::keys(_games.at(game_id)->contexts());
@@ -466,7 +474,7 @@ void Builder::ApiContextTypes(const httplib::Request& req, httplib::Response& re
 
 void Builder::ApiContextAttributes(const httplib::Request& req, httplib::Response& resp) {
   std::string game_id = req.path_params.at("game_id");
-  std::unique_lock ul(_mtx_games);
+  std::shared_lock sl(_mtx_games);
 
   std::map<std::string, std::vector<std::string>> ctx_attribute_mapping;
   for (const auto& it : _games.at(game_id)->contexts()) {
@@ -481,7 +489,7 @@ void Builder::ApiContextAttributes(const httplib::Request& req, httplib::Respons
 
 void Builder::ApiTypesAttributes(const httplib::Request& req, httplib::Response& resp) {
   std::string game_id = req.path_params.at("game_id");
-  std::unique_lock ul(_mtx_games);
+  std::shared_lock sl(_mtx_games);
   // Get all types first
   auto ks = std::views::keys(_games.at(game_id)->contexts());
   std::vector<std::string> ctx_ids{ks.begin(), ks.end()};
@@ -530,6 +538,7 @@ void Builder::ApiCtxReferences(const httplib::Request& req, httplib::Response& r
   if (!req.has_param("path")) {
     throw std::invalid_argument("Missing query-parameter: (api-ctx-references) path");
   } 
+  std::shared_lock sl(_mtx_games);
   nlohmann::json references = _games.at(game_id)->GetCtxReferences(req.get_param_value("path"));
   resp.status = 200;
   resp.set_content(references.dump(), "application/json");
@@ -540,6 +549,7 @@ void Builder::ApiTxtReferences(const httplib::Request& req, httplib::Response& r
   if (!req.has_param("path")) {
     throw std::invalid_argument("Missing query-parameter: (api-txt-references) path");
   } 
+  std::shared_lock sl(_mtx_games);
   nlohmann::json references = _games.at(game_id)->GetTextReferences(req.get_param_value("path"));
   resp.status = 200;
   resp.set_content(references.dump(), "application/json");
@@ -550,6 +560,7 @@ void Builder::ApiDirReferences(const httplib::Request& req, httplib::Response& r
   if (!req.has_param("path")) {
     throw std::invalid_argument("Missing query-parameter: (api-txt-references) path");
   } 
+  std::shared_lock sl(_mtx_games);
   const std::string path = req.get_param_value("path");
   std::vector<std::string> references;
   for (const auto& it : _games.at(game_id)->texts()) {
@@ -768,9 +779,22 @@ void Builder::SaveGame(const httplib::Request& req, httplib::Response& resp) {
   std::unique_lock ul(_mtx_games);
   std::string game_path = _games.at(game_id)->path();
   try {
+    auto changes = _games.at(game_id)->modified();
     _games.at(game_id)->StoreGame();
     _games.erase(game_id);
+
+    const std::string username = _manager.CreatorFromCookie(req)->username();
+    if (const auto& branch_name = _http::GetField(req, "branch_name")) {
+      std::string iso_utc_now = util::iso_utc_now();
+      std::string date = iso_utc_now.substr(iso_utc_now.find(" "));
+      std::string full_branch_name = username + "/" + *branch_name + date;
+      git::switch_to_new_branch(game_path, full_branch_name);
+    }
+    git::commit_on_save(game_path, changes, _http::GetField(req, "commit_message"), username);
+
+    // Load game after commiting to be able to load current backup
     _games[game_id] = std::make_shared<BuilderGame>(game_path, game_id);
+
     resp.status = 200;
   } catch (std::exception& e) {
     resp.set_content("Failed storing game: " + std::string(e.what()), "text/txt");
@@ -871,6 +895,7 @@ void Builder::RemoveText(const httplib::Request& req, httplib::Response& resp) {
   if (!req.has_param("path")) {
     throw std::invalid_argument("Missing query-parameter: (remove-ctx) path");
   } 
+  std::unique_lock ul(_mtx_games);
   const std::string txt_id = req.get_param_value("path");
   _games.at(game_id)->RemoveText(txt_id);
   resp.set_redirect(_http::Referer(req, "Successfully removed text: " + txt_id), 303);
@@ -881,6 +906,7 @@ void Builder::RemoveContext(const httplib::Request& req, httplib::Response& resp
   if (!req.has_param("path")) {
     throw std::invalid_argument("Missing query-parameter: (remove-ctx) path");
   } 
+  std::unique_lock ul(_mtx_games);
   const std::string ctx_id = req.get_param_value("path");
   _games.at(game_id)->RemoveContext(ctx_id);
   resp.set_redirect(_http::Referer(req, "Successfully removed context: " + ctx_id), 303);
@@ -891,19 +917,18 @@ void Builder::RemoveDirectory(const httplib::Request& req, httplib::Response& re
   if (!req.has_param("path")) {
     throw std::invalid_argument("Missing query-parameter: (remove-ctx) path");
   } 
+  std::unique_lock ul(_mtx_games);
   const std::string path = req.get_param_value("path");
 
   auto txt_ks = std::views::keys(_games.at(game_id)->texts());
   for (const auto& it : std::vector<std::string>(txt_ks.begin(), txt_ks.end())) {
     if (it.find(path) == 0) {
-      std::cout << "Deleting txt: " << it << std::endl;
       _games.at(game_id)->RemoveText(it);
     }
   }
   auto ctx_ks = std::views::keys(_games.at(game_id)->contexts());
   for (const auto& it : std::vector<std::string>(ctx_ks.begin(), ctx_ks.end())) {
     if (it.find(path) == 0) {
-      std::cout << "Deleting ctx: " << it << std::endl;
       _games.at(game_id)->RemoveContext(it);
     }
   }
@@ -922,6 +947,26 @@ void Builder::RestoreGame(const httplib::Request& req, httplib::Response& resp) 
     resp.status = 200;
   } catch (std::exception& e) {
     resp.set_content("Failed restoring old game state: " + std::string(e.what()), "text/txt");
+    resp.status = 400;
+  }
+}
+
+void Builder::RestoreArchive(const httplib::Request& req, httplib::Response& resp) {
+  std::string game_id = req.path_params.at("game_id");
+  if (!req.has_param("archive")) {
+    throw std::invalid_argument("Missing query-parameter: (restore-archive) archive");
+  }
+  const std::string commit_sha = req.get_param_value("archive");
+  std::unique_lock ul(_mtx_games);
+  std::string game_path = _games.at(game_id)->path();
+
+  try {
+    _games.erase(game_id);
+    git::restore_to_commit_always_branch(game_path, commit_sha);
+    _games[game_id] = std::make_shared<BuilderGame>(game_path, game_id);
+    resp.status = 200;
+  } catch (std::exception& e) {
+    resp.set_content("Failed restoring archive (" + commit_sha + "): " + std::string(e.what()), "text/txt");
     resp.status = 400;
   }
 }

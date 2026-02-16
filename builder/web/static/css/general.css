@@ -53,3 +53,13 @@ h1 {
   overflow: hidden;
   text-overflow: ellipsis;
 }
+
+.floating-link-button {
+  float: right; 
+  margin-right: 0em;
+  background: none!important;
+  border: none;
+  padding: 0!important;
+  text-decoration: underline;
+  cursor: pointer;
+}

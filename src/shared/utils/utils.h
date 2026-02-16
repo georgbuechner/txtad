@@ -127,6 +127,8 @@ namespace util
    */
   std::string HashSha3512(const std::string& input);
 
+  std::string iso_utc_now();
+
   std::string generate_random_hex_string(size_t length);
 
   std::string GetPage(const std::string& path);

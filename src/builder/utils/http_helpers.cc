@@ -1,11 +1,19 @@
 #include "http_helpers.h"
 #include "httplib.h"
 #include "shared/utils/utils.h"
+#include <optional>
 
 std::string _http::Get(const httplib::Request& req, const std::string &field) {
   if (req.get_param_value_count(field) == 0) 
     throw _t_exception({401, "Missing field \"" + field + "\""});
   return req.get_param_value(field);
+}
+
+std::optional<std::string> _http::GetField(const httplib::Request& req, const std::string& field) {
+  if (req.form.has_field(field)) {
+    return std::optional<std::string>(req.form.get_field(field));
+  }
+  return std::nullopt;
 }
 
 std::string _http::UrlPath(const std::string& url) {
@@ -52,3 +60,4 @@ std::string _http::Referer(const httplib::Request& req, std::string msg) {
   }
   return path + "?" + new_query;
 }
+

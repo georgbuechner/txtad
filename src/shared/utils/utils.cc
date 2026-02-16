@@ -1,8 +1,12 @@
 #include "utils.h"
 #include "cleanup_dtor.h"
+#include <chrono>
+#include <ctime>
 #include <exception>
 #include <fmt/core.h>
 #include <fstream>
+#include <iomanip>
+#include <ios>
 #include <nlohmann/json.hpp>
 #include <optional>
 #include <random>
@@ -230,6 +234,15 @@ std::string util::HashSha3512(const std::string& input) {
   for (auto b : std::vector<uint8_t>(digest,digest+digest_length))
     stream << std::setw(2) << std::setfill('0') << (int)b;
   return stream.str();
+}
+
+std::string util::iso_utc_now() {
+  std::ostringstream out;
+  out << std::chrono::utc_clock::now();
+  std::string s = out.str();
+  if (s.find(".") == std::string::npos)
+    return s;
+  return s.substr(0, s.rfind("."));
 }
 
 std::string util::generate_random_hex_string(size_t length) {

@@ -57,14 +57,30 @@ function type_attributes(type) {
     return DataStore.data["type-attributes"] ?? [];
   return DataStore.data["type-attributes"][type] ?? [];
 }
+
 async function SaveContent(game_id) {
   let container = document.getElementById("save_results");
   let tests_successfull = await RunTests(game_id, "save_test_results");
   if (tests_successfull) {
     try {
-      let response = await fetch("/" + game_id + "/save", { method: "POST" });
+      const payload = new FormData(); 
+      payload.append("commit_message", document.getElementById("commit_message").value);
+      let branch_name = document.getElementById("branch_name").value;
+      if (branch_name && branch_name.length > 1) {
+        branch_name = branch_name.replaceAll(" ", "-");
+        payload.append("branch_name", document.getElementById("branch_name").value);
+      }
+
+      let response = await fetch("/" + game_id + "/save", { 
+        method: "POST", 
+        body: payload
+      });
+
+      console.log("Got response", response.status);
+
       if (response.status == 400) {
         let text = await response.text();
+        console.log("Got response text", text);
         container.innerHTML = text;
       } else if (response.status == 200) {
         updateUrlWithMessage("Successfully saved game content.");
@@ -76,6 +92,27 @@ async function SaveContent(game_id) {
       return false;
     }
   } 
+}
+
+async function RestoreArchive(game_id, commit_sha) {
+  try {
+    let response = await fetch("/" + game_id + "/archive/restore?archive=" + commit_sha, { 
+      method: "POST", 
+    });
+
+    console.log("Got response", response.status);
+
+    if (response.status == 400) {
+      alert("Failed restore archive " + commit_sha + ": 400");
+    } else if (response.status == 200) {
+      updateUrlWithMessage("Successfully restored archive.");
+    } else {
+      alert("Failed restore archive " + commit_sha + ": Unkown response (" + response.status + ")");
+    }
+  } catch (error) {
+    alert("Failed restore archive " + commit_sha + ": Unkown error (" + error.message + ")");
+    return false;
+  }
 }
 
 async function RestoreContent(game_id) {

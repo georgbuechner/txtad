@@ -5,11 +5,24 @@
 #include "game/utils/defines.h"
 #include "shared/utils/parser/game_file_parser.h"
 #include "shared/utils/utils.h"
+#include "shared/utils/git_wrapper/git_wrapper.h"
 
 namespace fs = std::filesystem;
 
+BuilderGame::BuilderGame(std::string path, std::string name) : Game(path, name), _modified(false) {
+  // If not yet initialized, initialize and create initial commit.
+  if (!git::is_initialized(path)) {
+    git::commit_on_save(path, {}, "initial_commit", "fux");
+  }
+
+  for (const auto& it : git::get_all_branches(_path)) {
+    _backup_infos[it] = git::get_commits_of_branch(_path, it);
+  }
+}
+
 // getter
 const std::vector<std::string>& BuilderGame::modified() const { return _modified; }
+const std::map<std::string, std::vector<git::CommitInfo>>& BuilderGame::backup_infos() { return _backup_infos; }
 
 // methods
 

@@ -15,6 +15,7 @@
 #include "shared/objects/tests/test_case.h"
 #include "shared/utils/eventmanager/listener.h"
 #include "shared/utils/utils.h"
+#include "shared/utils/git_wrapper/git_wrapper.h"
 #include <unordered_map>
 
 #include <map>
@@ -82,6 +83,16 @@ namespace _jinja {
       } else {
         m.emplace(id, jinja2::Value());
       }
+    }
+    return m;
+  }
+
+  template<typename T1, typename T2>
+  jinja2::ValuesMap Map(const std::map<T1, std::vector<T2>>& map) {
+    jinja2::ValuesMap m;
+    m.reserve(map.size());
+    for (const auto& [id, val] : map) {
+      m.emplace(id, Vec(val));
     }
     return m;
   }
@@ -223,11 +234,37 @@ namespace jinja2 {
       return acc;
     }
   };
+
   template<> struct TypeReflection<TestCase> : TypeReflected<TestCase> {
     static auto& GetAccessors() {
       static std::unordered_map<std::string, FieldAccessor> acc = {
         {"desc", [](const TestCase& t) { return jinja2::Value(t.desc()); }},
         {"tests", [](const TestCase& t) { return _jinja::Vec(t.tests()); }}
+      };
+      return acc;
+    }
+  };
+
+  template<> struct TypeReflection<git::CommitInfo> : TypeReflected<git::CommitInfo> {
+    static auto& GetAccessors() {
+      static std::unordered_map<std::string, FieldAccessor> acc = {
+        {"oid", [](const git::CommitInfo& ci) { return jinja2::Value(ci._oid); }},
+        {"summary", [](const git::CommitInfo& ci) { 
+            int pos = ci._summary.find(" - ");
+            if (pos != std::string::npos) {
+              return jinja2::Value(ci._summary.substr(pos+3));
+            }
+            return jinja2::Value(""); 
+        }},
+        {"author", [](const git::CommitInfo& ci) { return jinja2::Value(ci._author); }},
+        {"timestamp", [](const git::CommitInfo& ci) { 
+            int pos = ci._summary.find(" - ");
+            if (pos != std::string::npos) {
+              return jinja2::Value(ci._summary.substr(0, pos));
+            }
+            return jinja2::Value(ci._summary); 
+        }},
+
       };
       return acc;
     }

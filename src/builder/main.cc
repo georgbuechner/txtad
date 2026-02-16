@@ -9,7 +9,6 @@
 using namespace std::chrono_literals;
 
 int main() {
-
   util::SetUpLogger(builder::FILES_PATH, builder::LOGGER, spdlog::level::debug);
   util::LoggerContext scope(builder::LOGGER);
 
