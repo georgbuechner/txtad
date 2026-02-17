@@ -10,6 +10,7 @@
 #include <nlohmann/json_fwd.hpp>
 #include <optional>
 #include <regex>
+#include <set>
 #include <spdlog/common.h>
 #include <spdlog/logger.h>
 #include <string>
@@ -131,9 +132,12 @@ namespace util
 
   std::string generate_random_hex_string(size_t length);
 
+  bool IsIdType(const std::string& id);
+
   std::string GetPage(const std::string& path);
 
   std::vector<std::string> GetSubpaths(const std::vector<std::string>& ids);
+  std::vector<std::string> GetSubpaths(const std::string& id);
 
   class TmpPath {
     public: 

@@ -3,6 +3,7 @@
 
 #include "game/game/game.h"
 #include "shared/utils/git_wrapper/git_wrapper.h"
+#include <set>
 
 class BuilderGame : public Game {
   public: 
@@ -24,6 +25,24 @@ class BuilderGame : public Game {
     void AddModified(std::string mod);
 
     void UpdateBackupInfos();
+
+    /**
+     * Creates new context
+     * @param[in] id
+     */ 
+    void CreateCtx(const std::string& id);
+
+    /**
+     * Creates new text
+     * @param[in] id
+     */ 
+    void CreateTxt(const std::string& id);
+
+    /**
+     * Creates new directory
+     * @param[in] id
+     */ 
+    void CreateDir(const std::string& id);
 
     /**
      * Creates/Updates/Replaces listener while game is running
@@ -75,6 +94,7 @@ class BuilderGame : public Game {
     std::map<std::string, builder::FileType> GetPaths(const std::string& path) const;
 
   private:
+    std::set<std::string> _pending_directories;
     std::vector<std::string> _modified;
     std::map<std::string, std::vector<git::CommitInfo>> _backup_infos;
 

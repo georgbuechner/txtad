@@ -1,8 +1,11 @@
 #include "builder/game/builder_game.h"
 #include <filesystem>
 #include <format>
+#include <stdexcept>
+#include <string>
 #include "builder/utils/defines.h"
 #include "game/utils/defines.h"
+#include "shared/objects/context/context.h"
 #include "shared/utils/parser/game_file_parser.h"
 #include "shared/utils/utils.h"
 #include "shared/utils/git_wrapper/git_wrapper.h"
@@ -38,6 +41,27 @@ void BuilderGame::UpdateBackupInfos() {
   }
 }
 
+void BuilderGame::CreateCtx(const std::string& id) {
+  if (_contexts.contains(id)) {
+    throw std::invalid_argument("Context already exists: " + id);
+  }
+  _contexts[id] = std::make_shared<Context>(id, 0);
+}
+
+void BuilderGame::CreateTxt(const std::string& id) {
+  if (_texts.contains(id)) {
+    throw std::invalid_argument("Text already exists: " + id);
+  }
+  _texts[id] = std::make_shared<Text>(std::string(""));
+}
+
+void BuilderGame::CreateDir(const std::string& id) {
+  if (_pending_directories.contains(id)) {
+    throw std::invalid_argument("Directory already exists: " + id);
+  }
+  _pending_directories.emplace(id);
+}
+
 void BuilderGame::StoreGame(std::string path) {
   path = (path != "") ? path : _path;
   util::WriteJsonToDisc(path + "/" + txtad::GAME_SETTINGS, _settings.ToJson());
@@ -55,6 +79,10 @@ void BuilderGame::StoreGame(std::string path) {
     fs::path p(path + "/" + txtad::GAME_FILES + txt.first + txtad::TEXT_EXTENSION);
     fs::create_directories(p.parent_path());
     util::WriteJsonToDisc(p.string(), txt.second->json());
+  }
+  for (const auto& dir : _pending_directories) {
+    fs::path p(path + "/" + txtad::GAME_FILES + dir);
+    fs::create_directories(p.parent_path());
   }
 }
 
@@ -219,22 +247,33 @@ void BuilderGame::AddRefsFoundInString(std::vector<std::string>& refs, const std
 
 std::map<std::string, builder::FileType> BuilderGame::GetPaths() const {
   std::map<std::string, builder::FileType> paths;
-  
+
+
+  // Add DIRs first, so they get overwritten
+  for (const auto& dir : _pending_directories) {
+    paths.emplace(dir, builder::FileType::DIR);
+    for (const auto& sub_dir : util::GetSubpaths(dir)) {
+      paths.emplace(dir, builder::FileType::DIR);
+    }
+  }
+ 
+  // TODO (fux): account for identical dir and context names?
   auto cs = std::views::keys(_contexts);
-  for (const auto& it : util::GetSubpaths((std::vector<std::string>){cs.begin(), cs.end()})) {
+  for (const auto& dir : util::GetSubpaths((std::vector<std::string>){cs.begin(), cs.end()})) {
     // This implies that there cannot be a context and a (sub-)dir with the same name
-    paths.emplace(it, builder::FileType::DIR);
+    paths.emplace(dir, builder::FileType::DIR);
   }
-  for (const auto& it : _contexts) {
-    paths.emplace(it.first, builder::FileType::CTX);
+  for (const auto& ctx_id : _contexts) {
+    paths.emplace(ctx_id.first, builder::FileType::CTX);
   }
-  // TODO (fux): account for identical text and context names?
+
+  // TODO (fux): account for identical context and text names?
   auto ts = std::views::keys(_texts);
-  for (const auto& it : util::GetSubpaths((std::vector<std::string>){ts.begin(), ts.end()})) {
-    paths.emplace(it, builder::FileType::DIR);
+  for (const auto& dir : util::GetSubpaths((std::vector<std::string>){ts.begin(), ts.end()})) {
+    paths.emplace(dir, builder::FileType::DIR);
   }
-  for (const auto& it : _texts) {
-    paths.emplace(it.first, builder::FileType::TXT);
+  for (const auto& txt_id : _texts) {
+    paths.emplace(txt_id.first, builder::FileType::TXT);
   }
   return paths;
 }

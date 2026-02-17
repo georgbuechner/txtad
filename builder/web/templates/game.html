@@ -58,7 +58,8 @@
 
 
 <div class="accordion accordion-flush" id="accordionFlushExample">
-  {% for s in selections %} 
+  {% for it in selections|dictsort %} 
+    {% set s=it.key %}
     {% set type=selections[s] %}
     <div class="accordion-item">
       <div class="accordion-header d-flex justify-content-between align-items-center" 
@@ -128,6 +129,18 @@
     </div>
   {% endfor %}
 </div>
+
+<br>
+<br>
+<button 
+  type="button" 
+  class="btn btn-primary" 
+  data-bs-toggle="modal" 
+  data-bs-target="#shareAddElementModal"
+  title="Create New Element"
+>
+  <i class="bi bi-plus-lg"></i>
+</button>
 
 <!-- Modal -->
 <div class="modal fade" id="shareSettingsModal" tabindex="-1" aria-labelledby="#shareSettingsModal" aria-hidden="true">
@@ -256,6 +269,31 @@
 
         <p id="test_result"></p>
 
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal fade" id="shareAddElementModal" tabindex="-1" aria-labelledby="shareAddElementModal" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="shareSettingsModalLabel">Create New Element</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+
+        <form action="{{game.name}}/create?path={{path}}" method="POST" enctype="multipart/form-data">
+          <label for="id" class="form-label"><i>Use only a-z, A-Z, 0-9 and _ as element-ids!</i></label>
+          <div class="input-group mb-3">
+            <span class="input-group-text" id="basic-addon1">ID:</span>
+            <input type="text" class="form-control" placeholder="new elements id" id="id" name="id">
+          </div>
+
+          <button type="submit" name="action" value="TXT" class="btn btn-primary" title="Create new text.">TXT</button>
+          <button type="submit" name="action" value="DIR" class="btn btn-secondary" title="Create new directory.">DIR</button>
+          <button type="submit" name="action" value="CTX" class="btn btn-primary" title="Create new context.">CTX</button>
+        </form>
       </div>
     </div>
   </div>

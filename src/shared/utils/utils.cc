@@ -1,5 +1,6 @@
 #include "utils.h"
 #include "cleanup_dtor.h"
+#include <cctype>
 #include <chrono>
 #include <ctime>
 #include <exception>
@@ -259,6 +260,15 @@ std::string util::generate_random_hex_string(size_t length) {
   return random_string;
 }
 
+bool util::IsIdType(const std::string& id) {
+  for (const auto& c : id) {
+    if (!std::isalnum(c) && c != '_') {
+      util::Logger()->warn("{} has invalid character: {}!", id, c);
+      return false;
+    }
+  }
+  return true;
+}
 std::string util::GetPage(const std::string& path) {
   // Read loginpage and send
   std::ifstream read(path);
@@ -284,6 +294,18 @@ std::vector<std::string> util::GetSubpaths(const std::vector<std::string>& ids) 
       sub_paths.insert(path);
     } 
   }
+  std::vector<std::string> vec{sub_paths.begin(), sub_paths.end()};
+  return vec;
+}
+
+
+std::vector<std::string> util::GetSubpaths(const std::string& id) {
+  std::set<std::string> sub_paths = {}; 
+  std::string path = id;
+  while(path.find("/") != std::string::npos) {
+    path = path.substr(0, path.rfind("/"));
+    sub_paths.insert(path);
+  } 
   std::vector<std::string> vec{sub_paths.begin(), sub_paths.end()};
   return vec;
 }

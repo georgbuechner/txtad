@@ -76,6 +76,9 @@ class Builder {
     void SaveDescriptionElement(const httplib::Request& req, httplib::Response& resp, bool add_new);
     void SaveTextElement(const httplib::Request& req, httplib::Response& resp, bool add_new);
     void SaveGame(const httplib::Request& req, httplib::Response& resp);
+
+    // NEW ELEMENTS 
+    void NewElement(const httplib::Request& req, httplib::Response& resp);
     
     // REMOVES ELEMENTS
     void RemoveAttribute(const httplib::Request& req, httplib::Response& resp);

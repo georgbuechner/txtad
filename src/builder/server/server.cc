@@ -153,6 +153,10 @@ void Builder::Start() {
   _srv.Post("/:game_id/save", [&](const httplib::Request& req, httplib::Response& resp) {
       SaveGame(req, resp); });
 
+  // NEW ELEMENTS 
+  _srv.Post("/:game_id/create", [&](const httplib::Request& req, httplib::Response& resp) {
+      NewElement(req, resp); });
+
   // REMOVES ELEMENTS
   _srv.Post("/:game_id/remove/ctx/attribute", [&](const httplib::Request& req, httplib::Response& resp) {
       RemoveAttribute(req, resp); });
@@ -803,6 +807,35 @@ void Builder::SaveGame(const httplib::Request& req, httplib::Response& resp) {
     resp.set_content("Failed storing game: " + std::string(e.what()), "text/txt");
     resp.status = 400;
   }
+}
+
+void Builder::NewElement(const httplib::Request& req, httplib::Response& resp) {
+  std::string game_id = req.path_params.at("game_id");
+  const auto action = _http::GetField(req, "action");
+  const auto id = _http::GetField(req, "id");
+  const auto cur_path = (req.has_param("path")) ? req.get_param_value("path") : "";
+
+  if (!action || !id) {
+    resp.set_redirect(_http::Referer(req, "Failed creating element. Missing field!"), 303);
+    return;
+  } 
+  if (!util::IsIdType(*id)) {
+    resp.set_redirect(_http::Referer(req, "Failed creating element. ID contains invalid characters: " + *id), 303);
+    return;
+  } 
+  // Create id from current path + id
+  std::string elem_id = (cur_path.empty()) ? *id : cur_path + "/" + *id;
+  if (action == "CTX") {
+    _games.at(game_id)->CreateCtx(elem_id);
+  } else if (action == "TXT") {
+    _games.at(game_id)->CreateTxt(elem_id);
+  } else if (action == "DIR") {
+    _games.at(game_id)->CreateDir(elem_id);
+  } else {
+    resp.set_redirect(_http::Referer(req, "Failed creating element. Unkwon action: " + *action), 303);
+    return;
+  }
+  resp.set_redirect(_http::Referer(req, "Created new element: " + elem_id + " [" + *action + "]"), 303);
 }
 
 // REMOVES ELEMENTS
