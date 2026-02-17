@@ -37,8 +37,6 @@ class Game {
     void set_msg_fn(MsgFn fn);
     void set_running(bool status);
 
-    void set_settings(txtad::Settings&& settings);
-
     // methods 
     void HandleEvent(const std::string& user_id, const std::string& event);
     std::shared_ptr<User> CreateNewUser(std::string user_id);

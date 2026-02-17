@@ -643,6 +643,9 @@ void Builder::SaveSettings(const httplib::Request& req, httplib::Response& resp)
     std::unique_lock ul(_mtx_games);
     _games.at(game_id)->set_settings(txtad::Settings(settings_json));
     _games.at(game_id)->AddModified("Updated settings");
+    if (const auto game_desc = _http::GetField(req, "game_desc")) {
+      _games.at(game_id)->UpdateGameDescription(*game_desc);
+    }
     resp.set_redirect(_http::Referer(req, "Successfully saved game settings."), 303);
   } catch (std::exception& e) {
     std::string msg = "Failed saving settings: " + std::string(e.what());

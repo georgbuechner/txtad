@@ -107,7 +107,6 @@ void Game::set_msg_fn(MsgFn fn) {
   _cout = fn; 
 }
 void Game::set_running(bool status) { _running = status; }
-void Game::set_settings(txtad::Settings&& settings) { _settings = std::move(settings); }
 
 // methods 
 void Game::HandleEvent(const std::string& user_id, const std::string& event) {

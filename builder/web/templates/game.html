@@ -164,6 +164,15 @@
           {% set list_elements = game.settings.initial_contexts %}
           {% set list_hint = "CTX" %}
           {% include "forms/str_list.html" %}
+
+          <br>
+          <br>
+          <h4>Game Description:</h4>
+          <div class="input-group mb-3">
+            <span class="input-group-text">Description:</span>
+            <input type="text" class="form-control" placeholder="" name="game_desc" value="{{game.description}}">
+          </div>
+
           <br><br>
           <button type="submit" class="btn btn-primary">save</button>
         </form>

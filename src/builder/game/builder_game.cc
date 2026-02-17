@@ -24,6 +24,9 @@ BuilderGame::BuilderGame(std::string path, std::string name) : Game(path, name),
 const std::vector<std::string>& BuilderGame::modified() const { return _modified; }
 const std::map<std::string, std::vector<git::CommitInfo>>& BuilderGame::backup_infos() { return _backup_infos; }
 
+// setter 
+void BuilderGame::set_settings(txtad::Settings&& settings) { _settings = std::move(settings); }
+
 // methods
 
 void BuilderGame::ResetModified() {
@@ -65,7 +68,7 @@ void BuilderGame::CreateDir(const std::string& id) {
 void BuilderGame::StoreGame(std::string path) {
   path = (path != "") ? path : _path;
   util::WriteJsonToDisc(path + "/" + txtad::GAME_SETTINGS, _settings.ToJson());
-  util::WriteJsonToDisc(path + "/" + txtad::BUILDER_EXTENSION, _settings.ToJson());
+  util::WriteJsonToDisc(path + "/" + txtad::BUILDER_EXTENSION, _builder_settings.ToJson());
   // Remove everything first
   for (const auto& entry : std::filesystem::directory_iterator(path + "/" + txtad::GAME_FILES)) 
     std::filesystem::remove_all(entry.path());
@@ -84,6 +87,10 @@ void BuilderGame::StoreGame(std::string path) {
     fs::path p(path + "/" + txtad::GAME_FILES + dir);
     fs::create_directories(p.parent_path());
   }
+}
+
+void BuilderGame::UpdateGameDescription(const std::string& description) {
+  _builder_settings._description = description;
 }
 
 void BuilderGame::CreateListenerInPlace(const std::string& listener_id, const nlohmann::json& json_listener, 

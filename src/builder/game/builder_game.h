@@ -17,8 +17,13 @@ class BuilderGame : public Game {
     const std::vector<std::string>& modified() const;
     const std::map<std::string, std::vector<git::CommitInfo>>& backup_infos();
     
+    // setter
+    void set_settings(txtad::Settings&& settings);
+
     // Medthods
     void StoreGame(std::string path = "");
+
+    void UpdateGameDescription(const std::string& description);
 
     void ResetModified(); 
 
