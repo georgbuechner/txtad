@@ -133,6 +133,29 @@ async function RestoreContent(game_id) {
   }
 }
 
+async function ShowCommitMessage(game_id, commit_sha) {
+  // Show commit - message
+  document.getElementById(commit_sha + "_commit_message_container").classList.remove("d-none");
+  document.getElementById(commit_sha + "_show_commit_message_button").classList.add("d-none");
+
+  let dom_commit_message = document.getElementById(commit_sha + "_commit_message");
+  if (dom_commit_message.innerHTML === "") {
+    let response = await fetch("/api/archive/commit/" + game_id + "?commit_sha=" + commit_sha);
+    if (response.status == 200) {
+      let text = await response.text();
+      dom_commit_message.innerHTML = text.replace(/(?:\r\n|\r|\n)/g, '<br>');
+    } else {
+      dom_commit_message.classList.add("text-danger");
+      dom_commit_message.innerHTML = "Failed getting commit_message: " + response.status;
+    }
+  } 
+}
+
+function HideCommitMessage(commit_sha) {
+  document.getElementById(commit_sha + "_commit_message_container").classList.add("d-none");
+  document.getElementById(commit_sha + "_show_commit_message_button").classList.remove("d-none");
+}
+
 function SetTextIndex(index) {
   let form = document.getElementById('textAddModal').getElementsByTagName("FORM")[0];
   form.action = form.action.replace("new_index", index.toString());

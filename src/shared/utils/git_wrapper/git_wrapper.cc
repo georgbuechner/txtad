@@ -559,3 +559,17 @@ void git::rename_branch(const std::filesystem::path& repo_dir, const std::string
   git_reference_free(old_ref);
   git_repository_free(repo);
 }
+
+std::string git::commit_message(const std::filesystem::path& repo_dir, const std::string& commit_sha) {
+  git_repository* repo = nullptr;
+  throw_git(git_repository_open(&repo, repo_dir.c_str()), "git_repository_open");
+
+  git_commit* commit = lookup_commit(repo, commit_sha);
+
+  const char* msg = git_commit_message(commit);
+  std::string out = msg ? msg : "";
+
+  git_commit_free(commit);
+  git_repository_free(repo);
+  return out;
+}

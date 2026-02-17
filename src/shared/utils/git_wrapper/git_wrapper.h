@@ -34,6 +34,8 @@ namespace git {
   void delete_branch(const std::filesystem::path& repo_dir, const std::string& name);
 
   void rename_branch(const std::filesystem::path& repo_dir, const std::string& old_name, const std::string& new_name);
+
+  std::string commit_message(const std::filesystem::path& repo_dir, const std::string& commit_sha);
 }
 
 #endif

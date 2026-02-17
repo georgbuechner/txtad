@@ -105,6 +105,9 @@ void Builder::Start() {
   _srv.Get("/api/dir/references/:game_id", [&](const httplib::Request& req, httplib::Response& resp) {
       ApiDirReferences(req, resp); });
 
+  _srv.Get("/api/archive/commit/:game_id", [&](const httplib::Request& req, httplib::Response& resp) {
+      ApiCommitMessage(req, resp); });
+
   // PAGES 
   _srv.Get("/", [&](const httplib::Request& req, httplib::Response& resp) {
     LoadTemplate(resp, "index.html", CreateParams(req)); });
@@ -589,6 +592,21 @@ void Builder::ApiDirReferences(const httplib::Request& req, httplib::Response& r
   resp.set_content(nlohmann::json(references).dump(), "application/json");
 }
 
+void Builder::ApiCommitMessage(const httplib::Request& req, httplib::Response& resp) {
+  if (!req.has_param("commit_sha")) {
+    throw std::invalid_argument("Missing query-parameter: (api-commit-mesage) commit_sha");
+  } 
+  const std::string commit_sha = req.get_param_value("commit_sha");
+  std::string game_path;
+  {
+    std::string game_id = req.path_params.at("game_id");
+    std::shared_lock sl(_mtx_games);
+    game_path = _games.at(game_id)->path();
+  }
+
+  resp.status = 200;
+  resp.set_content(git::commit_message(game_path, commit_sha), "application/json");
+}
 // PAGES 
 
 void Builder::PagesGame(const httplib::Request& req, httplib::Response& resp) {

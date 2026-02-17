@@ -204,6 +204,25 @@
                           <br>
                           <span>{{commit.summary}}</span>
                         </p>
+                        <div id="{{commit.oid}}_show_commit_message_button"
+                          class="text-center mb-1">
+                          <button 
+                            class="btn btn-link p-0" 
+                            type="button"
+                            onclick="ShowCommitMessage('{{game.name}}', '{{commit.oid}}');"
+                          >details</button>
+                        </div>
+                        <div id="{{commit.oid}}_commit_message_container" class="d-none">
+                          <div class="text-center">
+                            <button 
+                              class="btn btn-link p-0" 
+                              type="button"
+                              id="{{commit.oid}}_hide_commit_message_button"
+                              onclick="HideCommitMessage('{{commit.oid}}');"
+                            >hide</button>
+                          </div>
+                          <p id="{{commit.oid}}_commit_message"></p>
+                        </div>
                       </li>
                     {% endfor %}
                   </ul>
