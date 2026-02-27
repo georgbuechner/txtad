@@ -976,20 +976,7 @@ void Builder::RemoveDirectory(const httplib::Request& req, httplib::Response& re
   } 
   std::unique_lock ul(_mtx_games);
   const std::string path = req.get_param_value("path");
-
-  auto txt_ks = std::views::keys(_games.at(game_id)->texts());
-  for (const auto& it : std::vector<std::string>(txt_ks.begin(), txt_ks.end())) {
-    if (it.find(path) == 0) {
-      _games.at(game_id)->RemoveText(it);
-    }
-  }
-  auto ctx_ks = std::views::keys(_games.at(game_id)->contexts());
-  for (const auto& it : std::vector<std::string>(ctx_ks.begin(), ctx_ks.end())) {
-    if (it.find(path) == 0) {
-      _games.at(game_id)->RemoveContext(it);
-    }
-  }
-
+  _games.at(game_id)->RemoveDirectory(path);
   resp.set_redirect(_http::Referer(req, "Successfully removed directory: " + path), 303);
 }
 

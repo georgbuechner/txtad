@@ -52,6 +52,16 @@ _jinja::Env::Env(std::string template_path) : _fs{template_path} {
       }, std::vector<jinja2::ArgInfo>()
     ));
 
+  _env.AddGlobal("branch_reduced", jinja2::UserCallable(
+      [](auto& params)->jinja2::Value {
+        const std::string str = params["s"].asString();
+        const auto pos = str.find("/");
+        if (pos != std::string::npos) {
+          return str.substr(pos+1);
+        }
+        return str;
+      }, std::vector<jinja2::ArgInfo>({jinja2::ArgInfo{"s"}})
+    ));
 }
 
 // methods

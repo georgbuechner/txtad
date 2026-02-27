@@ -57,6 +57,7 @@ class BuilderGame : public Game {
     void RemoveListener(const std::string& listener_id, const std::string& ctx_id);
     void RemoveContext(const std::string& ctx_id);
     void RemoveText(const std::string& ctx_id);
+    void RemoveDirectory(const std::string& path);
 
     /**
      * Updates text entry at given path.

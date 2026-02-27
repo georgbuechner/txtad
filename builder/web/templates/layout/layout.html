@@ -178,11 +178,11 @@
                     class="accordion-button collapsed flex-grow-1" 
                   {% endif %}
                     type="button" data-bs-toggle="collapse" 
-                    data-bs-target="#collapseBranch{{branch}}" aria-expanded="true" 
-                    aria-controls="collapseBranch{{branch}}"
+                    data-bs-target="#collapseBranch{{branch|branch_reduced}}" aria-expanded="true" 
+                    aria-controls="collapseBranch{{branch|branch_reduced}}"
                 >{{branch}}</button>
               </h2>
-              <div id="collapseBranch{{branch}}" 
+              <div id="collapseBranch{{branch|branch_reduced}}" 
                    {% if branch==current_branch %}
                     class="accordion-collapse collapse show"
                   {% else %}

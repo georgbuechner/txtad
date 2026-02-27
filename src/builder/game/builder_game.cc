@@ -139,6 +139,24 @@ void BuilderGame::RemoveText(const std::string& txt_id) {
   AddModified(fmt::format("Removed txt {}.", txt_id));
 }
 
+void BuilderGame::RemoveDirectory(const std::string& path) {
+  auto txt_ks = std::views::keys(_texts);
+  for (const auto& it : std::vector<std::string>(txt_ks.begin(), txt_ks.end())) {
+    if (it.find(path) == 0) {
+      RemoveText(it);
+    }
+  }
+  auto ctx_ks = std::views::keys(_contexts);
+  for (const auto& it : std::vector<std::string>(ctx_ks.begin(), ctx_ks.end())) {
+    if (it.find(path) == 0) {
+      RemoveContext(it);
+    }
+  }
+  if (_pending_directories.contains(path)) {
+    _pending_directories.erase(path);
+  }
+}
+
 void BuilderGame::UpdateText(std::string path, std::shared_ptr<Text> txt) {
   if (txt) {
     _texts[path] = txt;
