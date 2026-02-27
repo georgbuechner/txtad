@@ -38,9 +38,13 @@ class Builder {
     void ApiRegister(const httplib::Request& req, httplib::Response& resp);
     void ApiLogin(const httplib::Request& req, httplib::Response& resp);
     void ApiLogout(const httplib::Request& req, httplib::Response& resp);
+
     void ApiAddRequest(const httplib::Request& req, httplib::Response& resp);
     void ApiAcceptRequest(const httplib::Request& req, httplib::Response& resp);
     void ApiDenyRequest(const httplib::Request& req, httplib::Response& resp);
+    void ApiHidePath(const httplib::Request& req, httplib::Response& resp);
+    void ApiUnhidePath(const httplib::Request& req, httplib::Response& resp);
+
     void ApiReloadGame(const httplib::Request& req, httplib::Response& resp);
     void ApiStopGame(const httplib::Request& req, httplib::Response& resp);
     void ApiRunGame(const httplib::Request& req, httplib::Response& resp);

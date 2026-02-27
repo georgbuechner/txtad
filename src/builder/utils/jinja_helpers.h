@@ -147,6 +147,9 @@ namespace jinja2 {
         {"contexts", [](const PtrView<BuilderGame>& v){ return (v.ptr) ? _jinja::Map(v.ptr->contexts()) : Value{}; }},
         {"texts", [](const PtrView<BuilderGame>& v){ return (v.ptr) ? _jinja::Map(v.ptr->texts()) : Value{}; }},
         {"description", [](const PtrView<BuilderGame>& v){ return (v.ptr) ? v.ptr->builder_settings()._description : Value{}; }},
+        {"hidden", [](const PtrView<BuilderGame>& v){ return (v.ptr) 
+                ? _jinja::SetToVec(v.ptr->builder_settings()._hidded_dirs) 
+                : Value{}; }},
         {"running", [](const PtrView<BuilderGame>& v){ return (v.ptr) ? v.ptr->running() : Value{}; }},
       };
       return acc;

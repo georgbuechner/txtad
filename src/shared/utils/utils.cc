@@ -309,3 +309,15 @@ std::vector<std::string> util::GetSubpaths(const std::string& id) {
   std::vector<std::string> vec{sub_paths.begin(), sub_paths.end()};
   return vec;
 }
+
+bool util::IsSubPathOf(const std::string& path, const std::string& sub) {
+  return path.find(sub) == 0;
+}
+
+bool util::IsSubPathOf(const std::vector<std::string>& paths, const std::string& sub) {
+  for (const auto& it : paths) {
+    if (util::IsSubPathOf(it, sub)) 
+      return true;
+  }
+  return false;
+}

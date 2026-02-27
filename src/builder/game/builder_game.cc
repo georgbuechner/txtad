@@ -93,6 +93,20 @@ void BuilderGame::UpdateGameDescription(const std::string& description) {
   _builder_settings._description = description;
 }
 
+void BuilderGame::AddHiddenPath(const std::string& path) {
+  _builder_settings._hidded_dirs.insert(path);
+  AddModified(fmt::format("Added hidden path: {}", path));
+}
+
+void BuilderGame::RemoveHiddenPath(const std::string& path) {
+  if (_builder_settings._hidded_dirs.contains(path)) {
+    _builder_settings._hidded_dirs.erase(path);
+    AddModified(fmt::format("Removed hidden path: {}", path));
+  } else {
+    util::Logger()->warn("BuilderGame::RemoveHiddenPath. Path \"{}\" not found in hidden paths", path);
+  }
+}
+
 void BuilderGame::CreateListenerInPlace(const std::string& listener_id, const nlohmann::json& json_listener, 
         const std::string& ctx_id, bool added) {
   if (!_contexts.contains(ctx_id)) {

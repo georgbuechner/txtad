@@ -45,13 +45,17 @@ class Creator {
       creator_json["pending"] = _pending; 
       util::WriteJsonToDisc(builder::FILES_PATH + builder::CREATORS_PATH + _username + ".json", creator_json);
     }
-    bool HasAccessToGame(const std::string& game_id) {
-      return _games.count(game_id) > 0 || _shared.count(game_id);
+
+    bool HasAccessToGame(const std::string& game_id, const std::set<std::string>& hidden={}, const std::string& path="") {
+      if (!path.empty() && util::IsSubPathOf(std::vector<std::string>(hidden.begin(), hidden.end()), path)) {
+        return _games.contains(game_id);
+      }
+      return _games.contains(game_id) || _shared.contains(game_id);
     }
 
     bool OwnsGame(const std::string& game_id) {
       util::Logger()->info(fmt::format("Comparing {} with {}", game_id, nlohmann::json(_games).dump()));
-      return _games.count(game_id) > 0;
+      return _games.contains(game_id) > 0;
     }
 
     void AddGame(std::string game_id) {
@@ -70,7 +74,7 @@ class Creator {
     }
 
     void RemoveRequest(std::string username, std::string game_id) {
-      if (_pending.count({username, game_id}) == 0) {
+      if (_pending.contains({username, game_id}) == 0) {
         throw _http::_t_exception({401, "Unkown Game ID: \"" + game_id + "\"."});
       }
       _pending.erase({username, game_id});

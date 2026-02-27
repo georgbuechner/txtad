@@ -139,6 +139,9 @@ namespace util
   std::vector<std::string> GetSubpaths(const std::vector<std::string>& ids);
   std::vector<std::string> GetSubpaths(const std::string& id);
 
+  bool IsSubPathOf(const std::string& path, const std::string& sub);
+  bool IsSubPathOf(const std::vector<std::string>& paths, const std::string& sub);
+
   class TmpPath {
     public: 
       TmpPath(const std::vector<std::string>& dirs = {}) : _path("data/tmp/" + CreateRandomString(8)) {

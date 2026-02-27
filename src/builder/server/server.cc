@@ -66,6 +66,12 @@ void Builder::Start() {
   _srv.Post("/api/creator/requests/deny", [&](const httplib::Request& req, httplib::Response& resp) {
       ApiDenyRequest(req, resp); });
 
+  _srv.Post("/api/:game_id/hidden/add", [&](const httplib::Request& req, httplib::Response& resp) {
+      ApiHidePath(req, resp); });
+
+  _srv.Post("/api/:game_id/hidden/remove", [&](const httplib::Request& req, httplib::Response& resp) {
+      ApiUnhidePath(req, resp); });
+
   _srv.Get("/api/game/reload/:game_id", [&](const httplib::Request& req, httplib::Response& resp) {
       ApiReloadGame(req, resp); });
 
@@ -251,6 +257,7 @@ jinja2::ValuesMap Builder::CreateParams(const httplib::Request& req, std::string
     params.emplace("worlds", _jinja::SetToVec(creator->worlds()));
     params.emplace("shared", _jinja::SetToVec(creator->shared()));
     params.emplace("pending", _jinja::SetToVec(creator->pending()));
+    params.emplace("is_owner", creator->OwnsGame(game_id));
   } catch (_http::_t_exception e) {
     params.emplace("creatorname", "");
   }
@@ -343,6 +350,32 @@ void Builder::ApiDenyRequest(const httplib::Request& req, httplib::Response& res
     resp.set_redirect(_http::Referer(req, "Request denied."), 303);
   } catch (_http::_t_exception e) {
     resp.set_redirect(_http::Referer(req, e.second), 303);
+  }
+}
+
+void Builder::ApiHidePath(const httplib::Request& req, httplib::Response& resp) {
+  std::string game_id = req.path_params.at("game_id");
+  auto creator = _manager.CreatorFromCookie(req);
+  if (creator->OwnsGame(game_id)) {
+    const std::string& path = _http::Get(req, "target_path"); 
+    std::unique_lock ul(_mtx_games);
+    _games.at(game_id)->AddHiddenPath(path);
+    resp.set_redirect(_http::Referer(req, "Set \"" + path + "\" as hidden for collaborators."), 303);
+  } else {
+    resp.set_redirect(_http::Referer(req, "You are not the owner of the game."), 303);
+  }
+}
+
+void Builder::ApiUnhidePath(const httplib::Request& req, httplib::Response& resp) {
+  std::string game_id = req.path_params.at("game_id");
+  auto creator = _manager.CreatorFromCookie(req);
+  if (creator->OwnsGame(game_id)) {
+    const std::string& path = _http::Get(req, "target_path"); 
+    std::unique_lock ul(_mtx_games);
+    _games.at(game_id)->RemoveHiddenPath(path);
+    resp.set_redirect(_http::Referer(req, "Removed \"" + path + "\" from hidden."), 303);
+  } else {
+    resp.set_redirect(_http::Referer(req, "You are not the owner of the game."), 303);
   }
 }
 
@@ -610,10 +643,12 @@ void Builder::ApiCommitMessage(const httplib::Request& req, httplib::Response& r
 // PAGES 
 
 void Builder::PagesGame(const httplib::Request& req, httplib::Response& resp) {
-  std::string game_id = req.path_params.at("game_id");
-  std::string type = req.has_param("type") ? req.get_param_value("type") : "";
+  const std::string game_id = req.path_params.at("game_id");
+  const std::string type = req.has_param("type") ? req.get_param_value("type") : "";
+  const std::string path = (req.has_param("path")) ? util::Strip(req.get_param_value("path"), '/') : "";
+  const auto& hidden = _games.at(game_id)->builder_settings()._hidded_dirs;
   try {
-    if (!_manager.CreatorFromCookie(req)->HasAccessToGame(game_id))
+    if (!_manager.CreatorFromCookie(req)->HasAccessToGame(game_id, hidden, path))
       throw _http::_t_exception({400, "No Access to game: \"" + game_id + "\""});
     if (type == "CTX") {
       LoadTemplate(resp, "ctx-edit.html", CreateParams(req, game_id, type));

@@ -2,6 +2,7 @@
 #define SRC_BUILDER_UTILS_DEFINES_H 
 
 #include <nlohmann/json.hpp>
+#include <set>
 #include <string>
 
 namespace builder {
@@ -23,9 +24,15 @@ namespace builder {
 
   struct Settings {
     std::string _description;
+    std::set<std::string> _hidded_dirs;
+
     Settings() : _description("") {}
-    Settings(nlohmann::json j) : _description(j.value("description", "")) {}
-    nlohmann::json ToJson() const { return {{"description", _description}}; }
+    Settings(nlohmann::json j) : _description(j.value("description", "")), 
+      _hidded_dirs(j.value("hidden_dirs", std::set<std::string>())) {}
+
+    nlohmann::json ToJson() const { 
+      return {{"description", _description}, {"hidden_dirs", _hidded_dirs}}; 
+    }
   };
 
   enum FileType {

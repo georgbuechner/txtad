@@ -23,7 +23,16 @@ class BuilderGame : public Game {
     // Medthods
     void StoreGame(std::string path = "");
 
+    /**
+     * Builder settings: Updates game description
+     */
     void UpdateGameDescription(const std::string& description);
+
+    /**
+     * Builder settings: Adds path to hide from collaborators
+     */
+    void AddHiddenPath(const std::string& path);
+    void RemoveHiddenPath(const std::string& path);
 
     void ResetModified(); 
 
