@@ -19,6 +19,7 @@
 #include <sstream>
 #include <openssl/evp.h>
 #include <openssl/sha.h>
+#include <stdexcept>
 
 
 std::string util::LOGGER = "---";
@@ -163,6 +164,25 @@ void util::WriteJsonToDisc(const std::string& path, const nlohmann::json& json) 
     ofs << json;
     ofs.close();
     Logger()->debug("util::WriteJsonToDisc: Saved json @ {}", path);
+  }
+}
+
+void util::RemoveEmptyDirs(const std::string& path) {
+  std::vector<std::filesystem::path> dirs;
+  for (const auto& entry : std::filesystem::recursive_directory_iterator(path)) {
+    if (entry.is_directory()) {
+      dirs.push_back(entry.path());
+    }
+  }
+
+  // sort by depth (deepest first)
+  std::sort(dirs.begin(), dirs.end(), [](const auto& a, const auto& b) {
+    return a.string().size() > b.string().size(); });
+
+  for (const auto& dir : dirs) {
+    if (std::filesystem::is_empty(dir)) {
+      std::filesystem::remove(dir);
+    }
   }
 }
 
@@ -320,4 +340,26 @@ bool util::IsSubPathOf(const std::vector<std::string>& paths, const std::string&
       return true;
   }
   return false;
+}
+
+std::string util::GetContentType(const std::string& extension) {
+  static const std::map<std::string, std::string> content_types = {
+    // Images
+    {"jpg", "image/jpeg"},
+    {"jpeg", "image/jpeg"},
+    {"png", "image/png"},
+    {"gif", "image/gif"},
+    {"svg", "image/svg+xml"},
+    
+    // Audio
+    {"mp3", "audio/mpeg"},
+    {"wav", "audio/wav"},
+    {"ogg", "audio/ogg"},
+  };
+  
+  auto it = content_types.find(extension);
+  if (it != content_types.end()) {
+    return it->second;
+  }
+  throw std::invalid_argument("Unkown/unhandled extension: " + extension);
 }

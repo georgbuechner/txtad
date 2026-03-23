@@ -9,7 +9,7 @@ AppInit.register(async () => {
 });
 
 async function LoadAllData() {
-  const types = ["ctx-ids", "text-ids", "types", "ctx-attributes", "type-attributes"];
+  const types = ["ctx-ids", "text-ids", "types", "ctx-attributes", "type-attributes", "media-audios"];
 
   // Request data from server
   const results = await Promise.all(
@@ -56,6 +56,9 @@ function type_attributes(type) {
   if (type === undefined)
     return DataStore.data["type-attributes"] ?? [];
   return DataStore.data["type-attributes"][type] ?? [];
+}
+function media_audios() {
+  return DataStore.data["media-audios"] ?? [];
 }
 
 async function SaveContent(game_id) {
@@ -260,12 +263,38 @@ function renderReferences(list, containerId, gameId) {
   };
 
   const parseCtx = (s) => {
-    // Examples:
+    console.log("Parsing s", s);
+    // Listener refs:
     // "CTX: catch -> Listener Q1 (arguments: ...)"
     // "CTX: something -> Listener Inp2 (linked-ctx)"
-    const m = s.match(/^CTX:\s*(.*?)\s*->\s*Listener\s*([^\s]+)\s*\((.*)\)\s*$/);
-    if (!m) return null;
-    return { kind: "CTX", ctxId: m[1], listenerId: m[2], details: m[3] };
+    let m = s.match(/^CTX:\s*(.*?)\s*->\s*Listener\s*([^\s]+)\s*\((.*)\)\s*$/);
+    if (m) {
+      return {
+        kind: "CTX",
+        subtype: "listener",
+        ctxId: m[1],
+        listenerId: m[2],
+        details: m[3],
+      };
+    }
+
+    // Description refs:
+    // "CTX: my_ctx -> Description[2] (text): hello"
+    // "CTX: my_ctx -> Description[2] (permanent_events): foo;bar"
+    // "CTX: my_ctx -> Description[2] (one_time_events): baz"
+    m = s.match(/^CTX:\s*(.*?)\s*->\s*Description\[(\d+)\]\s*\(([^)]+)\):\s*(.*)\s*$/);
+    if (m) {
+      return {
+        kind: "CTX",
+        subtype: "description",
+        ctxId: m[1],
+        index: Number(m[2]),
+        field: m[3],
+        payload: m[4],
+      };
+    }
+
+    return null;
   };
 
   const parseTxt = (s) => {
@@ -314,6 +343,53 @@ function renderReferences(list, containerId, gameId) {
     // ---- CTX ----
     else if (ctx) {
       const baseUrl = buildBaseUrl("CTX", ctx.ctxId);
+
+      if (ctx.subtype === "listener") {
+        const openUrl = buildOpenUrl(baseUrl, ctx.listenerId);
+
+        left.innerHTML = `
+          <div class="fw-semibold">
+            ${kindBadge("CTX")}
+            <a class="link-info text-decoration-none" href="${baseUrl}">
+              ${escapeHtml(ctx.ctxId)}
+            </a>
+          </div>
+          <div class="small text-muted">
+            Listener <span class="fw-semibold">${escapeHtml(ctx.listenerId)}</span>
+            <span class="ms-1">(${escapeHtml(ctx.details)})</span>
+          </div>
+        `;
+
+        meta.innerHTML = `
+          <a class="btn btn-sm btn-outline-info" href="${openUrl}">
+            🔗 Link
+          </a>
+        `;
+      } else if (ctx.subtype === "description") {
+        const openUrl = buildOpenUrl(baseUrl, String(ctx.index));
+
+        left.innerHTML = `
+          <div class="fw-semibold">
+            ${kindBadge("CTX")}
+            <a class="link-info text-decoration-none" href="${baseUrl}">
+              ${escapeHtml(ctx.ctxId)}
+            </a>
+          </div>
+          <div class="small text-muted">
+            Description[<span class="fw-semibold">${ctx.index}</span>]
+            <span class="ms-1">(${escapeHtml(ctx.field)})</span>:
+            <span>${escapeHtml(ctx.payload)}</span>
+          </div>
+        `;
+
+        meta.innerHTML = `
+          <a class="btn btn-sm btn-outline-info" href="${openUrl}">
+            🔗 Link
+          </a>
+        `;
+      }
+      /*
+      const baseUrl = buildBaseUrl("CTX", ctx.ctxId);
       const openUrl = buildOpenUrl(baseUrl, ctx.listenerId);
 
       left.innerHTML = `
@@ -333,7 +409,7 @@ function renderReferences(list, containerId, gameId) {
         <a class="btn btn-sm btn-outline-info" href="${openUrl}">
           🔗 Link
         </a>
-      `;
+      `;*/
     }
 
     // ---- TXT ----

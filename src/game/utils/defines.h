@@ -2,6 +2,7 @@
 #define SRC_GAME_UTILS_DEFINES_H 
 
 #include <functional>
+#include <set>
 #include <string>
 
 namespace txtad {
@@ -22,6 +23,7 @@ namespace txtad {
   const std::string TEMPLATE_EXTENSION = ".template";
   const std::string CONTEXT_EXTENSION = ".ctx";
   const std::string TEXT_EXTENSION = ".text";
+  const std::set<std::string> MEDIA_EXTENSTIONS = {".jpg", ".jpeg", ".png", ".giff", ".svg", ".mp3", ".wav", ".ogg"};
 
   // replacements
   const std::string EVENT_REPLACEMENT = "#event";

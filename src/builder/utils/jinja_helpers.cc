@@ -1,6 +1,7 @@
 
 #include "builder/utils/jinja_helpers.h"
 #include "builder/utils/defines.h"
+#include "shared/utils/utils.h"
 #include <stdexcept>
 
 _jinja::Env::Env(std::string template_path) : _fs{template_path} {
@@ -62,6 +63,31 @@ _jinja::Env::Env(std::string template_path) : _fs{template_path} {
         return str;
       }, std::vector<jinja2::ArgInfo>({jinja2::ArgInfo{"s"}})
     ));
+
+  _env.AddGlobal("media_content_type", jinja2::UserCallable(
+      [](auto& params)->jinja2::Value {
+        const std::string str = params["s"].asString();
+        std::string extension = str.substr(str.find_last_of('.') + 1);
+        return util::GetContentType(extension);
+      }, std::vector<jinja2::ArgInfo>({jinja2::ArgInfo{"s"}})
+    ));
+
+  _env.AddGlobal("media_audio", jinja2::UserCallable(
+      [](auto& params)->jinja2::Value {
+        const std::string str = params["s"].asString();
+        std::string extension = str.substr(str.find_last_of('.') + 1);
+        return util::GetContentType(extension).find("audio") == 0;
+      }, std::vector<jinja2::ArgInfo>({jinja2::ArgInfo{"s"}})
+    ));
+
+  _env.AddGlobal("media_image", jinja2::UserCallable(
+      [](auto& params)->jinja2::Value {
+        const std::string str = params["s"].asString();
+        std::string extension = str.substr(str.find_last_of('.') + 1);
+        return util::GetContentType(extension).find("image") == 0;
+      }, std::vector<jinja2::ArgInfo>({jinja2::ArgInfo{"s"}})
+    ));
+
 }
 
 // methods

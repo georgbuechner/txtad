@@ -20,6 +20,9 @@ class STD extends State {
   handler(e) { 
     if (e.key == "{") {
       StateMaschine.transition(new REP_All(this));
+    }    
+    else if (e.key == "$") {
+      StateMaschine.transition(new GOPT(this));
     }
   }
 };
@@ -197,6 +200,55 @@ class OPT extends State {
   }
 }
 
+class GOPT extends REP {
+  constructor(prev, name, suggestions) {
+    if (name === undefined) {
+      name = "GOPT";
+    }
+    if (suggestions === undefined) {
+      suggestions = ["prompt", "color_", "bgsplay", "bgspause", "bgsset_", "fgsound_"];
+    }
+    super(name, suggestions, prev);
+    this.prev = prev;
+  }
+  handler(e) {
+    if (e.key == "Enter") {
+      e.preventDefault();
+      if (REP.ApplySuggestion(this)) {
+        let sug = this.suggestions[this.index];
+        if (["bgsset_", "fgsound_"].includes(sug)) {
+          StateMaschine.transition(new GOPT_ARGS(this, media_audios()));
+        } else {
+          StateMaschine.transition(new STD());
+        }
+      }
+    } else if (e.key == " ") {
+      StateMaschine.transition(new STD());
+      return;
+    } else {
+      super.handler(e);
+    }
+  }
+}
+
+class GOPT_ARGS extends GOPT {
+  constructor(prev, suggestions) {
+    super(prev, "GOPT_ARGS", suggestions);
+  }
+  handler(e) {
+    if (e.key == "Enter") {
+      e.preventDefault();
+      if (REP.ApplySuggestion(this)) {
+        StateMaschine.transition(new STD());
+        StateMaschine.event_container.value += " ";
+      }
+    } else {
+      super.handler(e);
+    }
+  }
+
+}
+
 const StateMaschine = {
   current_state: null,
   hints_container: null,
@@ -205,7 +257,7 @@ const StateMaschine = {
     StateMaschine.hints_container = document.getElementById("hints_" + id);
     StateMaschine.event_container = document.getElementById(id);
     StateMaschine.hints_container.innerHTML = "";
-    StateMaschine.event_container.innerHTML = "";
+    // StateMaschine.event_container.innerHTML = "";
 
     StateMaschine.current_state = new STD();
   },
@@ -220,7 +272,7 @@ const StateMaschine = {
 
   run: (e) => {
     console.log("Handling", e.key, "with", StateMaschine.current_state.name, 
-      "[current: ", StateMaschine.current_state.inp + "]");
+      "[current: ", StateMaschine.current_state.inp + "] (" + StateMaschine.current_state.suggestions + ")");
     // On closing, reset to STD State and clear states
     if (e.key == "}") {
       StateMaschine.current_state = new STD();

@@ -1,7 +1,9 @@
 #include "http_helpers.h"
 #include "httplib.h"
 #include "shared/utils/utils.h"
+#include <fstream>
 #include <optional>
+#include <stdexcept>
 
 std::string _http::Get(const httplib::Request& req, const std::string &field) {
   if (req.get_param_value_count(field) == 0) 
@@ -14,6 +16,57 @@ std::optional<std::string> _http::GetField(const httplib::Request& req, const st
     return std::optional<std::string>(req.form.get_field(field));
   }
   return std::nullopt;
+}
+
+std::string _http::GetFileExtension(const httplib::FormData& file) {
+  std::string extension = "";
+  size_t dot_pos = file.filename.find_last_of('.');
+  if (dot_pos != std::string::npos) {
+    extension = file.filename.substr(dot_pos);
+  }
+  return extension;
+}
+
+void _http::SafeFile(const httplib::FormData& file, const std::string& media_path) {
+  // Save the file
+  std::ofstream outfile(media_path, std::ios::binary);
+  if (!outfile.is_open()) {
+    throw std::runtime_error("Failed creating media element. Could not save file: " + media_path);
+  }
+  outfile.write(file.content.c_str(), file.content.length());
+  outfile.close();
+}
+
+void _http::LoadMediaFile(httplib::Response& resp, const std::string& media_path) {
+  // Open and read the file
+  std::ifstream file(media_path, std::ios::binary);
+  if (!file.is_open()) {
+    resp.status = 500;
+    resp.set_content("Could not open media file: " + media_path, "text/plain");
+    return;
+  }
+  
+  // Get file size
+  file.seekg(0, std::ios::end);
+  size_t file_size = file.tellg();
+  file.seekg(0, std::ios::beg);
+  
+  // Read file content
+  std::string content(file_size, '\0');
+  file.read(&content[0], file_size);
+  file.close();
+
+  // Determine content type from file extension
+  std::string extension = media_path.substr(media_path.find_last_of('.') + 1);
+  std::string content_type = util::GetContentType(extension);
+  
+  // Set response headers
+  resp.set_header("Content-Type", content_type);
+  resp.set_header("Content-Length", std::to_string(file_size));
+  // resp.set_header("Cache-Control", "public, max-age=86400");  // Cache for 1 day
+  
+  // Send the file content
+  resp.set_content(content, content_type);
 }
 
 std::string _http::UrlPath(const std::string& url) {

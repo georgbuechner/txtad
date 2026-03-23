@@ -14,6 +14,8 @@ class BuilderGame : public Game {
     BuilderGame(std::string path, std::string name);
 
     // getter
+    const std::set<std::string>& media_files() const;
+    const std::set<std::string>& pending_media_files() const;
     const std::vector<std::string>& modified() const;
     const std::map<std::string, std::vector<git::CommitInfo>>& backup_infos();
     
@@ -58,6 +60,9 @@ class BuilderGame : public Game {
      */ 
     void CreateDir(const std::string& id);
 
+    void AddMediaFile(const std::string& id);
+    void RemovePendingMediaFromDisc(const std::set<std::string>& pending_media_files);
+
     /**
      * Creates/Updates/Replaces listener while game is running
      */
@@ -66,6 +71,7 @@ class BuilderGame : public Game {
     void RemoveListener(const std::string& listener_id, const std::string& ctx_id);
     void RemoveContext(const std::string& ctx_id);
     void RemoveText(const std::string& ctx_id);
+    void RemoveMedia(const std::string& media_id);
     void RemoveDirectory(const std::string& path);
 
     /**
@@ -94,6 +100,7 @@ class BuilderGame : public Game {
      * @return list of references
      */
     std::vector<std::string> GetTextReferences(const std::string& text_id, const std::string& sub="") const;
+    std::vector<std::string> GetMediaReferences(const std::string& text_id) const;
 
     /**
      * Gets paths and sub paths to all contexts and texts including type-info
@@ -110,6 +117,9 @@ class BuilderGame : public Game {
 
   private:
     std::set<std::string> _pending_directories;
+    std::set<std::string> _pending_media_files;
+    std::set<std::string> _deleted_media_files;
+    std::set<std::string> _media_files;
     std::vector<std::string> _modified;
     std::map<std::string, std::vector<git::CommitInfo>> _backup_infos;
 
@@ -117,6 +127,9 @@ class BuilderGame : public Game {
         std::string&& msg);
     static void AddRefsFoundInString(std::vector<std::string>& refs, const std::string& id, const std::string& events, 
         const std::string& msg);
+    static void AddRefsFoundInDesc(std::vector<std::string>& refs, const std::string& id, std::shared_ptr<Text> desc, 
+        const std::string& ctx_id, bool media=false);
+    void AddRefsFoundInText(std::vector<std::string>& refs, const std::string& id, bool media=false, const std::string& sub="") const;
 };
 
 #endif

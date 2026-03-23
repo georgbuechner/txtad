@@ -176,6 +176,15 @@ std::shared_ptr<Listener> parser::CreateListenerFromJson(const nlohmann::json& o
   return std::make_shared<LForwarder>(json_listener, og_json_listener);
 }
 
+void parser::LoadMediaFileInformation(const std::string& path, std::set<std::string>& media_files) {
+  const std::string game_files_path = path + "/" + txtad::GAME_FILES;
+  for (const auto& dir_entry : fs::recursive_directory_iterator(game_files_path)) {
+    if (!dir_entry.is_directory() && txtad::MEDIA_EXTENSTIONS.contains(dir_entry.path().extension().string())) {
+      media_files.insert(dir_entry.path().string().substr(game_files_path.size()));
+    }
+  }
+}
+
 std::shared_ptr<Context> parser::CreateContextFromPath(std::filesystem::path path, size_t id_path_offset) {
   if (const auto& json = util::LoadJsonFromDisc(path.string())) {
     // std::string base_id = path.parent_path().string().substr(id_path_offset);

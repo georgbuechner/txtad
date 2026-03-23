@@ -102,6 +102,9 @@ void Builder::Start() {
   _srv.Get("/api/data/type-attributes/:game_id", [&](const httplib::Request& req, httplib::Response& resp) {
       ApiTypesAttributes(req, resp); });
 
+  _srv.Get("/api/data/media-audios/:game_id", [&](const httplib::Request& req, httplib::Response& resp) {
+      ApiMediaAudios(req, resp); });
+
   _srv.Get("/api/ctx/references/:game_id", [&](const httplib::Request& req, httplib::Response& resp) {
       ApiCtxReferences(req, resp); });
 
@@ -110,6 +113,9 @@ void Builder::Start() {
 
   _srv.Get("/api/dir/references/:game_id", [&](const httplib::Request& req, httplib::Response& resp) {
       ApiDirReferences(req, resp); });
+
+  _srv.Get("/api/media/references/:game_id", [&](const httplib::Request& req, httplib::Response& resp) {
+      ApiMediaReferences(req, resp); });
 
   _srv.Get("/api/archive/commit/:game_id", [&](const httplib::Request& req, httplib::Response& resp) {
       ApiCommitMessage(req, resp); });
@@ -129,6 +135,9 @@ void Builder::Start() {
 
   _srv.Get("/:game_id", [&](const httplib::Request& req, httplib::Response& resp) {
       PagesGame(req, resp); });
+
+  _srv.Get("/:game_id/media", [&](const httplib::Request& req, httplib::Response& resp) {
+      LoadMedia(req, resp); });
 
   // SAVE ELEMENTS
 
@@ -184,6 +193,8 @@ void Builder::Start() {
   _srv.Post("/:game_id/remove/ctx", [&](const httplib::Request& req, httplib::Response& resp) {
       RemoveContext(req, resp); });
   _srv.Post("/:game_id/remove/dir", [&](const httplib::Request& req, httplib::Response& resp) {
+      RemoveDirectory(req, resp); });
+  _srv.Post("/:game_id/remove/media", [&](const httplib::Request& req, httplib::Response& resp) {
       RemoveDirectory(req, resp); });
 
   _srv.Post("/:game_id/restore", [&](const httplib::Request& req, httplib::Response& resp) {
@@ -579,6 +590,27 @@ void Builder::ApiTypesAttributes(const httplib::Request& req, httplib::Response&
   resp.status = 200;
 }
 
+void Builder::ApiMediaAudios(const httplib::Request& req, httplib::Response& resp) {
+  std::string game_id = req.path_params.at("game_id");
+  std::shared_lock sl(_mtx_games);
+  
+  // Join into one vector
+  std::cout << "Concidering " << std::to_string(_games.at(game_id)->media_files().size()) << " media entries: " << std::endl;
+  std::vector<std::string> ids;
+  for (const auto& media : _games.at(game_id)->media_files()) {
+    std::cout << "-- Concidering " << media << std::endl;
+    const std::string extension = media.substr(media.find_last_of('.') + 1);
+    if (util::GetContentType(extension).find("audio") == 0) {
+      std::cout << "-- Adding " << media << std::endl;
+      ids.push_back(media);
+    }
+  }
+
+   // Return as json
+  resp.set_content(nlohmann::json(ids).dump(), "application/json");
+  resp.status = 200;
+}
+
 void Builder::ApiCtxReferences(const httplib::Request& req, httplib::Response& resp) {
   std::string game_id = req.path_params.at("game_id");
   if (!req.has_param("path")) {
@@ -625,6 +657,17 @@ void Builder::ApiDirReferences(const httplib::Request& req, httplib::Response& r
   resp.set_content(nlohmann::json(references).dump(), "application/json");
 }
 
+void Builder::ApiMediaReferences(const httplib::Request& req, httplib::Response& resp) {
+  std::string game_id = req.path_params.at("game_id");
+  if (!req.has_param("path")) {
+    throw std::invalid_argument("Missing query-parameter: (api-txt-references) path");
+  } 
+  std::shared_lock sl(_mtx_games);
+  nlohmann::json references = _games.at(game_id)->GetMediaReferences(req.get_param_value("path"));
+  resp.status = 200;
+  resp.set_content(references.dump(), "application/json");
+}
+
 void Builder::ApiCommitMessage(const httplib::Request& req, httplib::Response& resp) {
   if (!req.has_param("commit_sha")) {
     throw std::invalid_argument("Missing query-parameter: (api-commit-mesage) commit_sha");
@@ -664,6 +707,13 @@ void Builder::PagesGame(const httplib::Request& req, httplib::Response& resp) {
   } catch (_http::_t_exception& e) {
     resp.set_redirect("/?msg=" + e.second, 303);
   }
+}
+
+void Builder::LoadMedia(const httplib::Request& req, httplib::Response& resp) {
+  const std::string path = req.get_param_value("path");
+  const std::string game_id = req.path_params.at("game_id");
+  std::shared_lock sl(_mtx_games);
+  _http::LoadMediaFile(resp, _games.at(game_id)->path() + "/" + txtad::GAME_FILES + path);
 }
 
 // SAVE ELEMENTS 
@@ -887,6 +937,21 @@ void Builder::NewElement(const httplib::Request& req, httplib::Response& resp) {
     _games.at(game_id)->CreateTxt(elem_id);
   } else if (action == "DIR") {
     _games.at(game_id)->CreateDir(elem_id);
+  } else if (action == "MEDIA") {
+    if (!req.form.has_file("formFile")) {
+      throw std::runtime_error("Failed creating media element. No file uploaded!");
+    }
+    // Get file
+    const auto& file = req.form.get_file("formFile");
+    if (file.filename.empty()) {
+      throw std::runtime_error("Failed creating media element. No file selected!");
+    }
+    // Build media_filename
+    std::string media_filename = elem_id + _http::GetFileExtension(file);
+    // Save file
+    _http::SafeFile(file, _games.at(game_id)->path() + "/" + txtad::GAME_FILES + media_filename);
+    // Let game know about media file
+    _games.at(game_id)->AddMediaFile(media_filename);
   } else {
     resp.set_redirect(_http::Referer(req, "Failed creating element. Unkwon action: " + *action), 303);
     return;
@@ -985,7 +1050,7 @@ void Builder::RemoveTextElement(const httplib::Request& req, httplib::Response& 
 void Builder::RemoveText(const httplib::Request& req, httplib::Response& resp) {
   std::string game_id = req.path_params.at("game_id");
   if (!req.has_param("path")) {
-    throw std::invalid_argument("Missing query-parameter: (remove-ctx) path");
+    throw std::invalid_argument("Missing query-parameter: (remove-txt) path");
   } 
   std::unique_lock ul(_mtx_games);
   const std::string txt_id = req.get_param_value("path");
@@ -1007,11 +1072,22 @@ void Builder::RemoveContext(const httplib::Request& req, httplib::Response& resp
 void Builder::RemoveDirectory(const httplib::Request& req, httplib::Response& resp) {
   std::string game_id = req.path_params.at("game_id");
   if (!req.has_param("path")) {
-    throw std::invalid_argument("Missing query-parameter: (remove-ctx) path");
+    throw std::invalid_argument("Missing query-parameter: (remove-dir) path");
   } 
   std::unique_lock ul(_mtx_games);
   const std::string path = req.get_param_value("path");
   _games.at(game_id)->RemoveDirectory(path);
+  resp.set_redirect(_http::Referer(req, "Successfully removed directory: " + path), 303);
+}
+
+void Builder::RemoveMedia(const httplib::Request& req, httplib::Response& resp) {
+  const std::string game_id = req.path_params.at("game_id");
+  if (!req.has_param("path")) {
+    throw std::invalid_argument("Missing query-parameter: (remove-media) path");
+  } 
+  std::unique_lock ul(_mtx_games);
+  const std::string path = req.get_param_value("path");
+  _games.at(game_id)->RemoveMedia(path);
   resp.set_redirect(_http::Referer(req, "Successfully removed directory: " + path), 303);
 }
 
@@ -1020,6 +1096,7 @@ void Builder::RestoreGame(const httplib::Request& req, httplib::Response& resp) 
   std::unique_lock ul(_mtx_games);
   std::string game_path = _games.at(game_id)->path();
   try {
+    _games.at(game_id)->RemovePendingMediaFromDisc(_games.at(game_id)->pending_media_files());
     _games.erase(game_id);
     _games[game_id] = std::make_shared<BuilderGame>(game_path, game_id);
     resp.status = 200;
@@ -1097,7 +1174,9 @@ std::shared_ptr<Text> Builder::CreateTextElement(const httplib::Request& req, st
     {"logic", req.form.get_field("logic")},
     {"shared", req.form.has_field("shared")}
   };
+  util::Logger()->warn("Creating Text-Element from json: {}", j.dump());
   auto new_txt = std::make_shared<Text>(j);
+  util::Logger()->warn("Creating Text-Element {} with logic: {}", new_txt->txt(), new_txt->logic());
 
   // Text did not exist -> return new-text
   if (!text) {
@@ -1129,7 +1208,10 @@ std::shared_ptr<Text> Builder::RemoveTextElement(const httplib::Request& req, st
   if (!text) {
     throw std::invalid_argument("Trying to remove text from non existing text. Index: " + std::to_string(index));
   }
-  return text->RemoveAt(index);
+  if (auto updated_txt = text->RemoveAt(index)) {
+    return updated_txt;
+  }
+  return std::make_shared<Text>(std::string(""));
 }
 
 std::string Builder::CreateUserBranchname(const std::string& username, const std::string& branch_name) {

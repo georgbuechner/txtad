@@ -63,15 +63,19 @@ class Builder {
     void ApiContextAttributes(const httplib::Request& req, httplib::Response& resp);
     ///< map of types and the attributes that belong to ALL contexts of this type
     void ApiTypesAttributes(const httplib::Request& req, httplib::Response& resp);
+    ///< list of all audios
+    void ApiMediaAudios(const httplib::Request& req, httplib::Response& resp);
 
     void ApiCtxReferences(const httplib::Request& req, httplib::Response& resp);
     void ApiTxtReferences(const httplib::Request& req, httplib::Response& resp);
     void ApiDirReferences(const httplib::Request& req, httplib::Response& resp);
+    void ApiMediaReferences(const httplib::Request& req, httplib::Response& resp);
 
     void ApiCommitMessage(const httplib::Request& req, httplib::Response& resp);
 
     // PAGES 
     void PagesGame(const httplib::Request& req, httplib::Response& resp);
+    void LoadMedia(const httplib::Request& req, httplib::Response& resp);
 
     // SAVE ELEMENTS 
     void SaveSettings(const httplib::Request& req, httplib::Response& resp);
@@ -95,6 +99,7 @@ class Builder {
     void RemoveText(const httplib::Request& req, httplib::Response& resp);
     void RemoveContext(const httplib::Request& req, httplib::Response& resp);
     void RemoveDirectory(const httplib::Request& req, httplib::Response& resp);
+    void RemoveMedia(const httplib::Request& req, httplib::Response& resp);
 
     void RestoreGame(const httplib::Request& req, httplib::Response& resp);
 

@@ -146,6 +146,7 @@ namespace jinja2 {
         {"path", [](const PtrView<BuilderGame>& v){ return (v.ptr) ? v.ptr->path() : Value{}; }},
         {"contexts", [](const PtrView<BuilderGame>& v){ return (v.ptr) ? _jinja::Map(v.ptr->contexts()) : Value{}; }},
         {"texts", [](const PtrView<BuilderGame>& v){ return (v.ptr) ? _jinja::Map(v.ptr->texts()) : Value{}; }},
+        {"media_files", [](const PtrView<BuilderGame>& v){ return (v.ptr) ? _jinja::SetToVec(v.ptr->media_files()) : Value{}; }},
         {"description", [](const PtrView<BuilderGame>& v){ return (v.ptr) ? v.ptr->builder_settings()._description : Value{}; }},
         {"hidden", [](const PtrView<BuilderGame>& v){ return (v.ptr) 
                 ? _jinja::SetToVec(v.ptr->builder_settings()._hidded_dirs) 
@@ -196,7 +197,7 @@ namespace jinja2 {
               const std::string linked_ctx = v.ptr->ctx_id();
               return Value(linked_ctx);
             } catch (util::invalid_base_class_call&) { 
-              std::cout << "invalid_base_class_call in TypeReflection (listener) \n";
+              util::Logger()->debug("invalid_base_class_call in TypeReflection (listener::linked_ctx)");
             }
           }
           return Value{};

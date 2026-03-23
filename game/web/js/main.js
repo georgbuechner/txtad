@@ -147,16 +147,25 @@ function ParseParam(in_cmd, payload) {
 }
 
 function SetBackgroundSound(audio_file) {
+  console.log("[bg-audio] setting: ", audio_file);
+  PauseBackgroundAudio();
   _bg_sound_file = audio_file;
-  _bg_sound = new Howl({ src: ['media/' + _bg_sound_file ] });
+  _bg_sound = new Howl({ src: ['game_files/' + _bg_sound_file ] });
+  PlayBackgroundAudio();
 }
 
 function PlayBackgroundAudio() {
-  _bg_sound_play = _bg_sound.play();
+  console.log("[bg-audio] play");
+  if (_bg_sound) {
+    _bg_sound_play = _bg_sound.play();
+  }
 }
 
 function PauseBackgroundAudio() {
-  _bg_sound_play = _bg_sound.pause();
+  console.log("[bg-audio] pause");
+  if (_bg_sound) {
+    _bg_sound_play = _bg_sound.pause();
+  }
 }
 
 function PlayForegroundMusik(audio_file, {duckTo=0.5, fadeMS = 200 } = {}) {

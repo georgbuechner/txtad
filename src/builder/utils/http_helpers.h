@@ -16,6 +16,12 @@ namespace _http {
   std::string UrlQuery(const std::string& url);
 
   std::optional<std::string> GetField(const httplib::Request& req, const std::string& field);
+
+  std::string GetFileExtension(const httplib::FormData& file);
+
+  void SafeFile(const httplib::FormData& file, const std::string& media_path);
+
+  void LoadMediaFile(httplib::Response& resp, const std::string& media_path);
 }
 
 #endif

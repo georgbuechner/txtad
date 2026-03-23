@@ -75,8 +75,11 @@
         >X</button>
         <span>
           <a 
-            class="{{type}} flex-grow-1" style="margin-left: 1em;"
+            class="{{type}} flex-grow-1 ml-1" 
             href="/{{game.name}}?path={{path}}/{{s}}&type={{type}}"
+            {% if type == "MEDIA" %}
+              style="pointer-events: none;"
+            {% endif %}
           >{{s}}</a>
           <span class="{{type}} note">[{{type}}]: </span> 
         </span>
@@ -116,17 +119,19 @@
             {% include "objects/txt.html" %}
             <a href="/{{game.name}}?path={{path}}/{{s}}&type={{type}}">edit</a>
           <!-- DIRECTORY--->
-          {% else %} 
+          {% elif type == "DIR" %} 
             <ul class="list-group" style="text-align: left; font-size: small;">
-            {% for p in all_paths %} 
-              {% if is_child(p, subpath) and (p ~ "/") in game.hidden %}
-                {% set t=all_paths[p] %}
-                <li class="list-group-item {{t}}">
-                  {{ p }}
-                  <span class="{{t}} note">[{{t}}]: </span> 
-                </li>
-              {% endif %}
-            {% endfor %}
+              {% for p in all_paths %} 
+                {% set is_hidden = (p ~ "/") in game.hidden %}
+                {% if is_child(p, subpath) and not is_hidden %}
+                  {% set t=all_paths[p] %}
+                  <li class="list-group-item {{t}}">
+                    {{ p }}
+                    <span class="{{t}} note">[{{t}}]: </span> 
+                  </li>
+                {% endif %}
+              {% endfor %}
+            </ul>
             
             <!-- hidden-controls --->
             {% if is_owner %}
@@ -146,7 +151,16 @@
                 {% endif %}
               </div>
             {% endif %}
-            </ul>
+          <!-- MEDIA -->
+          {% else %}
+            <p class="input-group-text">{{s}}</p>
+            {% if s|media_audio %}
+              <audio controls>
+                <source src="/{{game.name}}/media?path={{path}}/{{s}}" type="{{s|media_content_type}}"> 
+              </audio>
+            {% elif s|media_image %}
+              <img src="/{{game.name}}/media?path={{path}}/{{s}}" class="img-fluid">
+            {% endif %}
           {% endif %}
         </div>
       </div>
@@ -325,9 +339,20 @@
             <input type="text" class="form-control" placeholder="new elements id" id="id" name="id">
           </div>
 
-          <button type="submit" name="action" value="TXT" class="btn btn-primary" title="Create new text.">TXT</button>
           <button type="submit" name="action" value="DIR" class="btn btn-secondary" title="Create new directory.">DIR</button>
+          <button type="submit" name="action" value="TXT" class="btn btn-primary" title="Create new text.">TXT</button>
           <button type="submit" name="action" value="CTX" class="btn btn-primary" title="Create new context.">CTX</button>
+
+          <button 
+            class="btn btn-warning" 
+            title="Upload Media."
+            onclick="event.preventDefault(); document.getElementById('upload_media').classList.toggle('d-none');"
+          >MEDIA</button>
+
+          <div id="upload_media" class="input-group mb-3 mt-2 d-none">
+            <input class="form-control" type="file" id="formFile" name="formFile">
+            <button type="submit" name="action" value="MEDIA" class="btn btn-primary" title="Upload media.">upload</button>
+          </div>
         </form>
       </div>
     </div>

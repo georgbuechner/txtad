@@ -114,7 +114,7 @@ std::shared_ptr<Text> Text::RemoveAt(int index) {
     if (_next) {
       return _next;
     } 
-    return std::make_shared<Text>(std::string(""));
+    return nullptr;
   }
   _next = _next->RemoveAt(--index);
   return shared_from_this();

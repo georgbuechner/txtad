@@ -8,14 +8,25 @@
   enctype="multipart/form-data"
   name="__text_form"
 >
+
+  {% set inp_id = path ~ "_" + loop.index ~ "txt" %}
+  {% set inp_name = "txt" %} 
+  {% set inp_label = "Text" %} 
+  {% set inp_value = txt.txt %}
+  {% include "forms/free-txtarea.html" %}
+
+  <!--
   <div class="input-group mb-3">
     <span class="input-group-text" id="txt">Text:</span>
     <textarea class="form-control" placeholder="text..." name="txt" id="txt" required>{{txt.txt}}</textarea>
   </div>
-  <div class="input-group mb-3">
-    <span class="input-group-text" id="logic">Logic:</span>
-    <input type="text" class="form-control" placeholder="..." name="logic" id="logic" value="{{txt.logic}}">
-  </div>
+  -->
+
+  {% set inp_id = path ~ "_" ~ loop.index ~ "logic" %}
+  {% set inp_name = "logic" %} 
+  {% set inp_label = "Logic" %} 
+  {% set inp_value = txt.logic %}
+  {% include "forms/free-inp.html" %}
 
   {% set event_id = path ~ "_" ~ loop.index ~ "one_time_events" %}
   {% set event_name = "one_time_events" %}

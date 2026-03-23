@@ -55,6 +55,7 @@ int main() {
     for (const auto& game : games) {
       http_server.set_mount_point("/" + game.second->name(), game.second->path() + "/" + txtad::HTML_PATH);
       http_server.set_mount_point("/" + game.second->name(), txtad::FILES_PATH + "/" + txtad::HTML_PATH);
+      http_server.set_mount_point("/" + game.second->name(), txtad::GAMES_PATH + game.second->name());
     }
 
     http_server.Get("/api/games/running", [&](const httplib::Request& req, httplib::Response& resp) {

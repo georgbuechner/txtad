@@ -39,13 +39,14 @@ namespace builder {
     DIR=0,
     CTX,
     TXT,
+    MEDIA,
     TEM
   };
   const std::map<FileType, std::string> FILE_TYPE_MAP = {
-    {DIR, "DIR"}, {CTX, "CTX"}, {TXT, "TXT"}, {TEM, "TEM"}
+    {DIR, "DIR"}, {CTX, "CTX"}, {TXT, "TXT"}, {MEDIA, "MEDIA"}, {TEM, "TEM"}
   };
   const std::map<std::string, FileType> REVERSE_FILE_TYPE_MAP = {
-    {"DIR", DIR}, {"CTX", CTX}, {"TXT", TXT}, {"TEM", TEM}
+    {"DIR", DIR}, {"CTX", CTX}, {"TXT", TXT}, {"MEDIA", MEDIA}, {"TEM", TEM}
   };
 
 };

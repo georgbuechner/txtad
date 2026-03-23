@@ -21,8 +21,9 @@ const opts = ["+=", "-=", "++", "--", "*=", "/=", "="];
 
 let using_events = "";
 let using_event_id = "";
+let using_cur_ctx = "";
 
-function OpenEventEditor(event_id) {
+function OpenEventEditor(event_id, cur_ctx) {
   const modal = new bootstrap.Modal(document.getElementById('shareEventModal'));
   modal.show();
   const events = document.getElementById(event_id).value;
@@ -30,6 +31,7 @@ function OpenEventEditor(event_id) {
   document.getElementById("events_preview").innerHTML = events;
   using_events = events;
   using_event_id = event_id;
+  using_cur_ctx = cur_ctx;
   UpdateEventList(events);
 }
 
@@ -182,7 +184,8 @@ function CreateEventFields(cmd, args) {
         <div class="input-group mb-3">
           <span class="input-group-text">Context (type):</span>
           <select class="form-select"> 
-            '<option selected>---</option>'
+            <option selected>---</option>
+            <option ${(tvalue.startsWith('_')) ? ' selected >' : '>'}_</option>
             ${context_types().map(ctx_id =>
               '<option' + ((tvalue.startsWith(ctx_id)) ? ' selected >' : '>') + ctx_id + '</option>'
             )}
@@ -192,12 +195,16 @@ function CreateEventFields(cmd, args) {
       i++;
     } else if (arg === "[attr]") {
       console.log(arg, elems[i-1], context_attributes(elems[i-1].trim()));
+      let ctx_id = elems[i-1].trim();
+      if (ctx_id === "_") {
+        ctx_id = using_cur_ctx;
+      }
       res += `
         <div class="input-group mb-3">
           <span class="input-group-text">Attribute:</span>
           <select class="form-select"> 
             '<option selected>---</option>'
-            ${context_attributes(elems[i-1].trim()).map(attr_key =>
+            ${context_attributes(ctx_id).map(attr_key =>
               '<option' + ((tvalue.startsWith(attr_key)) ? ' selected >' : '>') + attr_key + '</option>'
             )}
           </select>

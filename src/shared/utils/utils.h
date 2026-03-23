@@ -99,6 +99,8 @@ namespace util
 
   void WriteJsonToDisc(const std::string& path, const nlohmann::json& json);
 
+  void RemoveEmptyDirs(const std::string& path);
+
   /** 
    * Trys to find user-id in given string. If found retruns user id and removes
    * from original string.
@@ -141,6 +143,9 @@ namespace util
 
   bool IsSubPathOf(const std::string& path, const std::string& sub);
   bool IsSubPathOf(const std::vector<std::string>& paths, const std::string& sub);
+
+  std::string GetContentType(const std::string& extension);
+
 
   class TmpPath {
     public: 
