@@ -181,13 +181,10 @@ void User::AddVariableToText(const std::shared_ptr<Context>& ctx, const std::str
   }
 }
 
-std::shared_ptr<Context> User::GetContext(const std::string& ctx_id) {
+std::vector<std::shared_ptr<Context>> User::GetContext(const std::string& ctx_id) {
   if (ctx_id.front() == '*') {
-    for (const auto& ctx : _context_stack.find(ctx_id.substr(1))) 
-      return _context_stack.get(ctx->id());
+    return _context_stack.find(ctx_id.substr(1));
   } else if (_contexts.count(ctx_id) > 0) {
-    return _contexts.at(ctx_id);
-  } else {
-    return nullptr;
-  }
+    return {_contexts.at(ctx_id)};
+  } 
 }

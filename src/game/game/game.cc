@@ -183,7 +183,7 @@ void Game::h_replace_ctx(const std::string& event, const std::string& args) {
 void Game::h_set_ctx_name(const std::string& event, const std::string& args) {
   util::Logger()->info("Game::h_set_ctx_name. args: {}", args);
   if (const auto& parsed = pattern::set_ctx_name(args)) {
-    if (auto ctx = _cur_user->GetContext(parsed->ctx_id)) {
+    for (auto ctx : _cur_user->GetContext(parsed->ctx_id)) {
       ctx->set_name(parsed->value);
     }
   }
@@ -193,7 +193,11 @@ void Game::h_set_attribute(const std::string& event, const std::string& args) {
   util::Logger()->info("Game::h_set_attribute: {}", args);
   if (const auto parsed = pattern::set_attribute(args)) {
     // Find context: 
-    if (auto ctx = _cur_user->GetContext(parsed->ctx_id)) {
+    auto ctxs = _cur_user->GetContext(parsed->ctx_id);
+    if (ctxs.empty()) {
+      util::Logger()->warn("User::PrintCtxAttribute: ctx {} not found", parsed->ctx_id);
+    }
+    for (auto ctx : ctxs) {
       if (auto attr = ctx->GetAttribute(parsed->attribute_id)) {
         std::string res = "";
         if (parsed->opt == "=")
@@ -216,9 +220,7 @@ void Game::h_set_attribute(const std::string& event, const std::string& args) {
       } else {
         util::Logger()->warn("User::PrintCtxAttribute: attribute {} not found in ctx {}", parsed->attribute_id, ctx->id());
       }
-    } else {
-      util::Logger()->warn("User::PrintCtxAttribute: ctx {} not found", parsed->ctx_id);
-    }
+    } 
   }
 }
 
@@ -278,7 +280,7 @@ void Game::h_print_to(const std::string& event, const std::string& args) {
 
 void Game::h_list_attributes(const std::string& event, const std::string& ctx_id) {
   util::Logger()->info("Handler::h_list_attributes: {} {}", event, ctx_id);
-  if (const auto& ctx = _cur_user->GetContext(ctx_id)) {
+  for (const auto& ctx : _cur_user->GetContext(ctx_id)) {
     _cout(_cur_user->id(), "Attributes:");
     for (const auto& [key, value] : ctx->attributes()) {
       if (key.front() != '_') 
@@ -289,7 +291,7 @@ void Game::h_list_attributes(const std::string& event, const std::string& ctx_id
 
 void Game::h_list_all_attributes(const std::string& event, const std::string& ctx_id) {
   util::Logger()->info("Handler::h_list_all_attributes: {} {}", event, ctx_id);
-  if (const auto& ctx = _cur_user->GetContext(ctx_id)) {
+  for (const auto& ctx : _cur_user->GetContext(ctx_id)) {
     _cout(_cur_user->id(), "Attributes:");
     std::vector<std::string> hidden;
     for (const auto& [key, value] : ctx->attributes()) {
@@ -308,7 +310,7 @@ void Game::h_list_all_attributes(const std::string& event, const std::string& ct
 void Game::h_list_linked_contexts(const std::string& event, const std::string& args) {
   if (auto member_access = pattern::member_access(args)) {
     if (member_access->member_type == pattern::CtxMemberAccess::VARIABLE) {
-      if (auto ctx = _cur_user->GetContext(member_access->ctx_id)) {
+      for (auto ctx : _cur_user->GetContext(member_access->ctx_id)) {
         if (auto nested_member_access = pattern::member_access(member_access->key)) {
           for (const auto& it : ctx->LinkedContexts(nested_member_access->ctx_id.substr(1))) {
             if (auto linked_ctx = it.lock()) {

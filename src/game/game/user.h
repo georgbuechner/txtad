@@ -31,7 +31,7 @@ class User {
     /**
      * Accepts *<type> syntax, but expects the result to be a single context.
      */
-    std::shared_ptr<Context> GetContext(const std::string& ctx_id);
+    std::vector<std::shared_ptr<Context>> GetContext(const std::string& ctx_id);
 
     // Actions
     void AddToEventQueue(std::string events);
