@@ -137,12 +137,12 @@ TEST_CASE("Test Creating Game", "[game]") {
   // Test texts 
   REQUIRE(game.texts().count("texts/start") > 0);
   std::string event_queue;
-  REQUIRE(game.texts().at("texts/start")->print(event_queue) == txt_text_1["txt"].get<std::string>());
+  REQUIRE(util::Join(game.texts().at("texts/start")->print(event_queue, parser), ", ") == txt_text_1["txt"].get<std::string>());
   REQUIRE(event_queue == txt_text_1["permanent_events"].get<std::string>() + ";" 
       + txt_text_1["one_time_events"].get<std::string>());
   event_queue = "";
   // After second print, event_queue does not contain onetime events.
-  REQUIRE(game.texts().at("texts/start")->print(event_queue) == txt_text_1["txt"].get<std::string>());
+  REQUIRE(util::Join(game.texts().at("texts/start")->print(event_queue, parser), ", ") == txt_text_1["txt"].get<std::string>());
   REQUIRE(event_queue == txt_text_1["permanent_events"].get<std::string>());
 }
 

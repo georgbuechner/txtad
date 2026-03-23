@@ -53,6 +53,9 @@ namespace util
       std::regex _regex;
   };
 
+
+  std::string Join(const std::vector<std::string>& vec, const std::string& separator);
+
   std::vector<std::string> Split(std::string str, std::string delimiter);
 
   /**
