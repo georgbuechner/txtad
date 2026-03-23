@@ -1,4 +1,33 @@
-{
-  "txt": "hello",
-  "permanent_events": "#> {rooms/closet->desc}" 
-}
+[
+  {
+    "txt": "hello$bgsset_background.mp3$bgsplay"
+  },
+  {
+    "txt": "This is the sound of music baby"
+  },  
+  {
+    "txt": "Of never ending music"
+  },
+  {
+    "txt": "Ohhhh yes!"
+  },
+  {
+    "txt": "Sudden silence! $bgspause"
+  },
+  {
+    "txt": "Dark and empty silence... $bgspause"
+  },
+  {
+    "txt": "... $fgsplay_01.mp3"
+  },
+  {
+    "txt": "Ah yes, the sweet sound continues $bgsplay"
+  },
+  {
+    "txt": "... $fgsplay_02.mp3"
+  },
+  {
+    "txt": "Let's look at where we are",
+    "permanent_events": "#> {rooms/closet->desc}" 
+  }
+]

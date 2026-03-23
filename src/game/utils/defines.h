@@ -42,6 +42,10 @@ namespace txtad {
   const std::string WEB_CMD_CALL_DONE = "$done";
   const std::string WEB_CMD_ADD_PROMPT = "$prompt";
   const std::string WEB_COLOR = "$color_";
+  const std::string BG_SOUND_PLAY = "$bgsplay"; // played in the background 
+  const std::string BG_SOUND_PAUSE = "$bgspause"; // played in the background 
+  const std::string BG_SOUND_SET = "$bgsset_"; // played in the background 
+  const std::string FG_SOUND = "$fgsound_"; // played and pauses action while playing
 
   // Other cmds
   const std::string REMOVE_USER = "#remove_user";
