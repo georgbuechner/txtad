@@ -51,7 +51,7 @@ std::optional<pattern::SetAttribute> pattern::set_attribute(const std::string & 
     return std::nullopt;
   }
   std::string ctx_id = tmp_attribute.substr(0, pos);
-  std::string attribute_id = tmp_attribute.substr(pos+1);
+  std::string attribute_id = util::Strip(tmp_attribute.substr(pos+1));
 
   return std::optional(SetAttribute{ctx_id, attribute_id, opt, expression});
 }

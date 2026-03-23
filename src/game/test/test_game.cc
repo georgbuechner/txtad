@@ -845,7 +845,7 @@ TEST_CASE("Test Game example dialog", "[game]") {
 TEST_CASE("Test multi-edit", "[game]") {
   const nlohmann::json settings = {
     {"initial_events", ""},
-    {"initial_contexts", {"general", "dialogs/state_1"}}
+    {"initial_contexts", {"general"}} 
   };
 
   const nlohmann::json ctx_general = {
@@ -886,7 +886,7 @@ TEST_CASE("Test multi-edit", "[game]") {
 
   const std::string GAME_NAME = "test_game_multiple";
   const std::string GAME_PATH = txtad::GAMES_PATH + GAME_NAME;
-  TestGameWrapper test_game_wrapper(GAME_NAME, settings, {{"", {ctx_general}},
+  test::GameWrapper test_game_wrapper(GAME_NAME, settings, {{"", {ctx_general}},
       {"users", {user_1, user_2}}}, {});
   Game game(GAME_PATH, GAME_NAME);
 
@@ -894,7 +894,17 @@ TEST_CASE("Test multi-edit", "[game]") {
   const std::string USER_ID = "0x1234";
   game.HandleEvent(USER_ID, "");
 
-  game.HandleEvent(USER_ID, "#sa *users += 5");
-  REQUIRE(game.contexts().at("users/user_1")->GetAttribute("life") == "15");
-  REQUIRE(game.contexts().at("users/user_2")->GetAttribute("life") == "25");
+  game.HandleEvent(USER_ID, "#sa *users.life += 5");
+  util::Logger()->info("User 1, life: {}", game.contexts().at("users/user_1")->GetAttribute("life").value());
+  util::Logger()->info("User 2, life: {}", game.contexts().at("users/user_2")->GetAttribute("life").value());
+  REQUIRE(game.contexts().at("users/user_1")->GetAttribute("life").value() == "10");
+  REQUIRE(game.contexts().at("users/user_2")->GetAttribute("life").value() == "20");
+
+  game.HandleEvent(USER_ID, "#ctx add users/user_1");
+  game.HandleEvent(USER_ID, "#ctx add users/user_2");
+  game.HandleEvent(USER_ID, "#sa *users.life += 5");
+  util::Logger()->info("User 1, life: {}", game.contexts().at("users/user_1")->GetAttribute("life").value());
+  util::Logger()->info("User 2, life: {}", game.contexts().at("users/user_2")->GetAttribute("life").value());
+  REQUIRE(game.contexts().at("users/user_1")->GetAttribute("life").value() == "15");
+  REQUIRE(game.contexts().at("users/user_2")->GetAttribute("life").value() == "25");
 }
