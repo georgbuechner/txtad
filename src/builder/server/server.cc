@@ -4,6 +4,7 @@
 #include "builder/utils/http_helpers.h"
 #include "builder/utils/jinja_helpers.h"
 #include "game/utils/defines.h"
+#include "shared/objects/settings/settings.h"
 #include "shared/utils/parser/game_file_parser.h"
 #include "shared/utils/parser/test_file_parser.h"
 #include "shared/utils/git_wrapper/git_wrapper.h"
@@ -138,6 +139,13 @@ void Builder::Start() {
 
   _srv.Get("/:game_id/media", [&](const httplib::Request& req, httplib::Response& resp) {
       LoadMedia(req, resp); });
+
+  // GAMES
+  _srv.Post("/world/create", [&](const httplib::Request& req, httplib::Response& resp) {
+      CreateNewGame(req, resp); });
+
+  _srv.Post("/world/create/:game_id", [&](const httplib::Request& req, httplib::Response& resp) {
+      DeleteGame(req, resp); });
 
   // SAVE ELEMENTS
 
@@ -716,6 +724,56 @@ void Builder::LoadMedia(const httplib::Request& req, httplib::Response& resp) {
   _http::LoadMediaFile(resp, _games.at(game_id)->path() + "/" + txtad::GAME_FILES + path);
 }
 
+// GAMES
+void Builder::CreateNewGame(const httplib::Request& req, httplib::Response& resp) {
+  const std::string game_id = req.form.get_field("game_id");
+  const std::string game_path = txtad::GAMES_PATH + game_id + "/";
+
+  // Check whether game already exists
+  if (_games.contains(game_id)) {
+    resp.set_redirect(_http::Referer(req, fmt::format("Failed creating new world ({}): Already exists!", game_id)), 303);
+    return;
+  }
+
+  // Try creating new game
+  try {
+    std::filesystem::create_directory(game_path);
+    std::filesystem::create_directory(game_path + txtad::GAME_FILES);
+
+    txtad::Settings settings;
+    util::WriteJsonToDisc(game_path + "settings.json", settings.ToJson());
+    builder::Settings builder_settings;
+    util::WriteJsonToDisc(game_path + ".builder", builder_settings.ToJson());
+    nlohmann::json test_cases = nlohmann::json::array();
+    util::WriteJsonToDisc(game_path + "tests.json", test_cases);
+
+    auto creator = _manager.CreatorFromCookie(req);
+    creator->AddGame(game_id);
+    _games[game_id] = std::make_shared<BuilderGame>(game_path, game_id);
+    resp.set_redirect(_http::Referer(req, fmt::format("Successfully created new world: {}.", game_id)), 303);
+  } catch (std::exception& e) {
+    // Cleanup in case of failure!
+    if (std::filesystem::exists(game_path)) {
+      std::filesystem::remove_all(game_path);
+    }
+    resp.set_redirect(_http::Referer(req, fmt::format("Failed creating new world ({}): {}.", game_id, e.what())), 303);
+  }
+}
+
+void Builder::DeleteGame(const httplib::Request& req, httplib::Response& resp) {
+  std::string game_id = req.path_params.at("game_id");
+  std::unique_lock ul(_mtx_games);
+  if (_games.contains(game_id)) {
+    if (std::filesystem::exists(_games.at(game_id)->path())) {
+      std::filesystem::remove_all(_games.at(game_id)->path());
+    }
+    _games.erase(game_id);
+    resp.set_redirect(fmt::format("/?msg=Successfully removed world: {}.", game_id), 303);
+  } else {
+    resp.set_redirect(_http::Referer(req, fmt::format("Failed removing world ({}): Not Found.", game_id)), 303);
+  }
+}
+
 // SAVE ELEMENTS 
 
 void Builder::SaveSettings(const httplib::Request& req, httplib::Response& resp) {
@@ -834,7 +892,8 @@ void Builder::SaveListener(const httplib::Request& req, httplib::Response& resp)
       {"re_event", req.form.get_field("event")},
       {"arguments", req.form.get_field("arguments")},
       {"logic", req.form.get_field("logic")},
-      {"context", req.form.get_field("context")},
+      {"ctx", req.form.get_field("context")},
+      {"use_ctx_regex", std::stoi(req.form.get_field("use_ctx_regex"))},
       {"permeable", req.form.has_field("permeable")},
       {"exec", req.form.has_field("exec")}
     };

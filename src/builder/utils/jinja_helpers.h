@@ -197,10 +197,20 @@ namespace jinja2 {
               const std::string linked_ctx = v.ptr->ctx_id();
               return Value(linked_ctx);
             } catch (util::invalid_base_class_call&) { 
-              util::Logger()->debug("invalid_base_class_call in TypeReflection (listener::linked_ctx)");
+              // util::Logger()->debug("invalid_base_class_call in TypeReflection (listener::linked_ctx)");
             }
           }
           return Value{};
+        }}, 
+        {"use_ctx_regex", [](const PtrView<Listener> v) { 
+          if (v.ptr) {
+            try {
+              return Value(v.ptr->use_ctx_regex());
+            } catch (util::invalid_base_class_call&) {
+              // util::Logger()->debug("invalid_base_class_call in TypeReflection (listener::use_ctx_regex)");
+            }
+          } 
+          return Value{}; 
         }}, 
         {"exec", [](const PtrView<Listener> v) { return (v.ptr) ? v.ptr->original_json().value("exec", false) : Value{}; } }, 
       };

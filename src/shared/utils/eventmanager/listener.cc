@@ -86,6 +86,15 @@ LForwarder::LForwarder(const nlohmann::json& json, const nlohmann::json& origina
 
 // getter
 std::string LForwarder::logic() const { return _logic; }
+std::string LForwarder::ctx_id () const {
+  util::Logger()->info("LForwarder::ctx_id: l-forwarder {} does not have ctx-id!", _id);
+  return "";
+}
+
+int LForwarder::use_ctx_regex() const {
+  util::Logger()->info("LForwarder::use_ctx_regex: l-forwarder {} does not have ctx-id!", _id);
+  return UseCtx::NO;
+}
 
 // methods 
 bool LForwarder::Test(const std::string& event, const ExpressionParser& parser) const {
@@ -122,18 +131,23 @@ LContextForwarder::LContextForwarder(const nlohmann::json& json, std::shared_ptr
 // getter 
 std::string LContextForwarder::ctx_id () const { return GetCtxId(_ctx); }
 std::weak_ptr<Context> LContextForwarder::ctx() const { return _ctx; }
+int LContextForwarder::use_ctx_regex() const { return _use_ctx_regex; }
 
 bool LContextForwarder::Test(const std::string& event, const ExpressionParser& parser) const { 
   // Test logic
+  util::Logger()->debug("- LContextForwarder::Test. Test logic");
   if (_logic != "" && parser.Evaluate(_logic) != "1")
     return false;
   // Test regex
+  util::Logger()->debug("- LContextForwarder::Test. Test Regex");
   std::smatch base_match;
   if (std::regex_match(event, base_match, static_cast<const std::regex&>(_event))) {
     // Potentially check context name or regex too
+    util::Logger()->debug("- LContextForwarder::Test. Test CTX-Regex");
     if (base_match.size() == 2) {
       const std::string ctx_name = GetCtxName(_ctx);
       std::string arg = base_match[1].str();
+      util::Logger()->debug("- LContextForwarder::Test: {} =={}, {} ", ctx_name, std::to_string(_use_ctx_regex), arg);
       switch(_use_ctx_regex) {
         case UseCtx::NO: 
           return true;

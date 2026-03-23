@@ -153,6 +153,8 @@ parser::ExecListeners parser::LoadListeners(std::map<std::string, std::shared_pt
 std::shared_ptr<Listener> parser::CreateListenerFromJson(const nlohmann::json& og_json_listener, 
     const std::string& ctx_id, const std::map<std::string, std::shared_ptr<Context>>& contexts) {
   nlohmann::json json_listener = og_json_listener;
+  util::Logger()->debug("creating listener: {}", json_listener.dump());
+
   // Replace "this"-field with ctx_id
   for (const auto* field : {"logic", "arguments"}) {
     if (json_listener.contains(field)) {
@@ -161,7 +163,8 @@ std::shared_ptr<Listener> parser::CreateListenerFromJson(const nlohmann::json& o
   }
 
   // Create context-listener
-  if (json_listener.contains("ctx")) {
+  if (json_listener.contains("ctx") && !json_listener.at("ctx").get<std::string>().empty()) {
+    util::Logger()->debug("CREATING CTX-FORWARDER");
     std::string target_ctx_id = json_listener["ctx"];
     auto it_ctx = contexts.find((target_ctx_id == "<_>") ? ctx_id : target_ctx_id);
     if (it_ctx != contexts.end()) {
@@ -173,6 +176,7 @@ std::shared_ptr<Listener> parser::CreateListenerFromJson(const nlohmann::json& o
     }
   } 
   // Create "normal" listener
+  util::Logger()->debug("CREATING FORWARDER");
   return std::make_shared<LForwarder>(json_listener, og_json_listener);
 }
 

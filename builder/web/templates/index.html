@@ -3,13 +3,24 @@
 {% block content %}
 
   
-  {% if worlds %}
+  {% if creatorname %}
     <h4>Custom Worlds</h4>
-    {% set filter_worlds = worlds %}
-    {% set request_allowed = False %}
-    {% set accordion_id = "custom" %}
-    {% include "elements/worlds.html" %}
+      {% set filter_worlds = worlds %}
+      {% set request_allowed = False %}
+      {% set accordion_id = "custom" %}
+      {% include "elements/worlds.html" %}
+    {% if worlds|length == 0 %}
+      <p>No worlds yet. Create your first world!</p>
+    {% endif %}
+    <button 
+      type="button" 
+      class="btn btn-primary mb-4" 
+      data-bs-toggle="modal" 
+      data-bs-target="#shareAddWorldModal"
+      title="Create New World"
+    >New World</button>
   {% endif %}
+
 
   {% if shared %}
     <h4>Shared Worlds</h4>
@@ -24,5 +35,29 @@
   {% set request_allowed = True %}
   {% set accordion_id = "all" %}
   {% include "elements/worlds.html" %}
+
+  <!--- MODALS --->
+
+  <div class="modal fade" id="shareAddWorldModal" tabindex="-1" aria-labelledby="shareAddWorldModal" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="shareAddWorldModalLabel">Create New World</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <form action="/world/create" method="POST" enctype="multipart/form-data">
+            <label for="id" class="form-label"><i>Use only a-z, A-Z, 0-9 and _ for your world name!</i></label>
+            <div class="input-group mb-3">
+              <span class="input-group-text" id="basic-addon1">Name:</span>
+              <input type="text" class="form-control" placeholder="Name your world..." id="game_id" name="game_id">
+            </div>
+
+            <button type="submit" name="action" class="btn btn-primary" title="Create new world.">Create</button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
 
 {% endblock %}

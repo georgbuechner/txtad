@@ -77,6 +77,11 @@ class Builder {
     void PagesGame(const httplib::Request& req, httplib::Response& resp);
     void LoadMedia(const httplib::Request& req, httplib::Response& resp);
 
+    // GAMES
+    void CreateNewGame(const httplib::Request& req, httplib::Response& resp);
+    void DeleteGame(const httplib::Request& req, httplib::Response& resp);
+
+
     // SAVE ELEMENTS 
     void SaveSettings(const httplib::Request& req, httplib::Response& resp);
     void SaveTests(const httplib::Request& req, httplib::Response& resp);

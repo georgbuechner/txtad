@@ -21,28 +21,31 @@ class Listener {
     virtual bool permeable() const = 0;
     virtual std::string arguments() const = 0;
     virtual std::string logic() const { 
-      throw util::invalid_base_class_call("Listener::logic");
+      throw util::invalid_base_class_call("invalid_base_class_call: Listener::logic");
     }
     virtual std::string ctx_id () const { 
       throw util::invalid_base_class_call("invalid_base_class_call: Listener::ctx_id");
     }
     virtual std::weak_ptr<Context> ctx() const { 
-      throw util::invalid_base_class_call("Listener::ctx");
+      throw util::invalid_base_class_call("invalid_base_class_call: Listener::ctx");
+    }
+    virtual int use_ctx_regex() const {
+      throw util::invalid_base_class_call("invalid_base_class_call: Listener::use_ctx_regex");
     }
     virtual const nlohmann::json& original_json() const { 
-      throw util::invalid_base_class_call("Listener::original_json");
+      throw util::invalid_base_class_call("invalid_base_class_call: Listener::original_json");
     }
 
     // setter
     virtual void set_fn(Fn fn) {
-      throw util::invalid_base_class_call("Listener::set_fn");
+      throw util::invalid_base_class_call("invalid_base_class_call: Listener::set_fn");
     }
 
     // methods
     virtual bool Test(const std::string& event, const ExpressionParser& parser) const = 0;
     virtual void Execute(std::string event) const = 0;
     virtual nlohmann::json json() const { 
-      throw util::invalid_base_class_call("Listener::json");
+      throw util::invalid_base_class_call("invalid_base_class_call: Listener::json");
     }
 };
 
@@ -102,6 +105,8 @@ class LForwarder : public LHandler {
     // getter
     std::string logic() const override;
     const nlohmann::json& original_json() const { return _original_json; }
+    virtual std::string ctx_id () const override;
+    virtual int use_ctx_regex() const override;
 
     // methods 
     bool Test(const std::string& event, const ExpressionParser& parser) const override;
@@ -135,6 +140,7 @@ class LContextForwarder : public LForwarder {
     // getter
     std::string ctx_id() const override;
     std::weak_ptr<Context> ctx() const override;
+    int use_ctx_regex() const override;
 
     // methods 
     bool Test(const std::string& event, const ExpressionParser& parser) const override;

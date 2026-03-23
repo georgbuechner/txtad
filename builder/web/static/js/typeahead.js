@@ -285,8 +285,8 @@ const StateMaschine = {
 };
 
 function PrintHints(hinst_str, index=-1) {
-  const view = parseInt(StateMaschine.event_container.offsetWidth/8);
-  console.log(hinst_str, view, index);
+  const view = parseInt(StateMaschine.event_container.offsetWidth/8) + 28; // 28 = html-code for highlightling
+  console.log("[print hints]", hinst_str, view, index);
   let print = hinst_str;
   if (view < hinst_str.length) {
     const hints = hinst_str.split(", ");

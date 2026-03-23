@@ -159,10 +159,23 @@ function CreateEventFields(cmd, args) {
     const tvalue = value.trim();
     console.log("value: ", value, "arg: ", arg, "i-1: ", elems[i-1], "i-2: ", elems[i-2]);
     if (arg === "<free>") {
+      const inp_id = "evt_free_inp";
       res += `
         <div class="input-group mb-3">
           <span class="input-group-text">Free Input:</span>
-          <input type="text" class="form-control" value="${tvalue}">
+          <div class="flex-grow-1">
+            <input 
+              type="text" 
+              class="form-control" 
+              placeholder=" " 
+              id="${inp_id}" 
+              value="${tvalue}" 
+              onfocus="SetUpTypeahead('${inp_id}');"
+              onkeydown="Typeahead(event, '${inp_id}');"
+              autocomplete="off"
+            >
+            <div class="form-text" id="hints_${inp_id}" class="overflow" for="${inp_id}"></div>
+          </div>
         </div>
       `
       i++;
