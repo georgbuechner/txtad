@@ -1,1 +1,1 @@
-{"initial_contexts":["general","mindsets/dusty","dialogs/welcome/01_hello","mechanics","catch"],"initial_events":"#> {texts/start/00}"}
+{"description":"Creepy game experience","hidden_dirs":["mindsets/"]}
