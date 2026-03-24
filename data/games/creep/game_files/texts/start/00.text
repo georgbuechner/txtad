@@ -1,4 +1,1 @@
-{
-  "txt": "$center CREEP",
-  "permanent_events": "#>> {texts/start/01}" 
-}
+[{"logic":"","one_time_events":"","permanent_events":"","shared":true,"txt":"$center CREEP $bgsset_texts/start/default_background_audio.mp3"},{"logic":"","one_time_events":"","permanent_events":"#> {texts/start/01}","shared":false,"txt":"Let's beginn..."}]

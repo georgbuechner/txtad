@@ -1,9 +1,11 @@
 #include <fmt/core.h>
 #include <fmt/format.h>
+#include <memory>
 #include <regex>
 #include <spdlog/spdlog.h>
 #include <unistd.h>
 #include "context.h"
+#include "game/utils/defines.h"
 #include "shared/utils/eventmanager/eventmanager.h"
 #include "shared/utils/eventmanager/listener.h"
 #include "shared/utils/utils.h"
@@ -18,8 +20,8 @@ std::string Context::name() const {
   return _name;
 }
 
-std::string Context::description() const {
-  return _description.txt();
+const std::shared_ptr<Text> Context::description() const {
+  return _description;
 }
 
 std::string Context::entry_condition_pattern() const {
@@ -37,13 +39,16 @@ bool Context::permeable() const {
 bool Context::shared() const {
   return _shared;
 }
+const std::map<std::string, std::shared_ptr<Listener>>& Context::listeners() const {
+  return _event_manager->listeners();
+}
 
 // ***** ***** Setters ***** ***** //
 void Context::set_name(const std::string& name) {
   _name = name;
 }
 
-void Context::set_description(const Text& txt) {
+void Context::set_description(std::shared_ptr<Text> txt) {
   _description = txt;
 }
 
@@ -53,10 +58,11 @@ void Context::set_entry_condition(const std::string& pattern) {
 
   // ***** ***** String representation of the class ***** ***** //
 std::string Context::ToString() const {
-  return "Name: " + _name + "\n" + "Description: " + _description.txt() + "\n" + "Entry Condition (regex): " + _entry_condition.str();
+  return "Name: " + _name + "\n" + "Description: " + _description->txt() + "\n" + "Entry Condition (regex): " + _entry_condition.str();
 }
-std::string Context::PrintDescription(std::string& event_queue) {
-  
+
+std::string Context::PrintDescription(std::string& event_queue, const ExpressionParser& parser) {
+  return util::Join(_description->print(event_queue, parser), txtad::WEB_CMD_ADD_PROMPT);
 }
   
   // ***** ***** Entry check ***** ***** //
@@ -113,7 +119,8 @@ void Context::AddListener(std::shared_ptr<Listener> listener) {
   if (_event_manager) {
     _event_manager->AddListener(listener);
   } else {
-    util::Logger()->error("Context::AddListener: event_manager does not exist for listener {}", listener->id());
+    util::Logger()->error("Context::AddListener: event_manager does not exist for listener {}", 
+        listener->id());
   }
 }
 
@@ -128,8 +135,26 @@ void Context::RemoveListener(const std::string& id) {
 std::vector<std::weak_ptr<Context>> Context::LinkedContexts(std::string type) {
   std::vector<std::weak_ptr<Context>> linked_contexts;
   for (const auto& it : _event_manager->listeners()) {
-    if (type == "" || it.second->ctx_id().find(type) != std::string::npos)
+    if (type == "" || it.second->ctx_id().find(type) == 0)
       linked_contexts.push_back(it.second->ctx());
   }
   return linked_contexts;
+}
+
+void Context::UpdateMeta(std::string name, std::string entry_condition_pattern, int priority, 
+      bool permeable, bool shared) {
+  _name = name; 
+  _entry_condition = util::Regex(entry_condition_pattern);
+  _priority = priority; 
+  _permeable = permeable; 
+  _shared = shared;
+}
+nlohmann::json Context::json() const {
+  nlohmann::json j = {{"id", _id}, {"name", _name}, {"description", _description->json()}, 
+    {"re_entrycondition", _entry_condition.str()}, {"attributes", _attributes}, {"priority", _priority}, 
+    {"permeable", _permeable}, {"shared", _shared}, {"listeners", nlohmann::json::array()} };
+  for (const auto& it : _event_manager->listeners()) {
+    j["listeners"].push_back(it.second->json());
+  }
+  return j;
 }

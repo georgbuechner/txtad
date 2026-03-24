@@ -6,6 +6,7 @@
 
 #include "game/utils/defines.h"
 #include <map>
+#include <optional>
 #include <string>
 
 class ExpressionParser{
@@ -72,6 +73,8 @@ class ExpressionParser{
      * @return operand and it's position in the given expression.
      */
     static std::pair<int, std::string> LastOpt(const std::string& inp);
+
+    static std::optional<short> PartOfOpt(int pos, const std::string& inp);
 };
 
 #endif

@@ -1,0 +1,16 @@
+<h4>{{ctx.name}}</h4>
+{% set text=ctx.description %}
+{% set label="" %}
+{% include "objects/txt.html" %}
+
+{% if ctx.entry %}
+  Entry: {{ctx.entry}}
+  <br>
+{% endif %} 
+
+{% set atts=ctx.attributes %} 
+{% include "objects/attributes.html" %}
+
+{% set listeners=ctx.listeners %} 
+{% include "objects/listeners.html" %}
+

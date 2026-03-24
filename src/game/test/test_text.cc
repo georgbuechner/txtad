@@ -1,5 +1,5 @@
 #include <catch2/catch_test_macros.hpp>
-#include <nlohmann/json_fwd.hpp>
+#include <nlohmann/json.hpp>
 #include "shared/objects/text/text.h"
 #include "shared/utils/utils.h"
 

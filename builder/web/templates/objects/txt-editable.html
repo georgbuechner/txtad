@@ -1,0 +1,67 @@
+
+{% if label %} 
+  <h4>{{label}}</h4>
+{% endif %}
+
+<div class="accordion accordion" id="accordion{{label}}">
+  {% for txt in texts %}
+    <div class="accordion-item">
+      <h2 class="accordion-header d-flex align-items-center" id="headingtxt{{label}}{{loop.index}}">
+
+        <form 
+          {% if txt_parent == "text" %}
+            action="/{{game.name}}/remove/text?text_id={{path}}&index={{loop.index0}}" 
+          {% else %} 
+            action="/{{game.name}}/remove/ctx/description?ctx_id={{ctx.id}}&index={{loop.index0}}" 
+          {% endif %}
+          method="POST"
+        >
+          <button type="submit" class="btn btn-light btn-sm text-danger">X</button>
+        </form>
+
+        <button 
+            {% if loop.index0 == open|int %}
+              class="accordion-button flex-grow-1" 
+            {% else %}
+              class="accordion-button collapsed flex-grow-1" 
+            {% endif %}
+            type="button" 
+            data-bs-toggle="collapse" 
+            data-bs-target="#collapsetxt{{label}}{{loop.index}}" aria-expanded="false" 
+            aria-controls="collapsetxt{{label}}{{loop.index}}">
+          {{txt.txt}}
+        </button>
+      </h2>
+      <div 
+        id="collapsetxt{{label}}{{loop.index}}" 
+        {% if loop.index0 == open|int %}
+          class="accordion-collapse collapse show" 
+        {% else %}
+          class="accordion-collapse collapse" 
+        {% endif %}
+        aria-labelledby="headingtxt{{label}}{{loop.index}}" 
+        data-bs-parent="#accordion{{label}}"
+      >
+        <div class="accordion-body">
+          {% set txt_index = loop.index0 %}
+          {% include "objects/txt-edit.html" %}
+          <br>
+          <button 
+            type="button" 
+            class="btn btn-primary"
+            data-bs-toggle="modal"
+            data-bs-target="#textAddModal"
+            onclick="SetTextIndex({{loop.index0}});"
+          >insert before</button>
+          <button 
+            type="button" 
+            class="btn btn-primary"
+            data-bs-toggle="modal"
+            data-bs-target="#textAddModal"
+            onclick="SetTextIndex({{loop.index0}}+1);"
+          >insert after</button>
+        </div>
+      </div>
+    </div>
+  {% endfor %}
+</div>

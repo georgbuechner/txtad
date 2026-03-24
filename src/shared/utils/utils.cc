@@ -1,14 +1,26 @@
 #include "utils.h"
+#include "cleanup_dtor.h"
+#include <cctype>
+#include <chrono>
+#include <ctime>
 #include <exception>
 #include <fmt/core.h>
 #include <fstream>
+#include <iomanip>
+#include <ios>
 #include <nlohmann/json.hpp>
 #include <optional>
+#include <random>
+#include <set>
 #include <spdlog/spdlog.h>
 #include <spdlog/common.h>
 #include <spdlog/sinks/daily_file_sink.h>
 #include <spdlog/sinks/stdout_color_sinks.h>
 #include <sstream>
+#include <openssl/evp.h>
+#include <openssl/sha.h>
+#include <stdexcept>
+
 
 std::string util::LOGGER = "---";
 
@@ -147,10 +159,30 @@ std::optional<nlohmann::json> util::LoadJsonFromDisc(const std::string& path) {
 void util::WriteJsonToDisc(const std::string& path, const nlohmann::json& json) {
   std::ofstream ofs(path);
   if (!ofs.is_open()) {
-    Logger()->error("Failed writing json to disc: output file could not be opened!");
+    Logger()->error(fmt::format("Failed writing json to disc: output file could not be opened: {}", path));
   } else {
     ofs << json;
     ofs.close();
+    Logger()->debug("util::WriteJsonToDisc: Saved json @ {}", path);
+  }
+}
+
+void util::RemoveEmptyDirs(const std::string& path) {
+  std::vector<std::filesystem::path> dirs;
+  for (const auto& entry : std::filesystem::recursive_directory_iterator(path)) {
+    if (entry.is_directory()) {
+      dirs.push_back(entry.path());
+    }
+  }
+
+  // sort by depth (deepest first)
+  std::sort(dirs.begin(), dirs.end(), [](const auto& a, const auto& b) {
+    return a.string().size() > b.string().size(); });
+
+  for (const auto& dir : dirs) {
+    if (std::filesystem::is_empty(dir)) {
+      std::filesystem::remove(dir);
+    }
   }
 }
 
@@ -161,4 +193,173 @@ std::optional<std::string> util::GetUserId(std::string& inp) {
     return user_id;
   }
   return std::nullopt;
+}
+
+std::optional<std::map<std::string, nlohmann::json>> util::ValidateSimpleJson(std::string json_string, std::vector<std::string> keys) {
+  nlohmann::json json;
+  try {
+    json = nlohmann::json::parse(json_string); 
+  } catch (std::exception& e) {
+    Logger()->warn(fmt::format("ValidateJson: Failed parsing json: {}", e.what()));
+    return std::nullopt;
+  }
+  for (auto key : keys) {
+    std::vector<std::string> depths = util::Split(key, "/");
+    if (depths.size() > 0) {
+      if (json.count(depths[0]) == 0) {
+        Logger()->info(fmt::format("ValidateJson: Missing key: {}", key));
+        return std::nullopt;
+      }
+    }
+    if (depths.size() > 1) {
+      if (json[depths[0]].count(depths[1]) == 0) {
+        Logger()->info(fmt::format("ValidateJson: Missing key: {}", key));
+        return std::nullopt;
+      }
+    }
+  }
+  return json;
+}
+
+
+std::string util::CreateRandomString(int len) {
+  std::string str;
+  static const char alphanum[] =
+    "0123456789"
+    "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+    "abcdefghijklmnopqrstuvwxyz"
+    "_";
+  std::random_device dev;
+  // Create random alphanumeric cookie
+  for(int i = 0; i < len; i++)
+    str += alphanum[dev()%(sizeof(alphanum)-1)];
+  return str;
+
+}
+
+std::string util::HashSha3512(const std::string& input) {
+  unsigned int digest_length = SHA512_DIGEST_LENGTH;
+  const EVP_MD* algorithm = EVP_sha3_512();
+  uint8_t* digest = static_cast<uint8_t*>(OPENSSL_malloc(digest_length));
+  CleanupDtor dtor([digest](){OPENSSL_free(digest);});
+
+  EVP_MD_CTX* context = EVP_MD_CTX_new();
+  EVP_DigestInit_ex(context, algorithm, nullptr);
+  EVP_DigestUpdate(context, input.c_str(), input.size());
+  EVP_DigestFinal_ex(context, digest, &digest_length);
+  EVP_MD_CTX_destroy(context);
+
+  std::stringstream stream;
+  stream << std::hex;
+
+  for (auto b : std::vector<uint8_t>(digest,digest+digest_length))
+    stream << std::setw(2) << std::setfill('0') << (int)b;
+  return stream.str();
+}
+
+std::string util::iso_utc_now() {
+  std::ostringstream out;
+  out << std::chrono::utc_clock::now();
+  std::string s = out.str();
+  if (s.find(".") == std::string::npos)
+    return s;
+  return s.substr(0, s.rfind("."));
+}
+
+std::string util::generate_random_hex_string(size_t length) {
+  const std::string characters = "0123456789ABCDEF";
+  std::random_device random_device;
+  std::mt19937 generator(random_device());
+  std::uniform_int_distribution<> distribution(0, characters.size() - 1);
+
+  std::string random_string;
+  for (size_t i = 0; i < length; ++i) {
+    random_string += characters[distribution(generator)];
+  }
+
+  return random_string;
+}
+
+bool util::IsIdType(const std::string& id) {
+  for (const auto& c : id) {
+    if (!std::isalnum(c) && c != '_') {
+      util::Logger()->warn("{} has invalid character: {}!", id, c);
+      return false;
+    }
+  }
+  return true;
+}
+std::string util::GetPage(const std::string& path) {
+  // Read loginpage and send
+  std::ifstream read(path);
+  if (!read) {
+    util::Logger()->warn(fmt::format("Wrong file passed: {}", path));
+    return "";
+  }
+  std::string page( (std::istreambuf_iterator<char>(read) ),
+                    std::istreambuf_iterator<char>()     );
+  // Delete file-end marker
+  page.pop_back();
+  return page;
+}
+
+std::vector<std::string> util::GetSubpaths(const std::vector<std::string>& ids) {
+  std::set<std::string> sub_paths = {}; 
+  for (const auto& id : ids) {
+    std::string path = id;
+    while(path.find("/") != std::string::npos) {
+      path = path.substr(0, path.rfind("/"));
+      if (sub_paths.contains(path)) 
+        break;
+      sub_paths.insert(path);
+    } 
+  }
+  std::vector<std::string> vec{sub_paths.begin(), sub_paths.end()};
+  return vec;
+}
+
+
+std::vector<std::string> util::GetSubpaths(const std::string& id) {
+  std::set<std::string> sub_paths = {}; 
+  std::string path = id;
+  while(path.find("/") != std::string::npos) {
+    path = path.substr(0, path.rfind("/"));
+    sub_paths.insert(path);
+  } 
+  std::vector<std::string> vec{sub_paths.begin(), sub_paths.end()};
+  return vec;
+}
+
+bool util::IsSubPathOf(const std::string& path, const std::string& sub) {
+  return path.find(sub) == 0;
+}
+
+bool util::IsSubPathOf(const std::vector<std::string>& paths, const std::string& sub) {
+  for (const auto& it : paths) {
+    if (util::IsSubPathOf(it, sub)) 
+      return true;
+  }
+  return false;
+}
+
+std::string util::GetContentType(const std::string& extension) {
+  static const std::map<std::string, std::string> content_types = {
+    // Images
+    {"jpg", "image/jpeg"},
+    {"jpeg", "image/jpeg"},
+    {"png", "image/png"},
+    {"gif", "image/gif"},
+    {"svg", "image/svg+xml"},
+    
+    // Audio
+    {"mp3", "audio/mpeg"},
+    {"wav", "audio/wav"},
+    {"ogg", "audio/ogg"},
+  };
+  
+  auto it = content_types.find(extension);
+  if (it != content_types.end()) {
+    return it->second;
+  }
+  throw std::invalid_argument("Unkown/unhandled extension: " + extension);
 }

@@ -1,0 +1,52 @@
+<form
+  {% if txt_parent == "text" %}
+    action="/{{game.name}}/{{txt_cmd}}/text?text_id={{path}}&index={{txt_index}}"
+  {% else %} 
+    action="/{{game.name}}/{{txt_cmd}}/ctx/description?ctx_id={{ctx.id}}&index={{txt_index}}"
+  {% endif %}
+  method="POST" 
+  enctype="multipart/form-data"
+  name="__text_form"
+>
+
+  {% set inp_id = path ~ "_" + loop.index ~ "txt" %}
+  {% set inp_name = "txt" %} 
+  {% set inp_label = "Text" %} 
+  {% set inp_value = txt.txt %}
+  {% include "forms/free-txtarea.html" %}
+
+  <!--
+  <div class="input-group mb-3">
+    <span class="input-group-text" id="txt">Text:</span>
+    <textarea class="form-control" placeholder="text..." name="txt" id="txt" required>{{txt.txt}}</textarea>
+  </div>
+  -->
+
+  {% set inp_id = path ~ "_" ~ loop.index ~ "logic" %}
+  {% set inp_name = "logic" %} 
+  {% set inp_label = "Logic" %} 
+  {% set inp_value = txt.logic %}
+  {% include "forms/free-inp.html" %}
+
+  {% set event_id = path ~ "_" ~ loop.index ~ "one_time_events" %}
+  {% set event_name = "one_time_events" %}
+  {% set event_label = "One-Time Events:" %}
+  {% set events = txt.one_time_events %}
+  {% include "forms/event-inp.html" %}
+
+  {% set event_id = path ~ "_" ~ loop.index ~ "permanent_events" %}
+  {% set event_name = "permanent_events" %}
+  {% set event_label = "Permanent Events:" %}
+  {% set events = txt.permanent_events%}
+  {% include "forms/event-inp.html" %}
+
+  <div class="input-group mb-3">
+    <span class="input-group-text" id="shared">Shared</span>
+    <div class="input-group-text">
+      <input class="form-check-input mt-0" type="checkbox" name="shared" id="shared" 
+       aria-label="Checkbox for following text input" {{ "checked" if txt.shared else ""}}>
+    </div>
+  </div>
+  <button type="submit" class="btn btn-primary">save</button>
+</form>
+

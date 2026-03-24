@@ -1,0 +1,66 @@
+body {
+  font-family: Monaco;
+  background-image: url("/static/media/background.jpg");
+  background-repeat: no-repeat;
+  background-attachment: fixed;
+  background-size: cover;
+}
+
+h1 {
+  /* margin-bottom: 2em; */
+}
+
+
+.main {
+  text-align: center;
+  padding: 50px;
+  margin-top: 5em;
+  box-shadow: rgba(0, 0, 0, 0.25) 0px 54px 55px, rgba(0, 0, 0, 0.12) 0px -12px 30px, rgba(0, 0, 0, 0.12) 0px 4px 6px, rgba(0, 0, 0, 0.17) 0px 12px 13px, rgba(0, 0, 0, 0.09) 0px -3px 5px;
+}
+
+.sub {
+  width: 50%;
+}
+
+.snack {
+  position: absolute;
+  bottom: 0;
+  margin-left: 2rem;
+}
+
+.note {
+  font-size: small;
+  margin-left: 1em;
+}
+
+.tiny {
+  font-size: 11px;
+}
+
+.game-desc {
+  /* margin-top: -4em; */
+  font-style: italic;
+  margin-bottom: 2em;
+}
+
+.th_sel {
+  text-decoration-line: underline;
+  text-decoration-color: blue;
+}
+
+.overflow {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.floating-link-button {
+  float: right; 
+  margin-right: 0em;
+  background: none!important;
+  border: none;
+  padding: 0!important;
+  text-decoration: underline;
+  cursor: pointer;
+
+}

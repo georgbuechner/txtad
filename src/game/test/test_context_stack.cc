@@ -1,13 +1,13 @@
-#include "game/test/helpers.h"
+#include "shared/utils/test_helpers.h"
 #include "shared/objects/context/context.h"
 #include "shared/utils/defines.h"
 #include "shared/utils/eventmanager/context_stack.h"
 #include "shared/utils/eventmanager/listener.h"
+#include "shared/utils/parser/pattern_parser.h"
 #include "shared/utils/utils.h"
 #include <catch2/catch_test_macros.hpp>
 #include <fmt/core.h>
 #include <memory>
-#include <regex>
 
 TEST_CASE("Test inserting, removing, getting and sorting", "[stack]") {
   ContextStack stack;
@@ -80,7 +80,7 @@ TEST_CASE("Test throwing events", "[stack]") {
   
   // define basic handlers
   Listener::Fn set_attribute = [&attributes, &parser](std::string event, std::string args) {
-    helpers::SetAttribute(attributes, args, parser);
+    test::SetAttribute(attributes, args, parser);
   };
   
   Listener::Fn add_ctx = [&contexts, &stack](std::string event, std::string ctx_id) {
@@ -94,18 +94,12 @@ TEST_CASE("Test throwing events", "[stack]") {
       stack.erase(ctx_id);
   };
   Listener::Fn replace_ctx = [&contexts, &stack](std::string event, std::string args) {
-    static const std::regex regex_expression("(.*) -> (.*)");
-    std::smatch base_match;
-    if (std::regex_match(args, base_match, regex_expression)) {
-      if (base_match.size() == 3) {
-        std::string ctx_from = base_match[1].str();
-        std::string ctx_to = base_match[2].str();
-        util::Logger()->info("Replacing context: {} with {}", ctx_from, ctx_to);
-        if (stack.exists(ctx_from))
-          stack.erase(ctx_from);
-        if (contexts.count(ctx_to) > 0)
-          stack.insert(contexts.at(ctx_to));
-      }
+    if (const auto& parsed = pattern::replace_ctx(args)) {
+      util::Logger()->info("Replacing context: {} with {}", parsed->original_ctx, parsed->new_ctx);
+      if (stack.exists(parsed->original_ctx))
+        stack.erase(parsed->original_ctx);
+      if (contexts.count(parsed->new_ctx) > 0)
+        stack.insert(contexts.at(parsed->new_ctx));
     }
   };
 
@@ -192,7 +186,7 @@ TEST_CASE("Test throwing events (with context-listener)", "[stack]") {
   
   // difine basic handlers
   Listener::Fn set_attribute = [&attributes, &parser](std::string event, std::string args) {
-    helpers::SetAttribute(attributes, args, parser);
+    test::SetAttribute(attributes, args, parser);
   };
   
   Listener::Fn add_ctx = [&contexts, &stack](std::string event, std::string ctx_id) {
@@ -214,17 +208,11 @@ TEST_CASE("Test throwing events (with context-listener)", "[stack]") {
       util::Logger()->error("[remove_ctx] failed: ctx '{}' not found!", ctx_id);
   };
   Listener::Fn replace_ctx = [&contexts, &stack, &add_ctx, &remove_ctx](std::string event, std::string args) {
-    static const std::regex regex_expression("(.*) -> (.*)");
-    std::smatch base_match;
-    if (std::regex_match(args, base_match, regex_expression)) {
-      if (base_match.size() == 3) {
-        std::string ctx_from = base_match[1].str();
-        std::string ctx_to = base_match[2].str();
-        util::Logger()->info("Replacing context: {} with {}", ctx_from, ctx_to);
-        // Get context to add: 
-        remove_ctx("", ctx_from);
-        add_ctx("", ctx_to);
-      }
+    if (const auto& parsed = pattern::replace_ctx(args)) {
+      util::Logger()->info("Replacing context: {} with {}", parsed->original_ctx, parsed->new_ctx);
+      // Get context to add: 
+      remove_ctx("", parsed->original_ctx);
+      add_ctx("", parsed->new_ctx);
     }
   };
 

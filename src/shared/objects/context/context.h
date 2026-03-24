@@ -20,30 +20,32 @@ class ExpressionParser;
 class Context {
   
 public:
-  Context(const std::string& id, int priority, bool permeable=true) : _id(id), _name(""), _description(std::string("")), 
-      _entry_condition(""), _priority(priority), _permeable(permeable), _shared(true),
+  Context(const std::string& id, int priority, bool permeable=true) : _id(id), _name(""), 
+      _description(std::make_shared<Text>(std::string(""))), _entry_condition(""), 
+      _priority(priority), _permeable(permeable), _shared(true),
       _event_manager(std::make_unique<EventManager>()) {
     util::Logger()->debug("Context. Context {} created", id); 
   }
 
   Context(const std::string& id, const std::string& name, const std::string& description, 
       const std::string& entry_condition_pattern="", int priority=0, bool permeable=true)
-    : _id(id), _name(name), _description(description), _entry_condition(entry_condition_pattern), 
-      _priority(priority), _permeable(permeable), _shared(true), _event_manager(std::make_unique<EventManager>()) {
+    : _id(id), _name(name), _description(std::make_shared<Text>(description)),
+      _entry_condition(entry_condition_pattern), _priority(priority), _permeable(permeable), 
+      _shared(true), _event_manager(std::make_unique<EventManager>()) {
     util::Logger()->debug("Context. Context \"{}\" created", _id); 
   }
 
-  Context(const std::string& id, const nlohmann::json& json, const Text& text) : _id(id), _name(json.at("name")), 
-      _description(text), _entry_condition(json.value("re_entrycondition", "")),
+  Context(const std::string& id, const nlohmann::json& json, std::shared_ptr<Text> text) 
+    : _id(id), _name(json.at("name")), _description(text), _entry_condition(json.value("re_entrycondition", "")),
       _attributes(json.value("attributes", std::map<std::string, std::string>())), 
-      _priority(json.value("priority", 0)), _permeable(json.value("permeable", 0) == 1), _shared(json.value("shared", true)),
+      _priority(json.value("priority", 0)), _permeable(json.value("permeable", false)), _shared(json.value("shared", true)),
       _event_manager(std::make_unique<EventManager>()) {
     util::Logger()->debug("Context. Context {} created", _id); 
   }
 
-  Context(const Context& other) : _id(other._id), _name(other._name), _description(other._description),
-    _entry_condition(other.entry_condition_pattern()), _attributes(other._attributes), _priority(other._priority),
-    _permeable(other._permeable), 
+  Context(const Context& other) : _id(other._id), _name(other._name), 
+    _description(std::make_shared<Text>(*other._description)), _entry_condition(other.entry_condition_pattern()), 
+    _attributes(other._attributes), _priority(other._priority), _permeable(other._permeable), 
     _event_manager(other._event_manager 
         ? std::make_unique<EventManager>(*other._event_manager) 
         : std::make_unique<EventManager>()) {}
@@ -55,20 +57,21 @@ public:
   // ***** ***** Getters ***** ***** //
   std::string id() const;
   std::string name() const;
-  std::string description() const;
+  const std::shared_ptr<Text> description() const;
   std::string entry_condition_pattern() const;
   const std::map<std::string, std::string>& attributes() const;
   int priority() const;
   bool permeable() const;
   bool shared() const;
+  const std::map<std::string, std::shared_ptr<Listener>>& listeners() const;
 
   // ***** ***** Setters ***** ***** //
   void set_name(const std::string& name);
-  void set_description(const Text& txt);
+  void set_description(std::shared_ptr<Text> txt);
   void set_entry_condition(const std::string& pattern);
 
   // ***** ***** String representation of the class ***** ***** //
-  std::string PrintDescription(std::string& event_queue);
+  std::string PrintDescription(std::string& event_queue, const ExpressionParser& parser);
   std::string ToString() const; 
   
   // ***** ***** Entry check ***** ***** //
@@ -84,17 +87,21 @@ public:
   // ***** ***** Listener methods calling EventManager ***** ***** //
   bool TakeEvent(std::string event, const ExpressionParser& parser);
 
-  void AddListener(std::shared_ptr<Listener> listener);
-  void AddListener(const nlohmann::json& listener);
+  void AddListener(std::shared_ptr<Listener> listener); ///< also for modifying
+  // void AddListener(const nlohmann::json& listener);
   void RemoveListener(const std::string& id);
 
   std::vector<std::weak_ptr<Context>> LinkedContexts(std::string type);
+
+  void UpdateMeta(std::string name, std::string entry_condition_pattern, int priority, 
+      bool permeable, bool shared);
+  nlohmann::json json() const;
 
   // ***** ***** Attributes or Data Members ***** ***** //
 private:
   const std::string _id;
   std::string _name;
-  Text _description;
+  std::shared_ptr<Text> _description;
   util::Regex _entry_condition;
   std::map<std::string, std::string> _attributes;
   int _priority;

@@ -1,0 +1,53 @@
+<br>
+<div class="accordion" id="worldsAccordion">
+  {% for id in games %}
+    {% if id in filter_worlds %}
+      <div class="accordion-item">
+        <h2 class="accordion-header" id="worldsHeading{{accordion_id}}{{loop.index}}">
+        <button 
+          class="accordion-button collapsed" 
+          type="button" 
+          data-bs-toggle="collapse" 
+          data-bs-target="#worldsCollapse{{accordion_id}}{{loop.index}}" 
+          aria-expanded="false" 
+          aria-controls="#worldsCollapse{{accordion_id}}{{loop.index}}"
+        >
+          {{id}}
+        </button>
+        </h2>
+        <div 
+          id="worldsCollapse{{accordion_id}}{{loop.index}}" 
+          class="accordion-collapse collapse" 
+          aria-labelledby="worldsHeading{{accordion_id}}{{loop.index}}" 
+          data-bs-parent="#worldsAccordion"
+        >
+          <div class="accordion-body">
+            {{games[id].description}}
+            <br>
+            <br>
+            {% if request_allowed %}
+              {% if username %}
+                <form action="/api/creator/requests/add" method="post">
+                  <input id="game_id" name="game_id" hidden type="text" value="{{id}}"></input>
+                  <input type="submit" class="btn btn-primary" value="Request Access"></input>
+                </form>
+              {% endif %}
+              {% if games[id].running %} 
+                <a 
+                   href="http://localhost:4080/{{id}}/" 
+                   target="_blank"
+                   rel="noopener"
+                   noreferrer
+                >play</a>
+              {% endif %}
+            {% else %}
+              <a href="/{{id}}">edit</a>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+    {% endif %}
+  {% endfor %}
+</div>
+<br>
+

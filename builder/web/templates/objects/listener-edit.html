@@ -1,0 +1,73 @@
+<form 
+  action="/{{game.name}}/save/ctx/listener?ctx_id={{ctx.id}}&id={{listener_id}}"
+  method="POST" 
+  enctype="multipart/form-data"
+> 
+  <div class="input-group mb-3">
+    <span class="input-group-text" id="id">listener ID (used for execution order):</span>
+    <input type="text" class="form-control" placeholder="text" aria-describedby="id" 
+      name="id" value="{{listener.id}}" required autocomplete="off">
+  </div>
+  <div class="input-group mb-3">
+    <span class="input-group-text" id="event">In-Event:</span>
+    <input type="text" class="form-control" placeholder="..." name="event"
+      aria-describedby="event" value="{{listener.event}}">
+  </div>
+
+  {% set event_id = ctx.id + "_" + listener.id + "arguments" %}
+  {% set event_name = "arguments" %}
+  {% set event_label = "Out-Event" %}
+  {% set events = listener.arguments %}
+  {% include "forms/event-inp.html" %}
+
+  {% set inp_id = ctx.id + "_" + listener.id + "_logic" %}
+  {% set inp_name = "logic" %} 
+  {% set inp_label = "Logic" %} 
+  {% set inp_value = listener.logic %}
+  {% include "forms/free-inp.html" %}
+
+  <div class="input-group mb-3">
+    <span class="input-group-text" id="context">Context:</span>
+    <select type="text" class="form-control" name="context" aria-describedby="context" value="{{listener.ctx}}" autocomplete="off">
+      <option value="">---</option>
+      {% for it in game.contexts|dictsort %} 
+        {% set opt_ctx=it.key %}
+        <option {{"selected" if opt_ctx == listener.ctx else ""}}>{{opt_ctx}}</option>
+      {% endfor %}
+    </select>
+  </div>
+
+  <div class="input-group mb-3">
+    <span class="input-group-text" id="use_ctx_regex">Use CTX regex:</span>
+    <select type="number" class="form-control" name="use_ctx_regex" aria-describedby="use_ctx_regex" autocomplete="off">
+      <option value=0 {{"selected" if listener.use_ctx_regex == 0 else ""}}>No</option>
+      <option value=1 {{"selected" if listener.use_ctx_regex == 1 else ""}}>Regex</option>
+      <option value=2 {{"selected" if listener.use_ctx_regex == 2 else ""}}>Name</option>
+      <option value=3 {{"selected" if listener.use_ctx_regex == 3 else ""}}>Name (starts with)</option>
+      <option value=4 {{"selected" if listener.use_ctx_regex == 4 else ""}}>Name (fuzzy)</option>
+      <option value=5 {{"selected" if listener.use_ctx_regex == 5 else ""}}>Name (fuzzy/start with)</option>
+    </select>
+  </div>
+
+  <div class="input-group mb-3">
+    <span class="input-group-text" id="permeable">Permeable:</span>
+    <div class="input-group-text">
+      <input class="form-check-input mt-0" type="checkbox" name="permeable" value=""
+          {{ "checked" if listener.permeable else ""}}>
+    </div>
+  </div>
+
+  <div class="input-group mb-3">
+    <span class="input-group-text" id="exec">Exec:</span>
+    <div class="input-group-text">
+      <input class="form-check-input mt-0" type="checkbox" name="exec" value="" 
+          {{ "checked" if listener.exec else ""}}>
+    </div>
+  </div>
+
+  <button 
+    type="submit" 
+    class="btn btn-primary"
+    onclick="SaveListener('{{ctx.id}}', '{{listener.id}}');"
+  >save</button>
+</form>

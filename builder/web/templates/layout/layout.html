@@ -1,0 +1,291 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <!-- Required meta tags -->
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <!-- Bootstrap CSS -->
+    <!-- <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">
+    -->
+
+    <!-- favicon -->
+    <link rel="apple-touch-icon" sizes="180x180" href="/static/media/favicon/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="/static/media/favicon/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="/static/media/favicon/favicon-16x16.png">
+    <link rel="manifest" href="/static/site.webmanifest">
+
+    <!-- Custom CSS -->
+    <link href="/static/css/custom.css" rel="stylesheet">
+    <link href="/static/css/general.css" rel="stylesheet">
+    <link href="/static/css/game.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <script src="/static/js/app-init.js"></script>
+
+    <title>Txtad*builder</title>
+  </head>
+
+  <body>
+      
+    {% include "layout/navbar.html" %}
+    <div class="container-md main bg-light-80">
+      {% if path %}
+        <div class="back-btn-float btn-lg btn-plum save-btn"> 
+          <a id="back-btn" style="color: white;" href="/{{game.name}}?path={{back}}&type={{all_paths[back]}}">back</a>
+        </div>
+      {% endif %}
+
+
+      <h1>TXTAD * BUILDER</h1>
+      <br>
+
+      <div class="container-md sub" style="width: 70%;">
+        {% block content scoped %}{% endblock %}
+      </div>
+    </div>
+
+    <div class="snack alert alert-primary alert-dismissible fade" id="snackbar" role="alert">
+      <span id="msg"></span>
+      <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+
+    <!-- Modal -->
+    <div class="modal fade" id="shareRequestsModal" tabindex="-1" aria-labelledby="#shareRequestsModal" aria-hidden="true">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="shareRequestsModalLabel">Requests</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body">
+            <table class="table">
+              {% for req in pending%} 
+                <tr>
+                  <td><u>{{req.first}}</u> requests access to <u>{{req.second}}</u>.</td>
+                  <td>
+                    <form action="/api/creator/requests/accept" method="post">
+                      <input id="username" name="username" hidden type="text" value="{{req.first}}"></input>
+                      <input id="game_id" name="game_id" hidden type="text" value="{{req.second}}"></input>
+                      <input type="submit" class="btn btn-primary" style="font-size: 9pt;" value="Accept"></input>
+                    </form>
+                  </td>
+                  <td>
+                    <form action="/api/creator/requests/deny" method="post">
+                      <input id="username" name="username" hidden type="text" value="{{req.first}}"></input>
+                      <input id="game_id" name="game_id" hidden type="text" value="{{req.second}}"></input>
+                      <input type="submit" class="btn btn-secondary" style="font-size: 9pt;" value="Deny"></input>
+                    </form>
+                  </td>
+                </tr>
+              {% endfor %}
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+<div class="modal fade" id="shareSaveModal" tabindex="-1" aria-labelledby="#shareSaveModal" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="shareSaveModalLabel">Save Content</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        Modifications:
+        <ul class="list-group text-start">
+          {% for mod in modified %}
+            {% set m = ""+mod %}
+            {% if m|starts_with("Added") %}
+              <li class="list-group-item list-group-item-success">
+            {% elif m|starts_with("Removed") %}
+              <li class="list-group-item list-group-item-danger">
+            {% else %}
+              <li class="list-group-item list-group-item-info">
+            {% endif %}
+            {{mod}}</li>
+          {% endfor %}
+        </ul>
+        <p id="save_test_results"></p>
+        <p id="save_results"></p>
+
+        <div class="input-group mb-3">
+          <span class="input-group-text" id="basic-addon1"><i class="bi bi-journals"></i></span>
+          <input type="text" class="form-control" placeholder="commit-message (optional)" id="commit_message">
+          <button 
+            class="btn btn-outline-secondary" 
+            type="button" 
+            id="button-addon2"
+            onclick="document.getElementById('branch_name_container').classList.toggle('d-none');"
+          >Save to new branch?</button>
+        </div>
+        <div class="input-group mb-3 d-none" id="branch_name_container">
+          <span class="input-group-text" id="addon_branch_name">Branch</span>
+          <input type="text" class="form-control" placeholder="branch name" id="branch_name">
+          <span class="input-group-text" id="addon_branch_name_notive">no spaces!</span>
+        </div>
+
+        <button type="button" class="btn btn-primary" onclick="SaveContent('{{game.name}}');">
+          Run Tests and Save
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal fade" id="shareRestoreModal" tabindex="-1" aria-labelledby="#shareRestoreModal" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="shareRestoreModalLabel">Restore Content</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <p id="restore_content"></p>
+        <button type="button" class="btn btn-primary" onclick="RestoreContent('{{game.name}}');">
+          Restore 
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal fade" id="shareArchiveModal" tabindex="-1" aria-labelledby="#shareArchiveModal" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="shareArchiveModal">Archive</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+
+        <div class="accordion accordion" id="accordionArchive">
+          {% for it in backup_infos|dictsort %}
+            {% set branch = it.key %}
+            {% set commits = backup_infos[branch] %}
+            <div class="accordion-item">
+              <h2 class="accordion-header d-flex align-items-center" id="headingBranch{{branch}}">
+                <form action="/{{game.name}}/archive/delete?archive={{branch}}" method="POST">
+                  <button 
+                    type="submit" 
+                    class="btn btn-light btn-sm text-danger" 
+                    {% if branch == current_branch %}
+                      title="Cannot remove current branch"
+                      disabled
+                    {% else %}
+                      title="Remove branch"
+                    {% endif %}
+                  >X</button>
+                </form>
+                <button 
+                   {% if branch == current_branch %}
+                    class="accordion-button flex-grow-1" 
+                  {% else %}
+                    class="accordion-button collapsed flex-grow-1" 
+                  {% endif %}
+                    type="button" data-bs-toggle="collapse" 
+                    data-bs-target="#collapseBranch{{branch|branch_reduced}}" aria-expanded="true" 
+                    aria-controls="collapseBranch{{branch|branch_reduced}}"
+                >{{branch}}</button>
+              </h2>
+              <div id="collapseBranch{{branch|branch_reduced}}" 
+                   {% if branch==current_branch %}
+                    class="accordion-collapse collapse show"
+                  {% else %}
+                    class="accordion-collapse collapse"
+                  {% endif %}
+                   aria-labelledby="headingBranch{{branch}}" data-bs-parent="#accordionArchive">
+                <div class="accordion-body">
+                  <br>
+                  <ul class="list-group"> 
+                    {% for commit in commits %}
+                      <li class="list-group-item">
+                        <p>
+                          <span class="text-plum">[{{commit.author}}] {{commit.timestamp}}</span>
+                          <button 
+                            class="floating-link-button" 
+                            type="button"
+                            onclick="RestoreArchive('{{game.name}}', '{{commit.oid}}');"
+                          >restore</button>
+                          <br>
+                          <span>{{commit.summary}}</span>
+                        </p>
+                        <div id="{{commit.oid}}_show_commit_message_button"
+                          class="text-center mb-1">
+                          <button 
+                            class="btn btn-link p-0" 
+                            type="button"
+                            onclick="ShowCommitMessage('{{game.name}}', '{{commit.oid}}');"
+                          >details</button>
+                        </div>
+                        <div id="{{commit.oid}}_commit_message_container" class="d-none">
+                          <div class="text-center">
+                            <button 
+                              class="btn btn-link p-0" 
+                              type="button"
+                              id="{{commit.oid}}_hide_commit_message_button"
+                              onclick="HideCommitMessage('{{commit.oid}}');"
+                            >hide</button>
+                          </div>
+                          <p id="{{commit.oid}}_commit_message"></p>
+                        </div>
+                      </li>
+                    {% endfor %}
+                  </ul>
+                  <form 
+                    action="/{{game.name}}/archive/rename?archive={{branch}}" 
+                    method="POST"
+                    enctype="multipart/form-data"
+                  >
+                    <div class="input-group mb-3">
+                      <span class="input-group-text" id="basic-addon1"><i class="bi bi-pen"></i></span>
+                      <input type="text" class="form-control" placeholder="new archive name" id="new_archive" name="new_archive">
+                      <button class="btn btn-outline-secondary" type="submit">Rename Archive</button>
+                    </div>
+                  </form>
+                </div>
+              </div>
+            </div>
+          {% endfor %}
+        </div>
+
+
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<div class="modal fade" id="shareEventModal" tabindex="-1" aria-labelledby="#shareEventModal" aria-hidden="true">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="shareEventModalLabel">Event(s) Editor</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <p id="events_preview" class="text-center"></p>
+        <h5>Events:</h5>
+
+        <div class="accordion accordion" id="events_list"></div>
+
+        <br>
+        <button type="button" class="btn btn-primary" onclick="ApplyEvents();">
+          Apply
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+  </body>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-MrcW6ZMFYlzcLA8Nl+NtUVF0sA7MsXsP1UyJoMp4YLEuNSfAP+JcXn/tWtIaxVXM" crossorigin="anonymous"></script>
+
+  <script src="/static/js/general.js"></script>
+  <script src="/static/js/tests.js"></script>
+  <script src="/static/js/game.js"></script>
+  <script src="/static/js/events.js"></script>
+  <script src="/static/js/typeahead.js"></script>
+</html>

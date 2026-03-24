@@ -1,0 +1,18 @@
+<div class="input-group mb-3">
+  <span class="input-group-text" id="txt">{{inp_label}}:</span>
+  <div class="flex-grow-1">
+    <textarea 
+      class="form-control" 
+      placeholder="text..." 
+      name="{{inp_name}}" 
+      id="{{inp_id}}" 
+      onfocus="SetUpTypeahead('{{inp_id}}');"
+      onkeydown="Typeahead(event, '{{inp_id}}');"
+      autocomplete="off"
+      required
+    >{{inp_value}}</textarea>
+    <div class="form-text" id="hints_{{inp_id}}" class="overflow"
+      for="{{inp_id}}"></div>
+  </div>
+</div>
+

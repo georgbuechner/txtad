@@ -1,0 +1,43 @@
+<div class="accordion accordion" id="accordionExample">
+  {% if attributes %} 
+    {% set atts = attributes %} 
+  {% else %} 
+    {% set atts = default_attributes() %} 
+  {% endif %} 
+
+  {% for attribute in atts|dictsort %}
+    <div class="accordion-item">
+      <h2 class="accordion-header d-flex align-items-center" id="headingattribute{{loop.index}}">
+        <form class="" action="/{{game.name}}/remove/ctx/attribute?ctx_id={{ctx.id}}&id={{attribute.key}}" method="POST">
+          <button type="submit" class="btn btn-light btn-sm text-danger">X</button>
+        </form>
+        <button class="accordion-button collapsed flex-grow-1" type="button" data-bs-toggle="collapse" 
+            data-bs-target="#collapseattribute{{loop.index}}" aria-expanded="false" 
+            aria-controls="collapseattribute{{loop.index}}">
+          {% if attributes %}
+            {{attribute.key}}: {{attribute.value}}
+          {% else %}
+            ...
+          {% endif %}
+        </button>
+      </h2>
+      <div id="collapseattribute{{loop.index}}" class="accordion-collapse collapse" 
+          aria-labelledby="headingattribute{{loop.index}}" data-bs-parent="#accordionExample">
+        <div class="accordion-body">
+          <br>
+          {% set attribute_id = attribute.key %}
+          {% include "objects/attribute-edit.html" %}
+        </div>
+      </div>
+    </div>
+  {% endfor %}
+</div>
+
+<br>
+
+<button 
+  type="button" 
+  class="btn btn-primary"
+  data-bs-toggle="modal"
+  data-bs-target="#attributeAddModal"
+>New Attribute</button>

@@ -1,0 +1,11 @@
+{% if atts %} 
+  <h5>Attributes:</h5>
+  <ul class="list-group text-start">
+  {% for attribute in atts|dictsort %} 
+    <li class="list-group-item">
+      <span class="">{{attribute.key}}</span>: {{attribute.value}}<br>
+    </li>
+  {% endfor %}
+  </ul>
+  <br>
+{% endif %}

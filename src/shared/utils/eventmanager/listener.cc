@@ -6,6 +6,7 @@
 #include "shared/utils/utils.h"
 #include <nlohmann/json.hpp>
 #include <memory>
+#include <stdexcept>
 #include <string>
 
 // ## l-handler
@@ -17,6 +18,7 @@ LHandler::LHandler(std::string id, std::string re_event, Fn fn, bool permeable) 
 std::string LHandler::id() const { return _id; }
 std::string LHandler::event() const { return _event.str(); }
 bool LHandler::permeable() const { return _permeable; } 
+std::string LHandler::arguments() const { return _arguments; }
 
 // setter 
 void LHandler::set_fn(Fn fn) {
@@ -25,6 +27,7 @@ void LHandler::set_fn(Fn fn) {
 
 // methods 
 bool LHandler::Test(const std::string& event, const ExpressionParser& parser) const {
+  util::Logger()->info(fmt::format("LHandler::Test: {}, {}, {}", _id, _event.str(), event));
   std::smatch base_match;
   return (std::regex_match(event, base_match, static_cast<const std::regex&>(_event)));
 }
@@ -59,21 +62,39 @@ std::string LHandler::ReplacedArguments(const std::string& event, const std::str
   }
   return "";
 }
+nlohmann::json LHandler::json() const {
+  nlohmann::json j = {{"id", _id}, {"re_event", _event.str()}, {"arguments", _arguments}, {"permeable", _permeable}};
+  return j;
+}
 
 // ## l-forwarder
 Listener::Fn LForwarder::_overwride_fn = nullptr;
 
 LForwarder::LForwarder(std::string id, std::string re_event, std::string arguments, bool permeable, 
-    std::string logic) : LHandler(id, util::ReplaceAll(re_event, txtad::IS_USER_REPLACEMENT, 
-        txtad::IS_USER_INP), _overwride_fn, permeable), _logic(logic) { 
+    std::string logic) : LHandler(id, re_event, _overwride_fn, permeable), _logic(logic) { 
     // Remove leading spaces in case of handlers (events starting with #)
   if (_arguments.find(" #") == 0)
     _arguments = arguments.substr(1);
   _arguments = util::ReplaceAll(arguments, "; #", ";#"); 
 }
 
-LForwarder::LForwarder(const nlohmann::json& json) : LForwarder(json.at("id"), json.at("re_event"), 
-    json.at("arguments"), json.at("permeable"), json.value("logic", "")) { }
+LForwarder::LForwarder(const nlohmann::json& json, const nlohmann::json& original_json) 
+  : LForwarder(json.at("id"), json.at("re_event"), json.at("arguments"), json.at("permeable"), 
+      json.value("logic", "")) { 
+  _original_json = original_json;
+}
+
+// getter
+std::string LForwarder::logic() const { return _logic; }
+std::string LForwarder::ctx_id () const {
+  util::Logger()->info("LForwarder::ctx_id: l-forwarder {} does not have ctx-id!", _id);
+  return "";
+}
+
+int LForwarder::use_ctx_regex() const {
+  util::Logger()->info("LForwarder::use_ctx_regex: l-forwarder {} does not have ctx-id!", _id);
+  return UseCtx::NO;
+}
 
 // methods 
 bool LForwarder::Test(const std::string& event, const ExpressionParser& parser) const {
@@ -87,6 +108,12 @@ void LForwarder::set_overwite_fn(Fn fn) {
   _overwride_fn = fn; 
 }
 
+nlohmann::json LForwarder::json() const {
+  if (!_original_json.empty())
+    return _original_json;
+  std::runtime_error("LForwarder::json: Saving l-forwarder that was not created from JSON " + _id);
+}
+
 // ## l-context-forwarded
 
 LContextForwarder::LContextForwarder(std::string id, std::string re_event, std::weak_ptr<Context> ctx, 
@@ -94,26 +121,33 @@ LContextForwarder::LContextForwarder(std::string id, std::string re_event, std::
   : LForwarder(id, re_event, util::ReplaceAll(arguments, txtad::CTX_REPLACEMENT, GetCtxId(ctx)), 
       permeable, util::ReplaceAll(logic, txtad::CTX_REPLACEMENT, GetCtxId(ctx))), _ctx(ctx), _use_ctx_regex(use_ctx_regex) {}
 
-LContextForwarder::LContextForwarder(const nlohmann::json& json, std::shared_ptr<Context> ctx) 
+LContextForwarder::LContextForwarder(const nlohmann::json& json, std::shared_ptr<Context> ctx, 
+    const nlohmann::json& original_json) 
   : LContextForwarder(json.at("id"), json.at("re_event"), ctx, json.at("arguments"), json.at("permeable"),
       json.at("use_ctx_regex"), json.value("logic", "")) {
+  _original_json = original_json;
 }
 
 // getter 
 std::string LContextForwarder::ctx_id () const { return GetCtxId(_ctx); }
 std::weak_ptr<Context> LContextForwarder::ctx() const { return _ctx; }
+int LContextForwarder::use_ctx_regex() const { return _use_ctx_regex; }
 
 bool LContextForwarder::Test(const std::string& event, const ExpressionParser& parser) const { 
   // Test logic
+  util::Logger()->debug("- LContextForwarder::Test. Test logic");
   if (_logic != "" && parser.Evaluate(_logic) != "1")
     return false;
   // Test regex
+  util::Logger()->debug("- LContextForwarder::Test. Test Regex");
   std::smatch base_match;
   if (std::regex_match(event, base_match, static_cast<const std::regex&>(_event))) {
     // Potentially check context name or regex too
+    util::Logger()->debug("- LContextForwarder::Test. Test CTX-Regex");
     if (base_match.size() == 2) {
       const std::string ctx_name = GetCtxName(_ctx);
       std::string arg = base_match[1].str();
+      util::Logger()->debug("- LContextForwarder::Test: {} =={}, {} ", ctx_name, std::to_string(_use_ctx_regex), arg);
       switch(_use_ctx_regex) {
         case UseCtx::NO: 
           return true;
@@ -154,4 +188,10 @@ std::string LContextForwarder::GetCtxName(std::weak_ptr<Context> _ctx) {
   } 
   util::Logger()->error("GetCtxName: Context for ContextForwarder not availible!");
   return "";
+}
+
+nlohmann::json LContextForwarder::json() const {
+  if (!_original_json.empty())
+    return _original_json;
+  std::runtime_error("LForwarder::json: Saving l-forwarder that was not created from JSON " + _id);
 }

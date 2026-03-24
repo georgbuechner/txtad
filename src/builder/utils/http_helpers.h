@@ -1,0 +1,27 @@
+#ifndef SRC_BUILDER_UTILS_HTTP_HELPERS_H
+#define SRC_BUILDER_UTILS_HTTP_HELPERS_H
+
+#include <optional>
+#include <string>
+#include "httplib.h"
+#include <utility>
+
+namespace _http {
+  typedef std::pair<int, std::string> _t_exception;
+  std::string Get(const httplib::Request& req, const std::string& field);
+
+  std::string Referer(const httplib::Request& req, std::string msg="");
+
+  std::string UrlPath(const std::string& url);
+  std::string UrlQuery(const std::string& url);
+
+  std::optional<std::string> GetField(const httplib::Request& req, const std::string& field);
+
+  std::string GetFileExtension(const httplib::FormData& file);
+
+  void SafeFile(const httplib::FormData& file, const std::string& media_path);
+
+  void LoadMediaFile(httplib::Response& resp, const std::string& media_path);
+}
+
+#endif

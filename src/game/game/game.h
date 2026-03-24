@@ -1,6 +1,7 @@
 #ifndef SRC_GAME_GAME_H
 #define SRC_GAME_GAME_H 
 
+#include "builder/utils/defines.h"
 #include "game/game/user.h"
 #include "shared/objects/context/context.h"
 #include "shared/objects/settings/settings.h"
@@ -16,6 +17,7 @@ class Game {
   public: 
     using MsgFn = std::function<void(std::string, std::string)>;
 
+    Game() {};
     Game(std::string path, std::string name);
     ~Game();
 
@@ -24,28 +26,37 @@ class Game {
     std::string name() const;
     const std::map<std::string, std::shared_ptr<Context>>& contexts() const;
     const std::map<std::string, std::shared_ptr<Text>>& texts() const;
-    const Settings& settings() const;
+    const txtad::Settings& settings() const;
+    const builder::Settings& builder_settings() const;
     const std::shared_ptr<User>& cur_user();
+    bool running() const;
+    const ExpressionParser& parser() const;
     
     // setter 
-    static void set_msg_fn(MsgFn fn);
+    static void set_global_msg_fn(MsgFn fn);
+    void set_msg_fn(MsgFn fn);
+    void set_running(bool status);
 
     // methods 
     void HandleEvent(const std::string& user_id, const std::string& event);
     std::shared_ptr<User> CreateNewUser(std::string user_id);
+    std::string CheckLogic(const std::string& logic);
 
-  private: 
-    static MsgFn _cout;
+  protected: 
+    static MsgFn _global_cout;
+    MsgFn _cout;
 
     mutable std::shared_mutex _mutex;  ///< Mutex for connections_.
     const std::string _path;
     const std::string _name;
     std::map<std::string, std::shared_ptr<User>> _users;
     std::shared_ptr<User> _cur_user;
+    bool _running;
 
     ExpressionParser _parser;
 
-    Settings _settings;
+    txtad::Settings _settings;
+    builder::Settings _builder_settings;
     std::shared_ptr<Context> _mechanics_ctx;
     std::map<std::string, std::shared_ptr<Context>> _contexts;
     std::map<std::string, std::shared_ptr<Text>> _texts;

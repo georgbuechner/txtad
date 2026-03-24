@@ -6,6 +6,7 @@
 #include "shared/utils/utils.h"
 #include <functional>
 #include <memory>
+#include <nlohmann/json.hpp>
 #include <string>
 
 class Context;
@@ -18,14 +19,34 @@ class Listener {
     virtual std::string id() const = 0;
     virtual std::string event() const = 0;
     virtual bool permeable() const = 0;
-    virtual std::string ctx_id () const { return ""; }
-    virtual std::weak_ptr<Context> ctx() const { return {}; }
+    virtual std::string arguments() const = 0;
+    virtual std::string logic() const { 
+      throw util::invalid_base_class_call("invalid_base_class_call: Listener::logic");
+    }
+    virtual std::string ctx_id () const { 
+      throw util::invalid_base_class_call("invalid_base_class_call: Listener::ctx_id");
+    }
+    virtual std::weak_ptr<Context> ctx() const { 
+      throw util::invalid_base_class_call("invalid_base_class_call: Listener::ctx");
+    }
+    virtual int use_ctx_regex() const {
+      throw util::invalid_base_class_call("invalid_base_class_call: Listener::use_ctx_regex");
+    }
+    virtual const nlohmann::json& original_json() const { 
+      throw util::invalid_base_class_call("invalid_base_class_call: Listener::original_json");
+    }
 
     // setter
-    virtual void set_fn(Fn fn) {}
+    virtual void set_fn(Fn fn) {
+      throw util::invalid_base_class_call("invalid_base_class_call: Listener::set_fn");
+    }
 
+    // methods
     virtual bool Test(const std::string& event, const ExpressionParser& parser) const = 0;
     virtual void Execute(std::string event) const = 0;
+    virtual nlohmann::json json() const { 
+      throw util::invalid_base_class_call("invalid_base_class_call: Listener::json");
+    }
 };
 
 class LHandler : public Listener {
@@ -36,6 +57,7 @@ class LHandler : public Listener {
     std::string id() const override;
     std::string event() const override;
     bool permeable() const override;
+    std::string arguments() const override;
 
     // setter 
     void set_fn(Fn fn) override;
@@ -44,6 +66,7 @@ class LHandler : public Listener {
     bool Test(const std::string& event, const ExpressionParser& parser) const override;
 
     void Execute(std::string event) const override;
+    virtual nlohmann::json json() const override;
 
   protected: 
     const std::string _id;
@@ -77,16 +100,24 @@ class LForwarder : public LHandler {
     LForwarder(std::string id, std::string re_event, std::string arguments, bool permeable, 
         std::string logic="");
 
-    LForwarder(const nlohmann::json& json);
+    LForwarder(const nlohmann::json& json, const nlohmann::json& original_json);
+
+    // getter
+    std::string logic() const override;
+    const nlohmann::json& original_json() const { return _original_json; }
+    virtual std::string ctx_id () const override;
+    virtual int use_ctx_regex() const override;
 
     // methods 
     bool Test(const std::string& event, const ExpressionParser& parser) const override;
+    nlohmann::json json() const override;
 
     static void set_overwite_fn(Fn fn);
 
   protected: 
     static Fn _overwride_fn;
     const std::string _logic;
+    nlohmann::json _original_json;
 };
 
 class LContextForwarder : public LForwarder {
@@ -103,14 +134,17 @@ class LContextForwarder : public LForwarder {
     LContextForwarder(std::string id, std::string re_event, std::weak_ptr<Context> ctx, std::string arguments, 
         bool permeable, UseCtx use_ctx_regex, std::string logic="");
 
-    LContextForwarder(const nlohmann::json& json, std::shared_ptr<Context> ctx);
+    LContextForwarder(const nlohmann::json& json, std::shared_ptr<Context> ctx, 
+        const nlohmann::json& original_json);
 
     // getter
-    std::string ctx_id() const;
-    std::weak_ptr<Context> ctx() const;
+    std::string ctx_id() const override;
+    std::weak_ptr<Context> ctx() const override;
+    int use_ctx_regex() const override;
 
     // methods 
     bool Test(const std::string& event, const ExpressionParser& parser) const override;
+    nlohmann::json json() const override;
 
   private: 
     std::weak_ptr<Context> _ctx;

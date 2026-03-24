@@ -1,9 +1,16 @@
 {
   "dependencies": [
+    "boost",
     "catch2",
-    "cpp-httplib",
+    "curl",
+    "expected-lite",
+    "fmt",
     "nlohmann-json",
+    "libgit2",
+    "optional-lite",
     "spdlog",
+    "string-view-lite",
+    "variant-lite",
     "websocketpp"
   ]
 }

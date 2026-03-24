@@ -1,0 +1,289 @@
+#ifndef SRC_BUILDER_UTILS_JINJA_HELPERS_H
+#define SRC_BUILDER_UTILS_JINJA_HELPERS_H 
+
+#include "builder/utils/defines.h"
+#include "jinja2cpp/filesystem_handler.h"
+#include "jinja2cpp/reflected_value.h"
+#include "jinja2cpp/template.h"
+#include "jinja2cpp/template_env.h"
+#include "jinja2cpp/value.h"
+#include "builder/game/builder_game.h"
+#include "jinja2cpp/reflected_value.h"
+#include "shared/objects/context/context.h"
+#include "shared/objects/settings/settings.h"
+#include "shared/objects/tests/test.h"
+#include "shared/objects/tests/test_case.h"
+#include "shared/utils/eventmanager/listener.h"
+#include "shared/utils/utils.h"
+#include "shared/utils/git_wrapper/git_wrapper.h"
+#include <unordered_map>
+
+#include <map>
+#include <memory>
+
+template<typename T1>
+struct PtrView {
+  const T1* ptr;
+};
+
+namespace _jinja {
+
+  class Env {
+    public: 
+      Env(std::string template_path);
+
+      // methods
+      std::string LoadTemplate(std::string page, const jinja2::ValuesMap& params);
+
+    private: 
+      jinja2::TemplateEnv _env;
+      jinja2::RealFileSystem _fs;
+  };
+
+  template<typename T1>
+  jinja2::ValuesList Vec(const std::vector<T1>& vec) {
+    jinja2::ValuesList vl;
+    vl.reserve(vec.size());
+    for (const auto& it : vec) {
+      vl.emplace_back(jinja2::Reflect(it));
+    }
+    return vl;
+  }
+
+  template<typename T1>
+  jinja2::ValuesList SetToVec(const std::set<T1>& set) {
+    jinja2::ValuesList vl;
+    vl.reserve(set.size());
+    for (const auto& it : set) {
+      vl.emplace_back(it);
+    }
+    return vl;
+  }
+
+  template<>
+  jinja2::ValuesList SetToVec(const std::set<std::pair<std::string, std::string>>& set);
+
+  template<typename T1, typename T2>
+  jinja2::ValuesList MapKeys(const std::map<T1, T2>& map) {
+    jinja2::ValuesList vl;
+    vl.reserve(map.size());
+    for (const auto& [id, _] : map) {
+      vl.emplace_back(id);
+    }
+    return vl;
+  }
+
+  template<typename T1, typename T2>
+  jinja2::ValuesMap Map(const std::map<T1, std::shared_ptr<T2>>& map) {
+    jinja2::ValuesMap m;
+    m.reserve(map.size());
+    for (const auto& [id, val] : map) {
+      if (val) {
+        m.emplace(id, jinja2::Reflect(PtrView<T2>{val.get()}));
+      } else {
+        m.emplace(id, jinja2::Value());
+      }
+    }
+    return m;
+  }
+
+  template<typename T1, typename T2>
+  jinja2::ValuesMap Map(const std::map<T1, std::vector<T2>>& map) {
+    jinja2::ValuesMap m;
+    m.reserve(map.size());
+    for (const auto& [id, val] : map) {
+      m.emplace(id, Vec(val));
+    }
+    return m;
+  }
+
+  template<typename T1, typename T2>
+  jinja2::ValuesMap Map(const std::map<T1, T2>& map) {
+    jinja2::ValuesMap m;
+    m.reserve(map.size());
+    for (const auto& [id, val] : map) {
+      m.emplace(id, val);
+    }
+    return m;
+  }
+
+  template<typename T1>
+  jinja2::ValuesMap Map(const std::map<T1, builder::FileType>& map) {
+    jinja2::ValuesMap m;
+    m.reserve(map.size());
+    for (const auto& [id, val] : map) {
+      m.emplace(id, builder::FILE_TYPE_MAP.at(val));
+    }
+    return m;
+  }
+}
+
+namespace jinja2 {
+  namespace detail {
+    template<>
+    struct Reflector<PtrView<Text>, void> {
+      static Value Create(const PtrView<Text>& v) {
+        jinja2::ValuesList list;
+        if (v.ptr) {
+          auto* t = v.ptr;
+          while (t) {
+            list.emplace_back(jinja2::Reflect(*t));  // Text stays element-like
+            t = t->next().get();
+          }
+        }
+        return jinja2::Value{std::move(list)};
+      }
+    };
+  }
+}
+
+namespace jinja2 {
+  template<> struct TypeReflection<PtrView<BuilderGame>> : TypeReflected<PtrView<BuilderGame>> {
+    static auto& GetAccessors() {
+      static std::unordered_map<std::string, FieldAccessor> acc = {
+        {"settings", [](const PtrView<BuilderGame>& v){ return (v.ptr) ? jinja2::Reflect(v.ptr->settings()) : Value{}; }},
+        {"name", [](const PtrView<BuilderGame>& v){ return (v.ptr) ? v.ptr->name() : Value{}; }},
+        {"path", [](const PtrView<BuilderGame>& v){ return (v.ptr) ? v.ptr->path() : Value{}; }},
+        {"contexts", [](const PtrView<BuilderGame>& v){ return (v.ptr) ? _jinja::Map(v.ptr->contexts()) : Value{}; }},
+        {"texts", [](const PtrView<BuilderGame>& v){ return (v.ptr) ? _jinja::Map(v.ptr->texts()) : Value{}; }},
+        {"media_files", [](const PtrView<BuilderGame>& v){ return (v.ptr) ? _jinja::SetToVec(v.ptr->media_files()) : Value{}; }},
+        {"description", [](const PtrView<BuilderGame>& v){ return (v.ptr) ? v.ptr->builder_settings()._description : Value{}; }},
+        {"hidden", [](const PtrView<BuilderGame>& v){ return (v.ptr) 
+                ? _jinja::SetToVec(v.ptr->builder_settings()._hidded_dirs) 
+                : Value{}; }},
+        {"running", [](const PtrView<BuilderGame>& v){ return (v.ptr) ? v.ptr->running() : Value{}; }},
+      };
+      return acc;
+    }
+  };
+
+  template<> struct TypeReflection<txtad::Settings> : TypeReflected<txtad::Settings> {
+    static auto& GetAccessors() {
+      static std::unordered_map<std::string, FieldAccessor> acc = {
+        {"initial_events", [](const txtad::Settings& settings) { return settings.initial_events(); }},
+        {"initial_contexts", [](const txtad::Settings& settings) { return _jinja::Vec(settings.initial_ctx_ids()); }},
+      };
+      return acc;
+    }
+   };
+
+
+  template<> struct TypeReflection<Text> : TypeReflected<Text> {
+    static auto& GetAccessors() {
+      static std::unordered_map<std::string, FieldAccessor> acc = {
+        {"shared", [](const Text& txt) { return txt.shared(); }},
+        {"txt", [](const Text& txt) { return txt.txt(); }},
+        {"logic", [](const Text& txt) { return txt.logic(); }},
+        {"one_time_events", [](const Text& txt) { return txt.one_time_events(); }},
+        {"permanent_events", [](const Text& txt) { return txt.permanent_events(); }},
+      };
+      return acc;
+    }
+   };
+
+  template<> struct TypeReflection<PtrView<Listener>> : TypeReflected<PtrView<Listener>> {
+    static auto& GetAccessors() {
+      static std::unordered_map<std::string, FieldAccessor> acc {
+        {"id", [](const PtrView<Listener> v) { return (v.ptr) ? v.ptr->id() : Value{}; }},
+        {"event", [](const PtrView<Listener> v) { return (v.ptr) ? v.ptr->event() : Value{}; }}, 
+        {"permeable", [](const PtrView<Listener> v) { return (v.ptr) ? v.ptr->permeable() : Value{}; }}, 
+        {"arguments", [](const PtrView<Listener> v) { return (v.ptr)
+            ? v.ptr->original_json().at("arguments").get<std::string>() 
+            : Value{}; }}, 
+        {"logic", [](const PtrView<Listener> v) { return (v.ptr) ? v.ptr->original_json().value("logic", "") : Value{}; }}, 
+        {"ctx", [](const PtrView<Listener> v) { 
+          if (v.ptr) {
+            try {
+              const std::string linked_ctx = v.ptr->ctx_id();
+              return Value(linked_ctx);
+            } catch (util::invalid_base_class_call&) { 
+              // util::Logger()->debug("invalid_base_class_call in TypeReflection (listener::linked_ctx)");
+            }
+          }
+          return Value{};
+        }}, 
+        {"use_ctx_regex", [](const PtrView<Listener> v) { 
+          if (v.ptr) {
+            try {
+              return Value(v.ptr->use_ctx_regex());
+            } catch (util::invalid_base_class_call&) {
+              // util::Logger()->debug("invalid_base_class_call in TypeReflection (listener::use_ctx_regex)");
+            }
+          } 
+          return Value{}; 
+        }}, 
+        {"exec", [](const PtrView<Listener> v) { return (v.ptr) ? v.ptr->original_json().value("exec", false) : Value{}; } }, 
+      };
+      return acc;
+    }
+  };
+
+
+  template<> struct TypeReflection<PtrView<Context>> : TypeReflected<PtrView<Context>> {
+    static auto& GetAccessors() {
+      static std::unordered_map<std::string, FieldAccessor> acc = {
+        {"id", [](const PtrView<Context>& v) { return (v.ptr) ? v.ptr->id() : Value{}; }},
+        {"name", [](const PtrView<Context>& v) { return (v.ptr) ? v.ptr->name() : Value{}; }},
+        {"entry", [](const PtrView<Context>& v) { return (v.ptr) ? v.ptr->entry_condition_pattern() : Value{}; }},
+        {"priority", [](const PtrView<Context>& v) { return (v.ptr) ? v.ptr->priority() : Value{}; }},
+        {"permeable", [](const PtrView<Context>& v) { return (v.ptr) ? v.ptr->permeable() : Value{}; }},
+        {"shared", [](const PtrView<Context>& v) { return (v.ptr) ? v.ptr->shared() : Value{}; }},
+        {"description", [](const PtrView<Context>& v) { return (v.ptr) 
+              ? jinja2::Reflect(PtrView<Text>{v.ptr->description().get()}) 
+              : Value{}; }},
+        {"attributes", [](const PtrView<Context>& v) { return (v.ptr) ? _jinja::Map(v.ptr->attributes()) : Value{}; }},
+        {"listeners", [](const PtrView<Context>& v) { return (v.ptr) ? _jinja::Map(v.ptr->listeners()) : Value{}; }},
+      };
+      return acc;
+    }
+  };
+
+  template<> struct TypeReflection<Test> : TypeReflected<Test> {
+    static auto& GetAccessors() {
+      static std::unordered_map<std::string, FieldAccessor> acc = {
+        {"cmd", [](const Test& t) { return t.cmd(); }},
+        {"result", [](const Test& t) { return t.result(); }},
+        {"checks", [](const Test& t) { return util::Join(t.checks(), ";"); }}
+      };
+      return acc;
+    }
+  };
+
+  template<> struct TypeReflection<TestCase> : TypeReflected<TestCase> {
+    static auto& GetAccessors() {
+      static std::unordered_map<std::string, FieldAccessor> acc = {
+        {"desc", [](const TestCase& t) { return jinja2::Value(t.desc()); }},
+        {"tests", [](const TestCase& t) { return _jinja::Vec(t.tests()); }}
+      };
+      return acc;
+    }
+  };
+
+  template<> struct TypeReflection<git::CommitInfo> : TypeReflected<git::CommitInfo> {
+    static auto& GetAccessors() {
+      static std::unordered_map<std::string, FieldAccessor> acc = {
+        {"oid", [](const git::CommitInfo& ci) { return jinja2::Value(ci._oid); }},
+        {"summary", [](const git::CommitInfo& ci) { 
+            int pos = ci._summary.find(" - ");
+            if (pos != std::string::npos) {
+              return jinja2::Value(ci._summary.substr(pos+3));
+            }
+            return jinja2::Value(""); 
+        }},
+        {"author", [](const git::CommitInfo& ci) { return jinja2::Value(ci._author); }},
+        {"timestamp", [](const git::CommitInfo& ci) { 
+            int pos = ci._summary.find(" - ");
+            if (pos != std::string::npos) {
+              return jinja2::Value(ci._summary.substr(0, pos));
+            }
+            return jinja2::Value(ci._summary); 
+        }},
+
+      };
+      return acc;
+    }
+  };
+
+}
+
+#endif

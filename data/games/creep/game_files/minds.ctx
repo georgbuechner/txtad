@@ -1,9 +1,1 @@
-{
-  "id": "minds", 
-  "name": "Minds", 
-  "description":"",
-  "attributes": {
-    "uneasyness": "$color_blue$mr UNEASYNESS $$",
-    "uncannyness": "$color_red$mr UNCANNYNESS $$"
-  }
-}
+{"attributes":{"uncannyness":"$color_red$mr UNCANNYNESS $$","uneasyness":"$color_blue$mr UNEASYNESS $$"},"description":{"logic":"","one_time_events":"","permanent_events":"","shared":true,"txt":""},"id":"minds","listeners":[],"name":"Minds","permeable":false,"priority":0,"re_entrycondition":"","shared":true}

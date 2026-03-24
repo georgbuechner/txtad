@@ -1,0 +1,59 @@
+{% extends "layout/layout.html" %}
+
+{% block content %}
+  <div class="game_header">
+    <h3>{{path}}</h3>
+
+    <div class="modified-indicator">
+      {% if modified %}
+        <button 
+          type="button" 
+          class="btn btn-success btn-sm save-btn"
+          data-bs-toggle="modal" 
+          data-bs-target="#shareSaveModal"
+        >
+          <i class="bi bi-save"></i> Save Content
+        </button>
+        <button 
+          type="submit" 
+          class="btn btn-danger btn-sm save-btn"
+          data-bs-toggle="modal" 
+          data-bs-target="#shareRestoreModal"
+        >
+          <i class="bi bi-trash"></i> 
+        </button>
+      {% endif %}
+      <button 
+        type="submit" 
+        class="btn btn-primary btn-sm save-btn"
+        data-bs-toggle="modal" 
+        data-bs-target="#shareBackupModal"
+      >
+        <i class="bi bi-archive"></i>
+      </button>
+    </div>
+  </div>
+
+  {% set txt_parent="text" %}
+  {% set txt_cmd = "update" %}
+  {% include "objects/txt-editable.html" %}
+
+  <div class="modal fade" id="textAddModal" tabindex="-1" aria-labelledby="#textAddModal" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="textAddModalLabel">Add Text Element</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          {% set txt_index = "new_index" %}
+          {% set txt_cmd = "add" %}
+          {% set txt_parent="text" %}
+          {% include "objects/txt-edit.html" %}
+        </div>
+      </div>
+    </div>
+  </div>
+
+{% endblock %}
+

@@ -1,0 +1,1 @@
+{"description":"Creepy game experience","hidden_dirs":["mindsets/"]}

@@ -1,5 +1,6 @@
 #include "game/utils/defines.h"
 #include "shared/utils/fuzzy_search/fuzzy.h"
+#include "shared/utils/parser/game_file_parser.h"
 #include "shared/utils/utils.h"
 #include <catch2/catch_test_macros.hpp>
 
@@ -61,4 +62,17 @@ TEST_CASE("Test join(str)", "[util]") {
   REQUIRE(util::Join({"jan"}, ", ") == "jan");
   REQUIRE(util::Join({"jan, alex"}, ", ") == "jan, alex");
   REQUIRE(util::Join({}, ", ") == "");
+}
+
+TEST_CASE("Test GetDirsFromIDs", "[parser]") {
+  std::vector<std::string> ids = {
+    "general", "rooms/freedom", "rooms/darkness", "items/potions/healing", "items/potions/poison"
+  };
+  std::vector<std::string> expected_types = { "*", "*rooms", "*items", "*items/potions" };
+  auto types = parser::GetTypesFromIDs(ids);
+  
+  REQUIRE(types.size() == expected_types.size());
+  for (const auto& type : expected_types) {
+    REQUIRE(std::find(types.begin(), types.end(), type) != types.end());
+  }
 }

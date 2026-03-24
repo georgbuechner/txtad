@@ -1,0 +1,21 @@
+<div class="input-group mb-3">
+  <span class="input-group-text" id="{{event_id}}_label">{{event_label}}</span>
+  <input 
+    type="text" 
+    class="form-control" 
+    placeholder="..." 
+    id="{{event_id}}" 
+    name="{{event_name}}" 
+    value="{{events}}"
+    data-type="event" 
+  >
+  <button 
+    class="btn btn-outline-secondary" 
+    type="button" 
+    id="button-addon2"
+    onclick="OpenEventEditor('{{event_id}}', {% if ctx %}'{{ctx.id}}'{% else %}null{% endif %});"
+  >
+    <i class="bi bi-pencil"></i>
+  </button>
+</div>
+

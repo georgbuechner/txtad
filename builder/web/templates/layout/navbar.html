@@ -1,0 +1,95 @@
+<nav class="navbar navbar-expand-lg navbar-light bg-primary">
+  <div class="container-fluid">
+    <a class="navbar-brand" href="/">TXT</a>
+    <button 
+      class="navbar-toggler" 
+      type="button" 
+      data-bs-toggle="collapse" 
+      data-bs-target="#navbarSupportedContent" 
+      aria-controls="navbarSupportedContent" 
+      aria-expanded="false" aria-label="Toggle navigation"
+    >
+      <span class="navbar-toggler-icon"></span>
+    </button>
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+        {% if creatorname != "" %}
+          <li class="nav-item dropdown">
+            <a 
+              class="nav-link dropdown-toggle {% if 'data' in request.path %} active {% endif %}" 
+              href="#" id="navbarDropdown" 
+              role="button" 
+              data-bs-toggle="dropdown" 
+              aria-expanded="false"
+            >
+              Account
+            </a>
+            <ul class="dropdown-menu" aria-labelledby="navbarDropdown">
+              <li><a class="dropdown-item" href="/api/creator/logout">logout</a></li>
+              <li><a class="dropdown-item" href="/api/creator/delete">delete account</a></li>
+              <li>
+                <button type="button" 
+                  class="dropdown-item" 
+                  data-bs-toggle="modal" 
+                  data-bs-target="#shareRequestsModal">
+                    Requests
+                </button>
+              </li>
+            </ul>
+          </li>
+          <li class="nav-item dropdown">
+            <a 
+              class="nav-link dropdown-toggle {% if 'data' in request.path %} active {% endif %}" 
+              href="#" id="navbarDropdown" 
+              role="button" 
+              data-bs-toggle="dropdown" 
+              aria-expanded="false"
+            >
+              Worlds
+            </a>
+            <ul class="dropdown-menu" aria-labelledby="navbarDropdown">
+              {% for id in worlds %}
+                <li><a class="dropdown-item" href="/{{id}}">{{id}}</a></li>
+              {% endfor %}
+              {% for id in shared %}
+                <li><a class="dropdown-item" href="/{{id}}">{{id}}</a></li>
+              {% endfor %}
+            </ul>
+          </li>
+        {% else %}
+          <li class="nav-item">
+            <a class="nav-link {% if 'login' in request.path %} active {% endif %}" aria-current="page" href="/login">Login</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link {% if 'register' in request.path %} active {% endif %}" aria-current="page" href="/register">Register</a>
+          </li>
+        {% endif %}
+      </ul>
+        {% if game %}
+          <span class="nav-item">|<i>{{game.name}}</i>
+          <a 
+             href="/api/game/reload/{{game.name}}/" 
+             style="color: #2b2c2c;"
+          >reload</a>
+          {% if game.running %} 
+            <a 
+               href="http://localhost:4080/{{game.name}}/" 
+               target="_blank"
+               rel="noopener"
+               style="color: #2b2c2c;"
+               noreferrer
+            >play</a>
+            <a 
+               href="/api/game/stop/{{game.name}}/" 
+               style="color: #2b2c2c;"
+            >stop</a>
+          {% endif %}
+          </span>
+        {% endif %}
+        {% if creatorname %}
+          <span class="nav-item">|{{creatorname}}|</span>
+        {% endif %}
+    </div>
+  </div>
+</nav>
+

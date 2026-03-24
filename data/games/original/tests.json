@@ -1,0 +1,1 @@
+[{"desc":"initial_ctx","tests":[{"checks":["closet ~3 {*rooms->name}"],"cmd":"","result":""}]}]

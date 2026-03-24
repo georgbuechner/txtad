@@ -1,0 +1,44 @@
+<div id="{{list_id}}">
+  {% if list_elements and list_elements|length > 0 %} 
+    {% set elems = list_elements %}
+  {% else %}
+    {% set elems = [""] %}
+  {% endif %}
+
+  {% for elem in elems %} 
+    <div class="input-group mb-3" id="parent_{{list_id}}_{{loop.index}}">
+      <span class="input-group-text" id="label_{{list_id}}_{{loop.index}}">{{loop.index}}</span>
+      {% if list_hint %} 
+        <select class="form-control" id="{{list_id}}_{{loop.index}}" name="{{list_id}}" autocomplete="off">
+          <option selected disabled value="---">---</option>
+          {% for path in all_paths %}
+            {% if all_paths[path] == list_hint %}
+              <option {{ "selected" if path == elem else ""}} value="{{path}}">{{path}}</option>
+            {% endif %}
+          {% endfor %}
+        </select>
+      {% else %}
+        <input 
+          type="text" 
+          class="form-control" 
+          placeholder="{{list_hint}}" 
+          aria-label="" 
+          aria-describedby="id" 
+          id="{{list_id}}_{{loop.index}}"
+          name="{{list_id}}"
+          value="{{elem}}"
+        >
+      {% endif %}
+      <button 
+        class="btn btn-outline-danger" 
+        type="button"
+        onclick="RemoveListElement('{{list_id}}', '{{loop.index}}');"
+      >remove</button>
+    </div>
+  {% endfor %}
+</div>
+<button 
+  class="btn btn-outline-secondary" 
+  type="button"
+  onclick="AddListElement('{{list_id}}');"
+>add</button>

@@ -2,6 +2,7 @@
 #include "game/utils/defines.h"
 #include "shared/objects/context/context.h"
 #include "shared/utils/parser/expression_parser.h"
+#include "shared/utils/parser/pattern_parser.h"
 #include "shared/utils/utils.h"
 #include <memory>
 #include <optional>
@@ -71,6 +72,7 @@ void User::HandleEvent(const std::string& event, const ExpressionParser& parser)
   _event_queue = event;
   util::Logger()->info("User::HandleEvent ({}): {}", _id, event);
   while (_event_queue != "") {
+    _event_queue = util::ReplaceAll(_event_queue, txtad::UID_REPLACEMENT, _id);
     _context_stack.TakeEvents(_event_queue, parser);
   }
 }
@@ -102,14 +104,14 @@ std::string User::PrintTxt(std::string txt_id, const ExpressionParser& parser) {
   util::Logger()->warn("User::PrintText. Text {} not found", txt_id);
 }
 
-std::string User::PrintCtx(std::string ctx_id, std::string what) {
+std::string User::PrintCtx(std::string ctx_id, std::string what, const ExpressionParser& parser) {
   util::Logger()->debug("User::PrintCtx. printing \"{}\"...", ctx_id);
   std::string txt;
   if (ctx_id.front() == '*') {
     for (const auto& ctx : _context_stack.find(ctx_id.substr(1)))
-      User::AddVariableToText(ctx, what, txt);
+      User::AddVariableToText(ctx, what, txt, _event_queue, parser);
   } else if (_contexts.count(ctx_id) > 0) {
-    User::AddVariableToText(_contexts.at(ctx_id), what, txt);
+    User::AddVariableToText(_contexts.at(ctx_id), what, txt, _event_queue, parser);
   } else {
     util::Logger()->warn("User::PrintCtx. Context \"{}\" not found.", ctx_id);
   }
@@ -138,28 +140,14 @@ std::string User::PrintCtxAttribute(std::string ctx_id, std::string attribute) {
   return txt;
 }
 
-std::optional<User::CtxPrint> User::GetCtxPrint(std::string inp) {
-  static const std::regex pattern(txtad::RE_PRINT_CTX);
-  std::smatch match;
-  if (std::regex_match(inp, match, pattern)) {
-    if (match[2].str() == "->") {
-      return CtxPrint({txtad::CtxPrint::VARIABLE, match[1].str(), match[3].str()});
-    }
-    else if (match[2].str() == ".") {
-      return CtxPrint({txtad::CtxPrint::ATTRIBUTE, match[1].str(), match[3].str()});
-    }   
-  }
-  return std::nullopt;
-}
-
 void User::AddVariableToText(const std::shared_ptr<Context>& ctx, const std::string& what, 
-    std::string& txt) {
+    std::string& txt, std::string& event_queue, const ExpressionParser& parser) {
   util::Logger()->debug("User::AddVariableToText: {}, {}", ctx->id(), what);
   if (what == "name") {
     txt += ((txt.length() > 0) ? ", " : "") + ctx->name();
   // Print ctx description
   } else if (what == "desc" || what == "description") {
-    txt += ((txt.length() > 0) ? ", " : "") + ctx->description();
+    txt += ((txt.length() > 0) ? ", " : "") + ctx->PrintDescription(event_queue, parser);
   // Print ctx attributes (or all attributes)
   } else if (what == "attributes" || what == "all_attributes") {
     std::vector<std::string> hidden;
@@ -177,13 +165,14 @@ void User::AddVariableToText(const std::shared_ptr<Context>& ctx, const std::str
     }
   // Print linked contexts
   } else if (what.front() == '*') {
-    if (auto print_ctx = User::GetCtxPrint(what)) {
-      for (const auto& it : ctx->LinkedContexts(print_ctx->_ctx_id.substr(1))) {
+    if (auto print_ctx = pattern::member_access(what)) {
+      for (const auto& it : ctx->LinkedContexts(print_ctx->ctx_id.substr(1))) {
         if (auto linked_ctx = it.lock()) {
-          if (print_ctx->_kind == txtad::CtxPrint::VARIABLE)
-            User::AddVariableToText(linked_ctx, print_ctx->_what, txt);
-          else if (print_ctx->_kind == txtad::CtxPrint::ATTRIBUTE) {
-            if (auto attr = linked_ctx->GetAttribute(print_ctx->_what))
+          if (print_ctx->member_type == pattern::CtxMemberAccess::VARIABLE) {
+            User::AddVariableToText(linked_ctx, print_ctx->key, txt, event_queue, parser);
+          }
+          else if (print_ctx->member_type == pattern::CtxMemberAccess::ATTRIBUTE) {
+            if (auto attr = linked_ctx->GetAttribute(print_ctx->key))
               txt += ((txt != "") ? ", " : "") + *attr;
           }
         }
@@ -192,13 +181,10 @@ void User::AddVariableToText(const std::shared_ptr<Context>& ctx, const std::str
   }
 }
 
-std::shared_ptr<Context> User::GetContext(const std::string& ctx_id) {
+std::vector<std::shared_ptr<Context>> User::GetContext(const std::string& ctx_id) {
   if (ctx_id.front() == '*') {
-    for (const auto& ctx : _context_stack.find(ctx_id.substr(1))) 
-      return _context_stack.get(ctx->id());
+    return _context_stack.find(ctx_id.substr(1));
   } else if (_contexts.count(ctx_id) > 0) {
-    return _contexts.at(ctx_id);
-  } else {
-    return nullptr;
-  }
+    return {_contexts.at(ctx_id)};
+  } 
 }

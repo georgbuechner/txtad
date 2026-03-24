@@ -1,0 +1,12 @@
+<form 
+  action="/{{game.name}}/save/ctx/attribute?ctx_id={{ctx.id}}&id={{attribute_id}}"
+  method="POST" 
+  enctype="multipart/form-data"
+>
+  <div class="input-group mb-3">
+    <input type="text" class="form-control" placeholder="key" name="key" id="key" value="{{attribute.key}}" required>
+    <input type="text" class="form-control" placeholder="value" name="value" id="value" value="{{attribute.value}}" required>
+    <button type="submit" class="btn btn-primary">save</button>
+  </div>
+</form>
+

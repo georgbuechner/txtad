@@ -1,0 +1,78 @@
+@use "sass:color";
+
+// Core brand tones
+$fresco-umber:    #291A13;
+$fresco-charcoal: #393C42;
+$fresco-stone:    #9C8774;
+$fresco-taupe:    #8E705A;
+$fresco-slate:    #576B73;
+$fresco-slate-2:  #79858F;
+$fresco-cloud:    #E6E1DB; // #DED8D0; // #F1F1F1;
+$fresco-ochre:    #D58142;
+$fresco-terracotta:#A44616;
+$fresco-sage:     #5D934B;
+
+// Optional extra accent from the painting’s shadows
+$fresco-plum:     #473D42;
+
+$primary:   $fresco-slate;
+$secondary: $fresco-stone;
+$success:   $fresco-sage;
+$info:      $fresco-slate-2;
+$warning:   $fresco-ochre;
+$danger:    $fresco-terracotta;
+$light:     $fresco-cloud;
+$dark:      $fresco-umber;
+
+// 2) Load & configure Bootstrap in one go
+@use "bootstrap/scss/bootstrap" with (
+
+  $primary:   $fresco-slate,
+  $secondary: $fresco-stone,
+  $success:   $fresco-sage,
+  $info:      $fresco-slate-2,
+  $warning:   $fresco-ochre,
+  $danger:    $fresco-terracotta,
+  $light:     $fresco-cloud,
+  $dark:      $fresco-umber,
+
+  $theme-colors: (
+    "primary":   $primary,
+    "secondary": $secondary,
+    "success":   $success,
+    "info":      $info,
+    "warning":   $warning,
+    "danger":    $danger,
+    "light":     $light,
+    "dark":      $dark,
+
+    // Custom utility (optional)
+    "plum":      $fresco-plum
+  ),
+
+  // Component backgrounds (default is white; set to your $brand-light)
+  $body-bg:       $light,
+  $input-bg:       $light,
+  $card-bg:       $light,
+  $dropdown-bg:   $light,
+  $accordion-bg:  $light,
+  $list-group-bg: $light,
+);
+
+// 3) Your own extras (can come after)
+.bg-light-80 {
+  background-color: color.scale($light, $alpha: -50%) !important;
+}
+
+.DIR {
+  color: $secondary;
+}
+.CTX {
+  color: $primary;
+}
+.TXT {
+  color: $primary;
+}
+.MEDIA {
+  color: $info;
+}
