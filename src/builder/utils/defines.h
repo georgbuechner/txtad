@@ -10,6 +10,7 @@ namespace builder {
   const std::string LOGGER = "LBuilder";
   const std::string TEST_LOGGER = "LBuilderTest";
   const std::string FILES_PATH = "builder/";
+  const std::string CONFIG = FILES_PATH + "builder.config";
   const std::string HTML_PATH = FILES_PATH + "web/";
   const std::string STATIC_PATH = HTML_PATH + "static/";
   const std::string MEDIA_PATH = HTML_PATH + "media/";

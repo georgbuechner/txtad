@@ -3,6 +3,7 @@
 #include "builder/utils/defines.h"
 #include "shared/utils/utils.h"
 #include <spdlog/spdlog.h>
+#include <stdexcept>
 #include <string>
 #include <thread>
 
@@ -12,7 +13,14 @@ int main() {
   util::SetUpLogger(builder::FILES_PATH, builder::LOGGER, spdlog::level::debug);
   util::LoggerContext scope(builder::LOGGER);
 
-  Builder builder(4081, "localhost", 4080);
+  nlohmann::json builder_config;
+  if (auto json = util::LoadJsonFromDisc(builder::CONFIG)) {
+    builder_config = *json;
+  } else {
+    std::runtime_error("No 'builder.config' file found!");
+  }
+
+  Builder builder(4081, "localhost", 4080, builder_config);
 
   std::thread thread_game_srv([&builder]() {
       builder.GameServerCommunication();
