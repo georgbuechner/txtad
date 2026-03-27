@@ -194,7 +194,7 @@ std::shared_ptr<Context> parser::CreateContextFromPath(std::filesystem::path pat
     // std::string base_id = path.parent_path().string().substr(id_path_offset);
     path.replace_extension();
     std::string base_id = path.string().substr(id_path_offset);
-    if (json->at("description").is_object())
+    if (json->at("description").is_object() || json->at("description").is_array())
       return std::make_shared<Context>(base_id, *json, std::make_shared<Text>(json->at("description").get<nlohmann::json>()));
     else 
       return std::make_shared<Context>(base_id, *json, std::make_shared<Text>(json->at("description").get<std::string>()));
@@ -206,7 +206,7 @@ std::shared_ptr<Text> parser::CreateTextFromPath(std::filesystem::path path, siz
   if (const auto& json = util::LoadJsonFromDisc(path.string())) {
     path.replace_extension();
     txt_id = path.string().substr(id_path_offset);
-    return std::make_shared<Text>(*json);
+    return std::make_shared<Text>(*json, "");
   }
   return nullptr;
 }
