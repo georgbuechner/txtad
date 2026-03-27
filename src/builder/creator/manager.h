@@ -20,6 +20,9 @@ class CreatorManager {
   public:
     CreatorManager() {
       for (const auto& dir : std::filesystem::directory_iterator(builder::FILES_PATH + builder::CREATORS_PATH)) {
+        if (dir.path().filename() == ".keep") {
+          continue;
+        }
         if (auto json = util::LoadJsonFromDisc(dir.path())) {
           std::shared_ptr<Creator> creator = std::make_shared<Creator>(*json);
           _creators[creator->username()] = creator;

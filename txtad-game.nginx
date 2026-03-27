@@ -1,0 +1,26 @@
+server {
+	root /usr/bin/txtad/game/web/;
+
+  listen 443 ssl;
+	server_name txtad.fux-1789.org;
+
+	location / {
+		proxy_pass http://127.0.0.1:4080/;
+		client_max_body_size 100M;
+	}
+	location /ws {
+		proxy_pass http://127.0.0.1:4181/;
+		client_max_body_size 100M;
+	}
+}
+
+server {
+    if ($host = txtad.fux-1789.org) {
+        return 301 https://$host$request_uri;
+    } # managed by Certbot
+
+
+	  server_name txtad.fux-1789.org;
+    listen 80;
+    return 404; # managed by Certbot
+} 

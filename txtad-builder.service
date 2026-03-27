@@ -1,0 +1,12 @@
+[Unit]
+Description=Txtad Builder 
+After=network.target
+
+[Service]
+WorkingDirectory=/usr/bin/txtad/
+ExecStart=/usr/bin/txtad/builder/builder.o
+Type=simple
+Restart=on-failure
+
+[Install]
+WantedBy=default.target
