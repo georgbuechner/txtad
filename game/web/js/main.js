@@ -24,7 +24,12 @@ window.onload = function() {
   _content = document.getElementById("content");
   _cmd = document.getElementById("cmd");
   
-  _socket = new WebSocket('ws://localhost:4181');
+  const wsUrl =
+  location.protocol === 'https:'
+    ? `wss://${location.host}/ws`
+    : `ws://${location.hostname}:4181`;
+
+  _socket = new WebSocket(wsUrl);
 
   _socket.onopen = function(event) { 
     console.log("WebSocket connection open!")
