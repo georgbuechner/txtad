@@ -129,7 +129,11 @@ std::string User::PrintCtxAttribute(std::string ctx_id, std::string attribute) {
       util::Logger()->warn("User::PrintCtxAttribute: attribute {} not found in ctx {}", attribute, ctx->id());
   };
 
+  int counter = 0;
   for (const auto& ctx : GetContext(ctx_id)) {
+    if (counter++ > 0) {
+      txt += ";";
+    }
     add_to_txt(ctx);
   }
   return txt;
@@ -179,11 +183,13 @@ void User::AddVariableToText(const std::shared_ptr<Context>& ctx, const std::str
 std::vector<std::shared_ptr<Context>> User::GetContext(const std::string& ctx_id) {
   if (ctx_id.starts_with("**")) {
     std::vector<std::shared_ptr<Context>> ctxs;
-    for (const auto& [ctx_id, ctx] : _contexts) {
-      if (ctx_id.find(ctx_id.substr(2)) == 0) {
-        ctxs.push_back(ctx);
+    for (const auto& it : _contexts) {
+      util::Logger()->debug("User::GetContext: {}, {}", it.first, ctx_id);
+      if (it.first.find(ctx_id.substr(2)) == 0) {
+        ctxs.push_back(it.second);
       }
     }
+    return ctxs;
   } else if (ctx_id.front() == '*') {
     return _context_stack.find(ctx_id.substr(1));
   } else if (_contexts.count(ctx_id) > 0) {
