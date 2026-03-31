@@ -195,7 +195,7 @@ void Game::h_set_attribute(const std::string& event, const std::string& args) {
     // Find context: 
     auto ctxs = _cur_user->GetContext(parsed->ctx_id);
     if (ctxs.empty()) {
-      util::Logger()->warn("User::PrintCtxAttribute: ctx {} not found", parsed->ctx_id);
+      util::Logger()->warn("Game::h_set_attribute: ctx {} not found", parsed->ctx_id);
     }
     for (auto ctx : ctxs) {
       if (auto attr = ctx->GetAttribute(parsed->attribute_id)) {
@@ -214,11 +214,11 @@ void Game::h_set_attribute(const std::string& event, const std::string& args) {
           res = std::to_string(std::stoi(*attr) * std::stoi(_parser.Evaluate(parsed->expression)));
         else if (parsed->opt == "/=")
           res = std::to_string(std::stoi(*attr) / std::stoi(_parser.Evaluate(parsed->expression)));
-        util::Logger()->debug("User::PrintCtxAttribute: setting {} to {}", parsed->attribute_id, res);
+        util::Logger()->debug("Game::h_set_attribute: setting {} to {}", parsed->attribute_id, res);
         if (!ctx->SetAttribute(parsed->attribute_id, res))
-          util::Logger()->warn("User::PrintCtxAttribute: Failed setting attribute: {} to {}", parsed->attribute_id, res);
+          util::Logger()->warn("Game::h_set_attribute: Failed setting attribute: {} to {}", parsed->attribute_id, res);
       } else {
-        util::Logger()->warn("User::PrintCtxAttribute: attribute {} not found in ctx {}", parsed->attribute_id, ctx->id());
+        util::Logger()->warn("Game::h_set_attribute: attribute {} not found in ctx {}", parsed->attribute_id, ctx->id());
       }
     } 
   }

@@ -118,3 +118,5 @@ Examples:
   fail, because `++` is intepreted as part of the regex expression, not as a
   plain string
 - remember for `#sa attribute=10` "attribute" needs no curly braces
+- '\*'-operator: Shows all contexts of given type in current stack 
+- '\*\*'-operator: Shows all contexts of given type
