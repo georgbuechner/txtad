@@ -35,9 +35,8 @@ update:
 	cp -f game/txtad.o /usr/bin/txtad/game/
 	cp -f -r game/web/ /usr/bin/txtad/game/
 	cp -f builder/builder.o /usr/bin/txtad/builder/
+	cp -f builder/builder.config /usr/bin/txtad/builder/
 	cp -f -r builder/web/ /usr/bin/txtad/builder/
-	cp -f txtad-builder.nginx /etc/nginx/sites-availible/
-	cp -f txtad-game.nginx /etc/nginx/sites-availible/
 	cp -f txtad-builder.service /etc/systemd/system/
 	cp -f txtad-game.service /etc/systemd/system/
 	echo -e "Restart systemd service"
