@@ -20,7 +20,8 @@
 
 using namespace std::chrono_literals;
 
-Builder::Builder(int port, std::string cli_address, int cli_port) : _cli(cli_address, cli_port), _env(builder::TEMPLATE_PATH) {
+Builder::Builder(int port, std::string cli_address, int cli_port, const nlohmann::json& config) 
+      : _cli(cli_address, cli_port), _env(builder::TEMPLATE_PATH), _txtad_addr(config.at("txtad").at("address")) {
   // init games
   _games = parser::InitGames<BuilderGame>(txtad::GAMES_PATH);
 
@@ -268,6 +269,7 @@ jinja2::ValuesMap Builder::CreateParams(const httplib::Request& req, std::string
   jinja2::ValuesMap params;
 
   // Add general information
+  params.emplace("txtad_address", _txtad_addr);
   params.emplace("games", _jinja::Map(_games));
   params.emplace("game_ids", _jinja::MapKeys(_games));
   try {

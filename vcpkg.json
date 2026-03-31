@@ -11,6 +11,7 @@
     "spdlog",
     "string-view-lite",
     "variant-lite",
+    "rapidjson",
     "websocketpp"
   ]
 }

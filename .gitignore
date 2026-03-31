@@ -30,6 +30,7 @@ builder/logs/*
 builder/.cache/*
 builder/builder.o
 builder/builder_test.o
+builder/builder.config
 builder/creators
 builder/package-lock.json
 builder/package.json

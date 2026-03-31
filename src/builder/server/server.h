@@ -10,7 +10,7 @@
 
 class Builder {
   public: 
-    Builder(int port, std::string cli_address, int cli_port);
+    Builder(int port, std::string cli_address, int cli_port, const nlohmann::json& config);
 
     // methods 
     void Start(); 
@@ -26,6 +26,8 @@ class Builder {
 
     std::shared_mutex _mtx_games;
     std::map<std::string, std::shared_ptr<BuilderGame>> _games;
+
+    const std::string _txtad_addr;
 
     // methods 
     void LoadTemplate(httplib::Response& resp, const std::string& page, 

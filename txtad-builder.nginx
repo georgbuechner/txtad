@@ -1,0 +1,21 @@
+server {
+	root /usr/bin/txtad/builder/web/;
+
+  listen 443 ssl;
+	server_name txtad-creator.fux-1789.org;
+
+	location / {
+		proxy_pass http://127.0.0.1:4081/;
+		client_max_body_size 100M;
+	}
+}
+
+server {
+    if ($host = txtad-creator.fux-1789.org) {
+        return 301 https://$host$request_uri;
+    } # managed by Certbot
+
+    server_name txtad-creator.fux-1789.org;
+    listen 80;
+    return 404; # managed by Certbot
+}
