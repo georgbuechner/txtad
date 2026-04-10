@@ -13,6 +13,10 @@ body {
   background-color: transparent;
 }
 
+.content {
+  padding-right: 1em;
+}
+
 .line {
   margin-top: 0.0em;
   margin-bottom: 0.3em;
@@ -31,4 +35,8 @@ body {
 
 .cmd::placeholder {
   color: white;
+}
+
+.prompt {
+  color: lightgrey;
 }

@@ -16,7 +16,7 @@ const BGSOUND_PLAY = '$bgsplay';
 const BGSOUND_PAUSE = '$bgspause';
 const FGSOUND_PLAY = '$fgsplay_';
 
-const STD_PROMPT = "Press enter to continue...";
+const STD_PROMPT = "<span class='prompt'>Press enter to continue...</span>";
 const FG_PROMPT = "Waiting...";
 
 window.onload = function() {
@@ -24,7 +24,11 @@ window.onload = function() {
   _content = document.getElementById("content");
   _cmd = document.getElementById("cmd");
   
-  _socket = new WebSocket('ws://localhost:4181');
+  if (location.hostname === "localhost") {
+    _socket = new WebSocket('ws://localhost:4181');
+  } else {
+    _socket = new WebSocket('wss://txtad.fux-1789.org/ws');
+  }
 
   _socket.onopen = function(event) { 
     console.log("WebSocket connection open!")
