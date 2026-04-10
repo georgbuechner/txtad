@@ -289,6 +289,7 @@ function AddInput(payload) {
 
   _content.appendChild(p);
   _cmd.value = "";
+  scrollToBottom();
 }
 
 function ClearContent() {
@@ -301,4 +302,13 @@ function CreateEvent(event) {
     event: event
   }
   return JSON.stringify(payload);
+}
+
+function scrollToBottom() {
+  requestAnimationFrame(() => {
+    window.scrollTo({
+      top: document.body.scrollHeight,
+      behavior: "smooth"
+    });
+  });
 }
