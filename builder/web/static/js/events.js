@@ -1,4 +1,4 @@
-const vars = ["name", "desc"];
+const vars = ["id", "name", "desc"];
 const ptrs = [".", "->"];
 const opts = ["+=", "-=", "++", "--", "*=", "/=", "="];
 

@@ -131,7 +131,7 @@ class REP_ATTS extends REP {
 
 class REP_VAR extends REP {
   constructor(prev, full) {
-    super("VAR", (full) ? ["name", "desc", "*"] : ["name", "desc"], prev);
+    super("VAR", (full) ? ["id", "name", "desc", "*"] : ["id", "name", "desc"], prev);
     this.full = full;
   }
   handler(e) {

@@ -143,6 +143,9 @@ void User::AddVariableToText(const std::shared_ptr<Context>& ctx, const std::str
     std::string& txt, std::string& event_queue, const ExpressionParser& parser) {
   util::Logger()->debug("User::AddVariableToText: {}, {}", ctx->id(), what);
   if (what == "name") {
+    txt += ((txt.length() > 0) ? ", " : "") + ctx->id();
+  // Print ctx id
+  } else if (what == "id") {
     txt += ((txt.length() > 0) ? ", " : "") + ctx->name();
   // Print ctx description
   } else if (what == "desc" || what == "description") {
