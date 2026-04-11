@@ -37,7 +37,10 @@ class REP extends State {
   handler(e) { 
     if (e.key.length == 1 && isValidIdStr(e.key)) {
       this.inp += e.key;
-      this.suggestions = this.base_suggestions.filter((id) => id.indexOf(this.inp) == 0);
+      this.suggestions = [
+        ...this.base_suggestions.filter((id) => id.indexOf(this.inp) === 0),
+        ...this.base_suggestions.filter((id) => id.indexOf(this.inp) !== -1)
+      ]
     } else if (e.key === "Backspace") {
       if (this.inp.length > 0) {
         this.inp = this.inp.substr(0, this.inp.length-1);
