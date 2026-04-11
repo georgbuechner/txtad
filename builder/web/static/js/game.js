@@ -169,11 +169,11 @@ function isValidIdStr(str) {
 
   for (i = 0, len = str.length; i < len; i++) {
     code = str.charCodeAt(i);
-    console.log(str[i], code);
+    console.log("CODE: ", str[i], code);
     if (!(code > 47 && code < 58) && // numeric (0-9)
         !(code > 64 && code < 91) && // upper alpha (A-Z)
         !(code > 96 && code < 123) && // lower alpha (a-z)
-        !(code == 47 || code == 42)) { // slash ('/')
+        !(code == 47 || code == 42 || code == 95)) { // slash ('/'), ???, ('_')
       return false;
     }
   }
