@@ -107,6 +107,9 @@ void Builder::Start() {
   _srv.Get("/api/data/media-audios/:game_id", [&](const httplib::Request& req, httplib::Response& resp) {
       ApiMediaAudios(req, resp); });
 
+  _srv.Get("/api/data/custom-handlers/:game_id", [&](const httplib::Request& req, httplib::Response& resp) {
+      ApiCustomHandlers(req, resp); });
+
   _srv.Get("/api/ctx/references/:game_id", [&](const httplib::Request& req, httplib::Response& resp) {
       ApiCtxReferences(req, resp); });
 
@@ -605,18 +608,33 @@ void Builder::ApiMediaAudios(const httplib::Request& req, httplib::Response& res
   std::shared_lock sl(_mtx_games);
   
   // Join into one vector
-  std::cout << "Concidering " << std::to_string(_games.at(game_id)->media_files().size()) << " media entries: " << std::endl;
   std::vector<std::string> ids;
   for (const auto& media : _games.at(game_id)->media_files()) {
-    std::cout << "-- Concidering " << media << std::endl;
     const std::string extension = media.substr(media.find_last_of('.') + 1);
     if (util::GetContentType(extension).find("audio") == 0) {
-      std::cout << "-- Adding " << media << std::endl;
       ids.push_back(media);
     }
   }
 
-   // Return as json
+  // Return as json
+  resp.set_content(nlohmann::json(ids).dump(), "application/json");
+  resp.status = 200;
+}
+
+void Builder::ApiCustomHandlers(const httplib::Request& req, httplib::Response& resp) {
+  std::string game_id = req.path_params.at("game_id");
+  std::shared_lock sl(_mtx_games);
+
+  std::vector<std::string> ids;
+  for (const auto& ctx : _games.at(game_id)->contexts()) {
+    for (const auto& [_, h] : ctx.second->listeners()) {
+      if (h->event().starts_with("#")) {
+        ids.push_back(h->event());
+      }
+    }
+  }
+
+  // Return as json
   resp.set_content(nlohmann::json(ids).dump(), "application/json");
   resp.status = 200;
 }

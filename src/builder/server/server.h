@@ -67,6 +67,8 @@ class Builder {
     void ApiTypesAttributes(const httplib::Request& req, httplib::Response& resp);
     ///< list of all audios
     void ApiMediaAudios(const httplib::Request& req, httplib::Response& resp);
+    ///< list of custom handlers (starting with "#")
+    void ApiCustomHandlers(const httplib::Request& req, httplib::Response& resp);
 
     void ApiCtxReferences(const httplib::Request& req, httplib::Response& resp);
     void ApiTxtReferences(const httplib::Request& req, httplib::Response& resp);

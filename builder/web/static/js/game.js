@@ -1,3 +1,20 @@
+const events_config = {
+  "#ctx remove": ["[ctx]"], // manually tested
+  "#ctx add": ["<ctx>"], // manually tested
+  "#ctx replace": ["[ctx]", " -> ", "<ctx>"], // manually tested
+  "#ctx name": ["[ctx]", " = ", "<free>"], // manually tested
+  "#sa": ["[ctx]", ".", "[attr]", "<opt>", "<free>"], // manually tested
+  "#lst atts": ["[ctx]"], // manually tested
+  "#lst* atts": ["[ctx]"], // manually tested
+  "#lst ctxs": ["[ctx]", "->", "[type]", "<ptr>", "[tattr|var]"], // TODO ???
+  "#>": ["<free>"], // manually tested
+  "#>>": ["<free>"], // manually tested
+  "#->": ["<free>"], // manually tested
+  "#reset game": [], // manually tested
+  "#reset user": [], // manually tested
+  "#remove_user": ["[ctx]", ".", "[attr]"], // manually tested
+};
+
 const DataStore = {
   ready: false, 
   data: {}
@@ -9,7 +26,8 @@ AppInit.register(async () => {
 });
 
 async function LoadAllData() {
-  const types = ["ctx-ids", "text-ids", "types", "ctx-attributes", "type-attributes", "media-audios"];
+  const types = ["ctx-ids", "text-ids", "types", "ctx-attributes", "type-attributes", 
+    "media-audios", "custom-handlers"];
 
   // Request data from server
   const results = await Promise.all(
@@ -26,6 +44,14 @@ async function LoadAllData() {
   DataStore.data["ctx-types"] = DataStore.data["ctx-ids"].concat(DataStore.data["types"]);
 
   DataStore.ready = true;
+
+  console.log("custom-handlers: ", DataStore.data["custom-handlers"]);
+  for (const h of  DataStore.data["custom-handlers"]) {
+    let evt = h.replaceAll("(.*)", "").replaceAll(".*", "").trim();
+    if (!(evt in events_config)) {
+      events_config[evt] = ["<free>"];
+    }
+  }
 }
 
 function game_id() {

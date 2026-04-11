@@ -1,20 +1,3 @@
-const events_config = {
-  "#ctx remove": ["[ctx]"], // manually tested
-  "#ctx add": ["<ctx>"], // manually tested
-  "#ctx replace": ["[ctx]", " -> ", "<ctx>"], // manually tested
-  "#ctx name": ["[ctx]", " = ", "<free>"], // manually tested
-  "#sa": ["[ctx]", ".", "[attr]", "<opt>", "<free>"], // manually tested
-  "#lst atts": ["[ctx]"], // manually tested
-  "#lst* atts": ["[ctx]"], // manually tested
-  "#lst ctxs": ["[ctx]", "->", "[type]", "<ptr>", "[tattr|var]"], // TODO ???
-  "#>": ["<free>"], // manually tested
-  "#>>": ["<free>"], // manually tested
-  "#->": ["<free>"], // manually tested
-  "#reset game": [], // manually tested
-  "#reset user": [], // manually tested
-  "#remove_user": ["[ctx]", ".", "[attr]"], // manually tested
-};
-
 const vars = ["name", "desc"];
 const ptrs = [".", "->"];
 const opts = ["+=", "-=", "++", "--", "*=", "/=", "="];
