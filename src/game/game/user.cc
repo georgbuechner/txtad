@@ -107,7 +107,14 @@ std::string User::PrintTxt(std::string txt_id, const ExpressionParser& parser) {
 std::string User::PrintCtx(std::string ctx_id, std::string what, const ExpressionParser& parser) {
   util::Logger()->debug("User::PrintCtx. printing \"{}\"...", ctx_id);
   std::string txt;
-  if (ctx_id.front() == '*') {
+  if (ctx_id.starts_with("**")) {
+    for (const auto& it : _contexts) {
+      util::Logger()->debug("User::GetContext: {}, {}", it.first, ctx_id);
+      if (it.first.find(ctx_id.substr(2)) == 0) {
+        User::AddVariableToText(it.second, what, txt, _event_queue, parser);
+      }
+    }
+  } else if (ctx_id.front() == '*') {
     for (const auto& ctx : _context_stack.find(ctx_id.substr(1)))
       User::AddVariableToText(ctx, what, txt, _event_queue, parser);
   } else if (_contexts.count(ctx_id) > 0) {
@@ -142,10 +149,10 @@ std::string User::PrintCtxAttribute(std::string ctx_id, std::string attribute) {
 void User::AddVariableToText(const std::shared_ptr<Context>& ctx, const std::string& what, 
     std::string& txt, std::string& event_queue, const ExpressionParser& parser) {
   util::Logger()->debug("User::AddVariableToText: {}, {}", ctx->id(), what);
-  if (what == "name") {
+  if (what == "id") {
     txt += ((txt.length() > 0) ? ", " : "") + ctx->id();
   // Print ctx id
-  } else if (what == "id") {
+  } else if (what == "name") {
     txt += ((txt.length() > 0) ? ", " : "") + ctx->name();
   // Print ctx description
   } else if (what == "desc" || what == "description") {

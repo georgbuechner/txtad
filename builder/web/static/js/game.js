@@ -6,7 +6,8 @@ const events_config = {
   "#sa": ["[ctx]", ".", "[attr]", "<opt>", "<free>"], // manually tested
   "#lst atts": ["[ctx]"], // manually tested
   "#lst* atts": ["[ctx]"], // manually tested
-  "#lst ctxs": ["[ctx]", "->", "[type]", "<ptr>", "[tattr|var]"], // TODO ???
+  "#lst linked_ctxs": ["[ctx]", "->", "[type]", "<ptr>", "[tattr|var]"], // TODO ???
+  "#lst* ctxs": ["[ctx]", "<ptr>", "[tattr|var]"], // TODO ???
   "#>": ["<free>"], // manually tested
   "#>>": ["<free>"], // manually tested
   "#->": ["<free>"], // manually tested

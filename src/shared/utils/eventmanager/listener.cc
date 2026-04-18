@@ -62,6 +62,7 @@ std::string LHandler::ReplacedArguments(const std::string& event, const std::str
   }
   return "";
 }
+
 nlohmann::json LHandler::json() const {
   nlohmann::json j = {{"id", _id}, {"re_event", _event.str()}, {"arguments", _arguments}, {"permeable", _permeable}};
   return j;

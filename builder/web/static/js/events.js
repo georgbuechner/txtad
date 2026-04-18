@@ -285,8 +285,10 @@ function SplitArgs(cmd, args) {
     return args.split(".");
   } else if (cmd === "#sa") {
     return setAttribute(args);
-  } else if (cmd === "#lst ctxs") {
+  } else if (cmd === "#lst linked_ctxs") {
     return listLinkedCtxs(args);
+  } else if (cmd === "#lst* ctxs") {
+    return listCtxs(args);
   } else {
     return [args];
   }
@@ -351,4 +353,18 @@ function listLinkedCtxs(inp) {
   const type = inp.substr(0, pos);
   const tattr = inp.substr(pos+ptr.length); 
   return [ctx_type, type, ptr, tattr];
+}
+function listCtxs(inp) {
+  let ptr = ".";
+  pos = inp.indexOf(ptr);
+  if (pos === -1) {
+    ptr = "->";
+    pos = inp.indexOf(ptr);
+    if (pos === -1) {
+      return ["", "", ""];
+    }
+  }
+  const ctx_type = inp.substr(0, pos);
+  const tattr = inp.substr(pos+ptr.length); 
+  return [ctx_type, ptr, tattr];
 }

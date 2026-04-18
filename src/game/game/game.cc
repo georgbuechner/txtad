@@ -53,6 +53,8 @@ Game::Game(std::string path, std::string name) : _cout(_global_cout), _path(path
         std::bind(&Game::h_list_all_attributes, this, std::placeholders::_1, std::placeholders::_2)));
   _mechanics_ctx->AddListener(std::make_shared<LHandler>("H_LST03", "#lst ctxs (.*)", 
         std::bind(&Game::h_list_linked_contexts, this, std::placeholders::_1, std::placeholders::_2)));
+  _mechanics_ctx->AddListener(std::make_shared<LHandler>("H_LST04", "#lst* ctxs (.*)", 
+        std::bind(&Game::h_list_contexts, this, std::placeholders::_1, std::placeholders::_2)));
 
   // Print commands
   _mechanics_ctx->AddListener(std::make_shared<LHandler>("H_PRINT01", "#> (.*)", 
@@ -308,6 +310,7 @@ void Game::h_list_all_attributes(const std::string& event, const std::string& ct
 }
 
 void Game::h_list_linked_contexts(const std::string& event, const std::string& args) {
+  util::Logger()->info("Handler::h_list_linked_contexts: {} {}", event, args);
   if (auto member_access = pattern::member_access(args)) {
     if (member_access->member_type == pattern::CtxMemberAccess::VARIABLE) {
       for (auto ctx : _cur_user->GetContext(member_access->ctx_id)) {
@@ -326,6 +329,22 @@ void Game::h_list_linked_contexts(const std::string& event, const std::string& a
           }
         }
       }
+    }
+  }
+}
+
+void Game::h_list_contexts(const std::string& event, const std::string& args) {
+  util::Logger()->info("Handler::h_list_contexts: {} {}", event, args);
+  if (auto member_access = pattern::member_access(args)) {
+    for (const auto& it : _cur_user->GetContext(member_access->ctx_id)) {
+      std::string str = "";
+      if (member_access->member_type == pattern::CtxMemberAccess::VARIABLE)
+        User::AddVariableToText(it, member_access->key, str, _cur_user->event_queue(), _parser);
+      else if (member_access->member_type == pattern::CtxMemberAccess::ATTRIBUTE) {
+        if (auto attr = it->GetAttribute(member_access->key))
+          str = *attr;
+      }
+      _cout(_cur_user->id(), "- " + str);
     }
   }
 }

@@ -28,11 +28,13 @@ std::map<std::string, std::string(*)(const std::string&, const std::string&)> Ex
   {"~4", [](const std::string& a, const std::string& b) { 
             return std::to_string(fuzzy::fuzzy(b, a) == fuzzy::FuzzyMatch::FUZZY); } },
   {":", [](const std::string& a, const std::string& b) -> std::string { 
-          util::Logger()->debug("EP:InList. {} in {}", a, b);
-          const std::string vec = (a.front() != '[') ? "[" + a + "]" : a;
-          for (const auto& it : util::Split(vec.substr(1, vec.length()-2), "|")) {
+          const std::string vec = (a.front() != '[') ? a : a.substr(1, a.length()-2);
+          const std::string vec_b = (b[1] == '\'' && b[b.length()-2] == '\'') 
+            ? b.substr(2, b.length()-4) : b.substr(1, b.length()-2);
+          std::string sep = (vec_b.find(";") != std::string::npos) ? ";" : ",";
+          for (const auto& it : util::Split(vec, "|")) {
             const std::string e = util::Strip(it);
-            for (const auto& elem : util::Split(b.substr(1, b.length()-2), ";")) {
+            for (const auto& elem : util::Split(vec_b, sep)) {
               if (util::Strip(elem) == e) return "1";
             }
           }
@@ -91,7 +93,9 @@ std::string ExpressionParser::Evaluate(std::string input) const {
           replacement = "''";
         } else if (replacement == txtad::NO_REPLACEMENT) {
           util::Logger()->error("No subsitute found for: {}", subsitute);
-        }       
+        } else {
+          replacement = "\'" + replacement + "\'";
+        }
       } 
       if (replacement != "") {
         // Add substituted string to replaced string and increase index
@@ -135,27 +139,35 @@ std::string ExpressionParser::evaluate(std::string input) const {
 
 std::string ExpressionParser::StripAndSubstitute(std::string str) const {
   // strip string from whitespaces and brackets
-  return util::Strip(util::Strip(util::Strip(str), ')'), '(');
+  return util::Strip(util::Strip(util::Strip(util::Strip(str), ')'), '('), '\'');
 }
 
 
 std::pair<int, std::string> ExpressionParser::LastOpt(const std::string& inp) {
-  int pos = -1;
-  std::string opt = "";
-  for (const auto& [cur_opt, _] : _opts) {
-    int cur_pos = inp.rfind(cur_opt);
-    // If the operand was found, then check 1. if the position is the furthest
-    // back (add +1 to the current pass to avoid '=' being further back than
-    // '>=') 2. no operand found before, 3. the current operand is longer than
-    // the one found sofar.
-    if (cur_pos != std::string::npos && (cur_pos-pos > 1 || 
-          (abs(cur_pos-pos) <= 1 && (cur_opt == "" || cur_opt.length() > opt.length())))) {
-      pos = cur_pos;
-      opt = cur_opt;
+  bool escaped = false;
+  for (int i=inp.length()-1; i>0; i--) {
+    const char& c = inp[i];
+    if (c == '\'') {
+      escaped = !escaped;
+    }
+    if (escaped) {
+      continue;
+    }
+
+    // Check current char is part of operator
+    if (auto remaining_len = RPartOfOpt(i, inp)) {
+      const std::string opt = std::string(1, c);
+      // Check direct match
+      if (remaining_len == 1) {
+        return {i, opt};
+      } else {
+        return {i-1, std::string(1, inp[i-1]) + opt};
+      }
     }
   }
-  return {pos, opt};
+  return {-1, ""};
 }
+
 std::optional<short> ExpressionParser::PartOfOpt(int i, const std::string& inp) {
   std::string a = std::string(1, inp[i]);
   if (_opts.contains(a))
@@ -166,6 +178,16 @@ std::optional<short> ExpressionParser::PartOfOpt(int i, const std::string& inp) 
     return std::optional(1);
   return std::nullopt;
 }
+
+std::optional<short> ExpressionParser::RPartOfOpt(int i, const std::string& inp) {
+  std::string a = std::string(1, inp[i]);
+  if (i > 0 && _opts.contains(std::string(1, inp[i-1]) + a))
+    return std::optional(2);
+  if (_opts.contains(a))
+    return std::optional(1);
+  return std::nullopt;
+}
+
 
 std::string ExpressionParser::EnsureExecutionOrder(std::string inp) {
   util::Logger()->debug("EP:EnsureExecutionOrder. {}", inp);
@@ -182,49 +204,56 @@ std::string ExpressionParser::EnsureExecutionOrder(std::string inp) {
   // Insert brackets to ensure priority f.e. "2+3*5" -> "2+(3*5)"
   std::string modified = "";
   std::string waiting = "";
+  bool escaped = false;
   int last = 0;
   for (unsigned int i=0; i<inp.length(); i++) {
     const auto& c = inp[i];
-    
-    // Handle brackets:
-    if (c == '(') {
-      auto pos = util::ClosingBracket(inp, i+1); // get closing bracket
-      if (pos != -1) {
-        // Recursive call for inside of bracket and add complete content to modified/waiting:
-        std::string inside_bracket = "(" + EnsureExecutionOrder(inp.substr(i+1, pos-i-1)) + ")";
-        add((waiting != "") ? waiting : modified, inside_bracket);
-        i = pos; // increase position to closing bracket
-        continue;
-      }
+
+    if (c == '\'') {
+      escaped = !escaped; 
     }
 
-    // If current char is not (part of) a priority operand:
-    if (std::find(priority_operands.begin(), priority_operands.end(), c) == priority_operands.end()) {
-      if (auto remaining_len = PartOfOpt(i, inp)) {
-        // If waiting is not empty, add (waiting) to modified 
+    if (!escaped) {
+      // Handle brackets:
+      if (c == '(') {
+        auto pos = util::ClosingBracket(inp, i+1); // get closing bracket
+        if (pos != -1) {
+          // Recursive call for inside of bracket and add complete content to modified/waiting:
+          std::string inside_bracket = "(" + EnsureExecutionOrder(inp.substr(i+1, pos-i-1)) + ")";
+          add((waiting != "") ? waiting : modified, inside_bracket);
+          i = pos; // increase position to closing bracket
+          continue;
+        }
+      }
+
+      // If current char is not (part of) a priority operand:
+      if (std::find(priority_operands.begin(), priority_operands.end(), c) == priority_operands.end()) {
+        if (auto remaining_len = PartOfOpt(i, inp)) {
+          // If waiting is not empty, add (waiting) to modified 
+          if (waiting != "") {
+            util::Logger()->debug("EP:EnsureExecutionOrder. -> {} (adding: {})", modified, waiting);
+            modified += "(" + waiting + ")";
+            waiting = "";
+          } 
+          // Set position of last found operand to position of current operand.
+          last = modified.length() + *remaining_len; 
+        }
+      } 
+      // If current char is priority-operand start waiting from last-operand to current position. 
+      else {
+        // If waiting already set, surround with brackets 
         if (waiting != "") {
           util::Logger()->debug("EP:EnsureExecutionOrder. -> {} (adding: {})", modified, waiting);
-          modified += "(" + waiting + ")";
-          waiting = "";
+          waiting = "(" + waiting + ")"; // evaluate(waiting, true);
+          util::Logger()->debug("EP:EnsureExecutionOrder. -> {} (new waiting: {})", modified, waiting);
         } 
-        // Set position of last found operand to position of current operand.
-        last = modified.length() + *remaining_len; 
-      }
-    } 
-    // If current char is priority-operand start waiting from last-operand to current position. 
-    else {
-      // If waiting already set, surround with brackets 
-      if (waiting != "") {
-        util::Logger()->debug("EP:EnsureExecutionOrder. -> {} (adding: {})", modified, waiting);
-        waiting = "(" + waiting + ")"; // evaluate(waiting, true);
-        util::Logger()->debug("EP:EnsureExecutionOrder. -> {} (new waiting: {})", modified, waiting);
-      } 
-      // Otherwise, set new waiting (last -> current pos)
-      else {
-        util::Logger()->debug("EP:EnsureExecutionOrder. -> {} (last: {})", modified, last);
-        waiting = modified.substr(last, modified.length()-last);
-        util::Logger()->debug("EP:EnsureExecutionOrder. => {} (new waiting: {})", modified, waiting);
-        modified.erase(modified.begin()+last, modified.end());
+        // Otherwise, set new waiting (last -> current pos)
+        else {
+          util::Logger()->debug("EP:EnsureExecutionOrder. -> {} (last: {})", modified, last);
+          waiting = modified.substr(last, modified.length()-last);
+          util::Logger()->debug("EP:EnsureExecutionOrder. => {} (new waiting: {})", modified, waiting);
+          modified.erase(modified.begin()+last, modified.end());
+        }
       }
     }
 
