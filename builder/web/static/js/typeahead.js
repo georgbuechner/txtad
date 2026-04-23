@@ -191,7 +191,7 @@ class OPT extends State {
       return;
     } else if (e.key.length == 1 && e.key == ".") {
       const id = this.prev.suggestions[this.prev.index];
-      const options = (this.prev.name == "REP_ALL") ? context_attributes(id) : type_attributes(id);
+      const options = (id.indexOf("*") !== 0) ? context_attributes(id) : type_attributes(id);
       StateMaschine.transition(new REP_ATTS(options, this)); 
     } else if (e.key.length == 1 && e.key == "-") {
       this.inp = "-";
