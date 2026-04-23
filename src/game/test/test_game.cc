@@ -930,14 +930,14 @@ TEST_CASE("Test multi print", "[game]") {
     {"id", "user_1"},
     {"name", "User 1"},
     {"description", { {"txt", "A normal user"}, }},
-    {"attributes", {{"life", "10"}}},
+    {"attributes", {{"life", "10"}, {"poisened", "1"}}},
     {"listeners", nlohmann::json::array() },
   };
   const nlohmann::json user_2 = {
     {"id", "user_2"},
     {"name", "User 2"},
     {"description", { {"txt", "A normal user"}, }},
-    {"attributes", {{"life", "20"}}},
+    {"attributes", {{"life", "20"}, {"poisened", "2"}}},
     {"listeners", nlohmann::json::array() },
   };
 
@@ -945,6 +945,7 @@ TEST_CASE("Test multi print", "[game]") {
   std::string cout = "";
   Game::set_global_msg_fn([&cout](std::string id, std::string txt) { 
       cout += ((cout != "") ? "\n" : "") + txt; });
+
   auto get_cout = [&cout]() { 
     std::string str = cout;
     cout = "";
@@ -962,9 +963,19 @@ TEST_CASE("Test multi print", "[game]") {
   game.HandleEvent(USER_ID, "");
 
   game.HandleEvent(USER_ID, "#> {*users.life}");
-  REQUIRE(cout == "");
+  REQUIRE(get_cout() == "");
 
   game.HandleEvent(USER_ID, "#> {**users.life}");
-  REQUIRE(cout == "10;20");
-}
+  REQUIRE(get_cout() == "10;20");
 
+  game.HandleEvent(USER_ID, "#> {**users.life}");
+  REQUIRE(get_cout() == "10;20");
+
+  game.HandleEvent(USER_ID, "#> poisened users: {**users[.poisened > 0]->name}");
+  REQUIRE(get_cout() == "poisened users: User 1, User 2");
+
+  game.HandleEvent(USER_ID, "#sa **users[.poisened > 0].life -= 5;#sa **users[.poisened > 0].poisened -= 1");
+
+  game.HandleEvent(USER_ID, "#> poisened users: {**users[.poisened > 0]->name}");
+  REQUIRE(cout == "poisened users: User 2");
+}

@@ -197,7 +197,7 @@ void Game::h_set_ctx_name(const std::string& event, const std::string& args) {
     return;
   }
   if (const auto& parsed = pattern::set_ctx_name(args)) {
-    for (auto ctx : _cur_user->GetContext(parsed->ctx_id)) {
+    for (auto ctx : _cur_user->GetContext(parsed->ctx_id, _parser)) {
       ctx->set_name(parsed->value);
     }
   }
@@ -211,33 +211,42 @@ void Game::h_set_attribute(const std::string& event, const std::string& args) {
   }
   if (const auto parsed = pattern::set_attribute(args)) {
     // Find context: 
-    auto ctxs = _cur_user->GetContext(parsed->ctx_id);
+    auto ctxs = _cur_user->GetContext(parsed->ctx_id, _parser);
     if (ctxs.empty()) {
       util::Logger()->warn("Game::h_set_attribute: ctx {} not found", parsed->ctx_id);
     }
     for (auto ctx : ctxs) {
+      util::Logger()->debug("Game::h_set_attribute: ctx {}", ctx->id());
+      std::string attribute = "";
       if (auto attr = ctx->GetAttribute(parsed->attribute_id)) {
-        std::string res = "";
-        if (parsed->opt == "=")
-          res = _parser.Evaluate(parsed->expression);
-        else if (parsed->opt == "++")
-          res = std::to_string(std::stoi(*attr) + 1);
-        else if (parsed->opt == "--")
-          res = std::to_string(std::stoi(*attr) - 1);
-        else if (parsed->opt == "+=")
-          res = std::to_string(std::stoi(*attr) + std::stoi(_parser.Evaluate(parsed->expression)));
-        else if (parsed->opt == "-=")
-          res = std::to_string(std::stoi(*attr) - std::stoi(_parser.Evaluate(parsed->expression)));
-        else if (parsed->opt == "*=")
-          res = std::to_string(std::stoi(*attr) * std::stoi(_parser.Evaluate(parsed->expression)));
-        else if (parsed->opt == "/=")
-          res = std::to_string(std::stoi(*attr) / std::stoi(_parser.Evaluate(parsed->expression)));
-        util::Logger()->debug("Game::h_set_attribute: setting {} to {}", parsed->attribute_id, res);
-        if (!ctx->SetAttribute(parsed->attribute_id, res))
-          util::Logger()->warn("Game::h_set_attribute: Failed setting attribute: {} to {}", parsed->attribute_id, res);
+        attribute = *attr;
+      } else if (parsed->opt == "=") {
+        ctx->AddAttribute(parsed->attribute_id, "");
+        util::Logger()->warn("Game::h_set_attribute: attribute {} not found in ctx {}. New attribute created", 
+            parsed->attribute_id, ctx->id());
       } else {
-        util::Logger()->warn("Game::h_set_attribute: attribute {} not found in ctx {}", parsed->attribute_id, ctx->id());
+        util::Logger()->warn("Game::h_set_attribute: attribute {} not found in ctx {}. New attribute created", 
+            parsed->attribute_id, ctx->id());
+        continue;
       }
+      std::string res = "";
+      if (parsed->opt == "=")
+        res = _parser.Evaluate(parsed->expression);
+      else if (parsed->opt == "++")
+        res = std::to_string(std::stoi(attribute) + 1);
+      else if (parsed->opt == "--")
+        res = std::to_string(std::stoi(attribute) - 1);
+      else if (parsed->opt == "+=")
+        res = std::to_string(std::stoi(attribute) + std::stoi(_parser.Evaluate(parsed->expression)));
+      else if (parsed->opt == "-=")
+        res = std::to_string(std::stoi(attribute) - std::stoi(_parser.Evaluate(parsed->expression)));
+      else if (parsed->opt == "*=")
+        res = std::to_string(std::stoi(attribute) * std::stoi(_parser.Evaluate(parsed->expression)));
+      else if (parsed->opt == "/=")
+        res = std::to_string(std::stoi(attribute) / std::stoi(_parser.Evaluate(parsed->expression)));
+      util::Logger()->debug("Game::h_set_attribute: setting {} to {}", parsed->attribute_id, res);
+      if (!ctx->SetAttribute(parsed->attribute_id, res))
+        util::Logger()->warn("Game::h_set_attribute: Failed setting attribute: {} to {}", parsed->attribute_id, res);
     } 
   }
 }
@@ -314,7 +323,8 @@ void Game::h_list_attributes(const std::string& event, const std::string& ctx_id
     util::Logger()->error("Game::h_list_attributes: {}, {}. _cur_user is NULL", event, ctx_id);
     return;
   }
-  for (const auto& ctx : _cur_user->GetContext(ctx_id)) {
+
+  for (const auto& ctx : _cur_user->GetContext(ctx_id, _parser)) {
     _cout(_cur_user->id(), "Attributes:");
     for (const auto& [key, value] : ctx->attributes()) {
       if (key.front() != '_') 
@@ -329,7 +339,7 @@ void Game::h_list_all_attributes(const std::string& event, const std::string& ct
     util::Logger()->error("Game::h_list_all_attributes: {}, {}. _cur_user is NULL", event, ctx_id);
     return;
   }
-  for (const auto& ctx : _cur_user->GetContext(ctx_id)) {
+  for (const auto& ctx : _cur_user->GetContext(ctx_id, _parser)) {
     _cout(_cur_user->id(), "Attributes:");
     std::vector<std::string> hidden;
     for (const auto& [key, value] : ctx->attributes()) {
@@ -353,7 +363,7 @@ void Game::h_list_linked_contexts(const std::string& event, const std::string& a
   }
   if (auto member_access = pattern::member_access(args)) {
     if (member_access->member_type == pattern::CtxMemberAccess::VARIABLE) {
-      for (auto ctx : _cur_user->GetContext(member_access->ctx_id)) {
+      for (auto ctx : _cur_user->GetContext(member_access->ctx_id, _parser)) {
         if (auto nested_member_access = pattern::member_access(member_access->key)) {
           for (const auto& it : ctx->LinkedContexts(nested_member_access->ctx_id.substr(1))) {
             if (auto linked_ctx = it.lock()) {
@@ -380,7 +390,7 @@ void Game::h_list_contexts(const std::string& event, const std::string& args) {
     return;
   }
   if (auto member_access = pattern::member_access(args)) {
-    for (const auto& it : _cur_user->GetContext(member_access->ctx_id)) {
+    for (const auto& it : _cur_user->GetContext(member_access->ctx_id, _parser)) {
       std::string str = "";
       if (member_access->member_type == pattern::CtxMemberAccess::VARIABLE)
         User::AddVariableToText(it, member_access->key, str, _cur_user->event_queue(), _parser);
@@ -465,7 +475,7 @@ std::string Game::t_substitue_fn(const std::string& subsitute) {
     if (print_ctx->member_type == pattern::CtxMemberAccess::VARIABLE)
       return GetText("", _cur_user->PrintCtx(print_ctx->ctx_id, print_ctx->key, _parser));
     else if (print_ctx->member_type == pattern::CtxMemberAccess::ATTRIBUTE)
-      return _cur_user->PrintCtxAttribute(print_ctx->ctx_id, print_ctx->key);
+      return _cur_user->PrintCtxAttribute(print_ctx->ctx_id, print_ctx->key, _parser);
   } else if (_cur_user->texts().count(subsitute) > 0) {
     return GetText("", _cur_user->PrintTxt(subsitute, _parser));
   } else {

@@ -32,7 +32,7 @@ class User {
     /**
      * Accepts *<type> syntax, but expects the result to be a single context.
      */
-    std::vector<std::shared_ptr<Context>> GetContext(const std::string& ctx_id);
+    std::vector<std::shared_ptr<Context>> GetContext(const std::string& ctx_id, const ExpressionParser& parser);
 
     // Actions
     void AddToEventQueue(std::string events);
@@ -40,7 +40,7 @@ class User {
     void RemoveContext(const std::string& ctx_id);
     std::string PrintTxt(std::string id, const ExpressionParser& parser);
     std::string PrintCtx(std::string id, std::string what, const ExpressionParser& parser);
-    std::string PrintCtxAttribute(std::string id, std::string what);
+    std::string PrintCtxAttribute(std::string id, std::string what, const ExpressionParser& parser);
 
     // helpers 
     static void AddVariableToText(const std::shared_ptr<Context>& ctx, const std::string& what, 

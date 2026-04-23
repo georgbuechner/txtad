@@ -107,25 +107,13 @@ std::string User::PrintTxt(std::string txt_id, const ExpressionParser& parser) {
 std::string User::PrintCtx(std::string ctx_id, std::string what, const ExpressionParser& parser) {
   util::Logger()->debug("User::PrintCtx. printing \"{}\"...", ctx_id);
   std::string txt;
-  if (ctx_id.starts_with("**")) {
-    for (const auto& it : _contexts) {
-      util::Logger()->debug("User::GetContext: {}, {}", it.first, ctx_id);
-      if (it.first.find(ctx_id.substr(2)) == 0) {
-        User::AddVariableToText(it.second, what, txt, _event_queue, parser);
-      }
-    }
-  } else if (ctx_id.front() == '*') {
-    for (const auto& ctx : _context_stack.find(ctx_id.substr(1)))
-      User::AddVariableToText(ctx, what, txt, _event_queue, parser);
-  } else if (_contexts.count(ctx_id) > 0) {
-    User::AddVariableToText(_contexts.at(ctx_id), what, txt, _event_queue, parser);
-  } else {
-    util::Logger()->warn("User::PrintCtx. Context \"{}\" not found.", ctx_id);
+  for (const auto& ctx : GetContext(ctx_id, parser)) {
+    User::AddVariableToText(ctx, what, txt, _event_queue, parser);
   }
   return txt;
 }
 
-std::string User::PrintCtxAttribute(std::string ctx_id, std::string attribute) {
+std::string User::PrintCtxAttribute(std::string ctx_id, std::string attribute, const ExpressionParser& parser) {
   util::Logger()->debug("User::PrintCtxAttribute. printing \"{}.{}\".", ctx_id, attribute);
   std::string txt;
 
@@ -137,7 +125,7 @@ std::string User::PrintCtxAttribute(std::string ctx_id, std::string attribute) {
   };
 
   int counter = 0;
-  for (const auto& ctx : GetContext(ctx_id)) {
+  for (const auto& ctx : GetContext(ctx_id, parser)) {
     if (counter++ > 0) {
       txt += ";";
     }
@@ -190,21 +178,52 @@ void User::AddVariableToText(const std::shared_ptr<Context>& ctx, const std::str
   }
 }
 
-std::vector<std::shared_ptr<Context>> User::GetContext(const std::string& ctx_id) {
-  if (ctx_id.starts_with("**")) {
-    std::vector<std::shared_ptr<Context>> ctxs;
+std::vector<std::shared_ptr<Context>> User::GetContext(const std::string& ctx_id, const ExpressionParser& parser) {
+  std::vector<std::shared_ptr<Context>> ctxs;
+
+  auto pos = ctx_id.find("[");
+  std::string id = ctx_id;
+  std::string query = "";
+  if (pos != std::string::npos && ctx_id.ends_with("]")) {
+    id = ctx_id.substr(0, pos);
+    query = ctx_id.substr(pos+1, ctx_id.length()-(pos+1)-1);
+  }
+  util::Logger()->debug("GetContext id: {}, query: {}", id, query);
+
+  if (id.starts_with("**")) {
     for (const auto& it : _contexts) {
-      util::Logger()->debug("User::GetContext: {}, {}", it.first, ctx_id);
-      if (it.first.find(ctx_id.substr(2)) == 0) {
+      util::Logger()->debug("User::GetContext: {}, {}", it.first, id);
+      if (it.first.find(id.substr(2)) == 0) {
         ctxs.push_back(it.second);
       }
     }
-    return ctxs;
-  } else if (ctx_id.front() == '*') {
-    return _context_stack.find(ctx_id.substr(1));
-  } else if (_contexts.count(ctx_id) > 0) {
-    return {_contexts.at(ctx_id)};
+  } else if (id.front() == '*') {
+    ctxs = _context_stack.find(id.substr(1));
+  } else if (_contexts.count(id) > 0) {
+    ctxs = {_contexts.at(id)};
   } else {
-    util::Logger()->warn("User::PrintCtx. Context \"{}\" not found.", ctx_id);
+    util::Logger()->warn("User::GetContext. Context \"{}\" not found.", id);
   }
+
+  if (query != "") {
+    util::Logger()->debug("User::GetContext. Fitering {} ctx with query: {}", ctxs.size(), query);
+    std::vector<std::shared_ptr<Context>> filtered_ctxs;
+
+    // Find position before operand to insert '}'
+    auto pos = query.find(" ");
+    if (pos == std::string::npos) {
+      util::Logger()->warn("User::GetContext. Query opts must be surrounded by spaces! {}", query);
+      return {};
+    }
+    query[pos] = '}';
+
+    for (const auto& ctx : ctxs) {
+      if (parser.Evaluate("{" + ctx->id() + query) == "1") {
+        filtered_ctxs.push_back(ctx);
+      }
+    }
+    return filtered_ctxs;
+  }
+  util::Logger()->debug("User::GetContext. returning {} ctxs.", ctxs.size());
+  return ctxs;
 }
