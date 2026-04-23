@@ -164,6 +164,10 @@ std::string Game::CheckLogic(const std::string& logic) {
 
 void Game::h_add_ctx(const std::string& event, const std::string& ctx_id) {
   util::Logger()->info("Adding context: {}", ctx_id);
+  if (!_cur_user) {
+    util::Logger()->error("Game::h_add_ctx: {}, {}. _cur_user is NULL", event, ctx_id);
+    return;
+  }
   if (_cur_user->contexts().count(ctx_id) > 0)
     _cur_user->LinkContextToStack(_cur_user->contexts().at(ctx_id));
   else 
@@ -172,6 +176,10 @@ void Game::h_add_ctx(const std::string& event, const std::string& ctx_id) {
 
 void Game::h_remove_ctx(const std::string& event, const std::string& ctx_id) {
   util::Logger()->info("Removing context: {}", ctx_id);
+  if (!_cur_user) {
+    util::Logger()->error("Game::h_remove_ctx: {}, {}. _cur_user is NULL", event, ctx_id);
+    return;
+  }
   _cur_user->RemoveContext(ctx_id);
 }
 
@@ -184,6 +192,10 @@ void Game::h_replace_ctx(const std::string& event, const std::string& args) {
 
 void Game::h_set_ctx_name(const std::string& event, const std::string& args) {
   util::Logger()->info("Game::h_set_ctx_name. args: {}", args);
+  if (!_cur_user) {
+    util::Logger()->error("Game::h_set_ctx_name: {}, {}. _cur_user is NULL", event, args);
+    return;
+  }
   if (const auto& parsed = pattern::set_ctx_name(args)) {
     for (auto ctx : _cur_user->GetContext(parsed->ctx_id)) {
       ctx->set_name(parsed->value);
@@ -193,6 +205,10 @@ void Game::h_set_ctx_name(const std::string& event, const std::string& args) {
 
 void Game::h_set_attribute(const std::string& event, const std::string& args) {
   util::Logger()->info("Game::h_set_attribute: {}", args);
+  if (!_cur_user) {
+    util::Logger()->error("Game::h_set_attribute: {}, {}. _cur_user is NULL", event, args);
+    return;
+  }
   if (const auto parsed = pattern::set_attribute(args)) {
     // Find context: 
     auto ctxs = _cur_user->GetContext(parsed->ctx_id);
@@ -234,6 +250,10 @@ void Game::h_add_to_eventqueue(const std::string& event, const std::string& args
 }
 
 void Game::h_exec(const std::string& event, const std::string& args) {
+  if (!_cur_user) {
+    util::Logger()->error("Game::h_exec: {}, {}. _cur_user is NULL", event, args);
+    return;
+  }
   const std::string event_queue = _cur_user->event_queue(); // Store event-queue
   _cur_user->HandleEvent(args, _parser);
   _cur_user->AddToEventQueue(event_queue); // And re-add here, since "HandleEvent" resets queue.
@@ -241,6 +261,10 @@ void Game::h_exec(const std::string& event, const std::string& args) {
 
 void Game::h_print(const std::string& event, const std::string& args) {
   util::Logger()->info("Handler::h_print: {} {}", event, args);
+  if (!_cur_user) {
+    util::Logger()->error("Game::h_print: {}, {}. _cur_user is NULL", event, args);
+    return;
+  }
   std::string txt = GetText(event, args);
   _cout(_cur_user->id(), txt);
   util::Logger()->debug("Handler::h_print: {} {} done", event, args);
@@ -248,6 +272,10 @@ void Game::h_print(const std::string& event, const std::string& args) {
 
 void Game::h_print_with_prompt(const std::string& event, const std::string& args) {
   util::Logger()->info("Handler::h_print_with_prompt: {} {}", event, args);
+  if (!_cur_user) {
+    util::Logger()->error("Game::h_print_with_prompt: {}, {}. _cur_user is NULL", event, args);
+    return;
+  }
   std::string txt = GetText(event, args);
   _cout(_cur_user->id(), txt + txtad::WEB_CMD_ADD_PROMPT);
   util::Logger()->debug("Handler::h_print_with_prompt: {} {} done", event, args);
@@ -282,6 +310,10 @@ void Game::h_print_to(const std::string& event, const std::string& args) {
 
 void Game::h_list_attributes(const std::string& event, const std::string& ctx_id) {
   util::Logger()->info("Handler::h_list_attributes: {} {}", event, ctx_id);
+  if (!_cur_user) {
+    util::Logger()->error("Game::h_list_attributes: {}, {}. _cur_user is NULL", event, ctx_id);
+    return;
+  }
   for (const auto& ctx : _cur_user->GetContext(ctx_id)) {
     _cout(_cur_user->id(), "Attributes:");
     for (const auto& [key, value] : ctx->attributes()) {
@@ -293,6 +325,10 @@ void Game::h_list_attributes(const std::string& event, const std::string& ctx_id
 
 void Game::h_list_all_attributes(const std::string& event, const std::string& ctx_id) {
   util::Logger()->info("Handler::h_list_all_attributes: {} {}", event, ctx_id);
+  if (!_cur_user) {
+    util::Logger()->error("Game::h_list_all_attributes: {}, {}. _cur_user is NULL", event, ctx_id);
+    return;
+  }
   for (const auto& ctx : _cur_user->GetContext(ctx_id)) {
     _cout(_cur_user->id(), "Attributes:");
     std::vector<std::string> hidden;
@@ -311,6 +347,10 @@ void Game::h_list_all_attributes(const std::string& event, const std::string& ct
 
 void Game::h_list_linked_contexts(const std::string& event, const std::string& args) {
   util::Logger()->info("Handler::h_list_linked_contexts: {} {}", event, args);
+  if (!_cur_user) {
+    util::Logger()->error("Game::h_list_all_attributes: {}, {}. _cur_user is NULL", event, args);
+    return;
+  }
   if (auto member_access = pattern::member_access(args)) {
     if (member_access->member_type == pattern::CtxMemberAccess::VARIABLE) {
       for (auto ctx : _cur_user->GetContext(member_access->ctx_id)) {
@@ -335,6 +375,10 @@ void Game::h_list_linked_contexts(const std::string& event, const std::string& a
 
 void Game::h_list_contexts(const std::string& event, const std::string& args) {
   util::Logger()->info("Handler::h_list_contexts: {} {}", event, args);
+  if (!_cur_user) {
+    util::Logger()->error("Game::h_list_contexts: {}, {}. _cur_user is NULL", event, args);
+    return;
+  }
   if (auto member_access = pattern::member_access(args)) {
     for (const auto& it : _cur_user->GetContext(member_access->ctx_id)) {
       std::string str = "";
@@ -354,7 +398,12 @@ void Game::h_reset_game(const std::string& event, const std::string& ctx_id) {
   _contexts.clear();
   _texts.clear();
   // Gather user IDs
-  std::string cur_user_id = _cur_user->id();
+  std::string cur_user_id = "";
+  if (_cur_user) {
+    cur_user_id = _cur_user->id();
+  } else {
+    util::Logger()->warn("Game::h_reset_game: {}, {}. _cur_user is NULL", event, ctx_id);
+  }
   std::vector<std::string> user_ids; 
   for (const auto& it : _users) {
     user_ids.push_back(it.first);
@@ -376,10 +425,19 @@ void Game::h_reset_game(const std::string& event, const std::string& ctx_id) {
     it.second->HandleEvent(_settings.initial_events(), _parser);
   }
   // Set current user to last current user
-  _cur_user = _users.at(cur_user_id);
+  if (!cur_user_id.empty()) {
+    _cur_user = _users.at(cur_user_id);
+  } else {
+    _cur_user = nullptr;
+    util::Logger()->warn("Game::h_reset_game, done but without new _cur_user!");
+  }
 }
 
 void Game::h_reset_user(const std::string& event, const std::string& ctx_id) {
+  if (!_cur_user) {
+    util::Logger()->error("Game::h_reset_user: {}, {}. _cur_user is NULL", event, ctx_id);
+    return;
+  }
   std::string user_id = _cur_user->id();
   _users.erase(user_id);
   _cur_user = CreateNewUser(user_id);
@@ -388,6 +446,10 @@ void Game::h_reset_user(const std::string& event, const std::string& ctx_id) {
 }
 
 void Game::h_remove_user(const std::string& event, const std::string& ctx_id) {
+  if (!_cur_user) {
+    util::Logger()->error("Game::h_reset_user: {}, {}. _cur_user is NULL", event, ctx_id);
+    return;
+  }
   std::string user_id = _cur_user->id();
   _users.erase(user_id);
   _cur_user = nullptr;
@@ -395,6 +457,10 @@ void Game::h_remove_user(const std::string& event, const std::string& ctx_id) {
 
 std::string Game::t_substitue_fn(const std::string& subsitute) {
   util::Logger()->info("Game::t_substitue_fn: subsitute {}", subsitute);
+  if (!_cur_user) {
+    util::Logger()->error("Game::t_substitue_fn: {}. _cur_user is NULL", subsitute);
+    return txtad::NO_REPLACEMENT;
+  }
   if (auto print_ctx = pattern::member_access(subsitute)) {
     if (print_ctx->member_type == pattern::CtxMemberAccess::VARIABLE)
       return GetText("", _cur_user->PrintCtx(print_ctx->ctx_id, print_ctx->key, _parser));
