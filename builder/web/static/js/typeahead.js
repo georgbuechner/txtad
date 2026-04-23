@@ -20,9 +20,10 @@ class STD extends State {
   handler(e) { 
     if (e.key == "{") {
       StateMaschine.transition(new REP_All(this));
-    }    
-    else if (e.key == "$") {
+    } else if (e.key == "$") {
       StateMaschine.transition(new GOPT(this));
+    } else if (e.key == "#") {
+      StateMaschine.transition(new ROPT(this));
     }
   }
 };
@@ -250,6 +251,33 @@ class GOPT_ARGS extends GOPT {
     }
   }
 
+}
+
+class ROPT extends REP {
+  constructor(prev, name, suggestions) {
+    if (name === undefined) {
+      name = "ROPT";
+    }
+    if (suggestions === undefined) {
+      suggestions = ["event", "uid", "new_connection", "remove_user"];
+    }
+    super(name, suggestions, prev);
+    this.prev = prev;
+  }
+  handler(e) {
+    if (e.key == "Enter") {
+      e.preventDefault();
+      if (REP.ApplySuggestion(this)) {
+        let sug = this.suggestions[this.index];
+        StateMaschine.transition(new STD());
+      }
+    } else if (e.key == " ") {
+      StateMaschine.transition(new STD());
+      return;
+    } else {
+      super.handler(e);
+    }
+  }
 }
 
 const StateMaschine = {

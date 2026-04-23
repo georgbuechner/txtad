@@ -1,6 +1,14 @@
 <div class="input-group mb-3">
   <span class="input-group-text" id="{{event_id}}_label">{{event_label}}</span>
-  <input 
+  {% set inp_id = event_id %}
+  {% set inp_name = event_name %} 
+  {% set inp_label = "" %} 
+  {% set inp_value = events %}
+  {% set inp_data_type= "event" %}
+  {% include "forms/free-inp.html" %}
+  {% set inp_data_type= "" %}
+
+  <!-- <input 
     type="text" 
     class="form-control" 
     placeholder="..." 
@@ -8,7 +16,7 @@
     name="{{event_name}}" 
     value="{{events}}"
     data-type="event" 
-  >
+    > -->
   <button 
     class="btn btn-outline-secondary" 
     type="button" 
