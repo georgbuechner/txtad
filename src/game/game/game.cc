@@ -295,7 +295,7 @@ void Game::h_print_to(const std::string& event, const std::string& args) {
   util::Logger()->info("Handler::h_print_to: {}, {}", event, args);
   std::string args_copy = args;
   if (args.front() == '*') {
-    std::string txt = GetText(event, args.substr(1));
+    std::string txt = GetText(event, args.substr(2)); // (skip leading whitespace 
     util::Logger()->info("Handler::h_print_to: sending to all users: {}", txt);
     for (const auto& it : _users) {
       _cout(it.first, txt);
@@ -305,7 +305,8 @@ void Game::h_print_to(const std::string& event, const std::string& args) {
     int closing = util::ClosingBracket(args, 1, '{', '}');
     if (closing != -1) {
       std::string subsitute = args.substr(1, closing-1);
-      _cout(t_substitue_fn(subsitute), GetText(event, args_copy.substr(subsitute.length()+2)));
+      // use `substr(len+3) for acknowledging whitespace and brackets 
+      _cout(t_substitue_fn(subsitute), GetText(event, args_copy.substr(subsitute.length()+3)));
     } else {
       util::Logger()->warn("Handler::h_print_to: sending to user via subsitute: closing bracket not found.");
     }
