@@ -68,7 +68,7 @@ std::vector<std::shared_ptr<Context>> ContextStack::find(const std::string& id_p
   std::vector<std::shared_ptr<Context>> ctxs; 
   for (const auto& it : _contexts) {
     util::Logger()->debug("ContextStack::find. {} == {}", id_part, it.second->id());
-    if (it.second->id().find(id_part) != std::string::npos) {
+    if (it.second->id().find(id_part) == 0) {
       ctxs.push_back(it.second);
     }
   }

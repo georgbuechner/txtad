@@ -40,6 +40,9 @@ namespace pattern {
     const std::string key;
   };
   std::optional<CtxMemberAccess> member_access(const std::string& inp);
+
+  size_t find(const std::string& inp, const std::string& sub_str); 
+  size_t rfind(const std::string& inp, const std::string& sub_str); 
 }
 
 #endif

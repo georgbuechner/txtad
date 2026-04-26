@@ -75,6 +75,7 @@ class ExpressionParser{
     static std::pair<int, std::string> LastOpt(const std::string& inp);
 
     static std::optional<short> PartOfOpt(int pos, const std::string& inp);
+    static std::optional<short> RPartOfOpt(int pos, const std::string& inp);
 };
 
 #endif

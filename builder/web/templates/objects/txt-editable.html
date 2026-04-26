@@ -29,7 +29,10 @@
             data-bs-toggle="collapse" 
             data-bs-target="#collapsetxt{{label}}{{loop.index}}" aria-expanded="false" 
             aria-controls="collapsetxt{{label}}{{loop.index}}">
-          {{txt.txt}}
+          {% if txt.logic != "" %}
+            [{{txt.logic|trim}}]<br>
+          {% endif %}
+          {{txt.txt|safe}}
         </button>
       </h2>
       <div 

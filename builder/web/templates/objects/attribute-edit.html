@@ -4,9 +4,15 @@
   enctype="multipart/form-data"
 >
   <div class="input-group mb-3">
-    <input type="text" class="form-control" placeholder="key" name="key" id="key" value="{{attribute.key}}" required>
-    <input type="text" class="form-control" placeholder="value" name="value" id="value" value="{{attribute.value}}" required>
-    <button type="submit" class="btn btn-primary">save</button>
+    <span class="input-group-text" id="shared">Key: </span>
+    <input type="text" class="form-control" name="key" id="key" value="{{attribute.key}}" required>
   </div>
+
+  {% set inp_id = path ~ "_" ~ attribute_id %}
+  {% set inp_name = "value" %} 
+  {% set inp_value = attribute.value %}
+  {% set inp_label = "Value: " %} 
+  {% include "forms/free-inp.html" %}
+  <button type="submit" class="btn btn-primary">save</button>
 </form>
 

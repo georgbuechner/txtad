@@ -908,3 +908,74 @@ TEST_CASE("Test multi-edit", "[game]") {
   REQUIRE(game.contexts().at("users/user_1")->GetAttribute("life").value() == "15");
   REQUIRE(game.contexts().at("users/user_2")->GetAttribute("life").value() == "25");
 }
+
+TEST_CASE("Test multi print", "[game]") {
+  const nlohmann::json settings = {
+    {"initial_events", ""},
+    {"initial_contexts", {"general"}} 
+  };
+
+  const nlohmann::json ctx_general = {
+    {"id", "general"},
+    {"name", "General"},
+    {"description", "Some general handlers"},
+    {"permeable", true},
+    {"listeners", {
+      {{"id", "L1"}, {"re_event", "increase-counter"}, {"arguments", 
+        "#sa general.counter++"}, {"permeable", true}},
+    }},
+  };
+
+  const nlohmann::json user_1 = {
+    {"id", "user_1"},
+    {"name", "User 1"},
+    {"description", { {"txt", "A normal user"}, }},
+    {"attributes", {{"life", "10"}, {"poisened", "1"}}},
+    {"listeners", nlohmann::json::array() },
+  };
+  const nlohmann::json user_2 = {
+    {"id", "user_2"},
+    {"name", "User 2"},
+    {"description", { {"txt", "A normal user"}, }},
+    {"attributes", {{"life", "20"}, {"poisened", "2"}}},
+    {"listeners", nlohmann::json::array() },
+  };
+
+
+  std::string cout = "";
+  Game::set_global_msg_fn([&cout](std::string id, std::string txt) { 
+      cout += ((cout != "") ? "\n" : "") + txt; });
+
+  auto get_cout = [&cout]() { 
+    std::string str = cout;
+    cout = "";
+    return str; 
+  };
+
+  const std::string GAME_NAME = "test_game_multiple";
+  const std::string GAME_PATH = txtad::GAMES_PATH + GAME_NAME;
+  test::GameWrapper test_game_wrapper(GAME_NAME, settings, {{"", {ctx_general}},
+      {"users", {user_1, user_2}}}, {});
+  Game game(GAME_PATH, GAME_NAME);
+
+  // Create users
+  const std::string USER_ID = "0x1234";
+  game.HandleEvent(USER_ID, "");
+
+  game.HandleEvent(USER_ID, "#> {*users.life}");
+  REQUIRE(get_cout() == "");
+
+  game.HandleEvent(USER_ID, "#> {**users.life}");
+  REQUIRE(get_cout() == "10;20");
+
+  game.HandleEvent(USER_ID, "#> {**users.life}");
+  REQUIRE(get_cout() == "10;20");
+
+  game.HandleEvent(USER_ID, "#> poisened users: {**users[.poisened > 0]->name}");
+  REQUIRE(get_cout() == "poisened users: User 1, User 2");
+
+  game.HandleEvent(USER_ID, "#sa **users[.poisened > 0].life -= 5;#sa **users[.poisened > 0].poisened -= 1");
+
+  game.HandleEvent(USER_ID, "#> poisened users: {**users[.poisened > 0]->name}");
+  REQUIRE(cout == "poisened users: User 2");
+}

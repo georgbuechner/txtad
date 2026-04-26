@@ -4,7 +4,12 @@
 {% endif %}
 
 {% for txt in text %}
-  <p class="text-primary"><i>{{txt.txt}}</i></p>
+  <p class="text-primary">
+    {% if txt.logic != "" %}
+    <span>[{{txt.logic|trim}}]</span><br>
+    {% endif %}
+    <span><i>{{txt.txt}}</i></span>
+  </p>
   {% if txt.one_time_events or txt.permanent_events %}
     <p style="margin-top: -1.2em;" class="text-primary small"> 
       (events: {{txt.one_time_events}} {{txt.permanent_events}})

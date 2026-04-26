@@ -1,21 +1,4 @@
-const events_config = {
-  "#ctx remove": ["[ctx]"], // manually tested
-  "#ctx add": ["<ctx>"], // manually tested
-  "#ctx replace": ["[ctx]", " -> ", "<ctx>"], // manually tested
-  "#ctx name": ["[ctx]", " = ", "<free>"], // manually tested
-  "#sa": ["[ctx]", ".", "[attr]", "<opt>", "<free>"], // manually tested
-  "#lst atts": ["[ctx]"], // manually tested
-  "#lst* atts": ["[ctx]"], // manually tested
-  "#lst ctxs": ["[ctx]", "->", "[type]", "<ptr>", "[tattr|var]"], // TODO ???
-  "#>": ["<free>"], // manually tested
-  "#>>": ["<free>"], // manually tested
-  "#->": ["<free>"], // manually tested
-  "#reset game": [], // manually tested
-  "#reset user": [], // manually tested
-  "#remove_user": ["[ctx]", ".", "[attr]"], // manually tested
-};
-
-const vars = ["name", "desc"];
+const vars = ["id", "name", "desc"];
 const ptrs = [".", "->"];
 const opts = ["+=", "-=", "++", "--", "*=", "/=", "="];
 
@@ -185,6 +168,7 @@ function CreateEventFields(cmd, args) {
           <span class="input-group-text">Context (match):</span>
           <select class="form-select"> 
             '<option selected>---</option>'
+            '<option selected>#event</option>'
             ${context_ids().map(ctx_id =>
               '<option' + ((tvalue.startsWith(ctx_id)) ? ' selected >' : '>') + ctx_id + '</option>'
             )}
@@ -302,8 +286,10 @@ function SplitArgs(cmd, args) {
     return args.split(".");
   } else if (cmd === "#sa") {
     return setAttribute(args);
-  } else if (cmd === "#lst ctxs") {
+  } else if (cmd === "#lst linked_ctxs") {
     return listLinkedCtxs(args);
+  } else if (cmd === "#lst* ctxs") {
+    return listCtxs(args);
   } else {
     return [args];
   }
@@ -368,4 +354,18 @@ function listLinkedCtxs(inp) {
   const type = inp.substr(0, pos);
   const tattr = inp.substr(pos+ptr.length); 
   return [ctx_type, type, ptr, tattr];
+}
+function listCtxs(inp) {
+  let ptr = ".";
+  pos = inp.indexOf(ptr);
+  if (pos === -1) {
+    ptr = "->";
+    pos = inp.indexOf(ptr);
+    if (pos === -1) {
+      return ["", "", ""];
+    }
+  }
+  const ctx_type = inp.substr(0, pos);
+  const tattr = inp.substr(pos+ptr.length); 
+  return [ctx_type, ptr, tattr];
 }

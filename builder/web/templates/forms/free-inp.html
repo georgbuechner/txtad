@@ -1,5 +1,7 @@
+{% if inp_label != "" %}
 <div class="input-group mb-3">
   <span class="input-group-text">{{inp_label}}</span>
+{% endif %}
   <div class="flex-grow-1">
     <input 
       type="text" 
@@ -8,11 +10,16 @@
       name="{{inp_name}}" 
       id="{{inp_id}}" 
       value="{{inp_value}}" 
+      {% if inp_data_type != "" %}
+        data-type="{{inp_data_type}}" 
+      {% endif %}
       onfocus="SetUpTypeahead('{{inp_id}}');"
       onkeydown="Typeahead(event, '{{inp_id}}');"
       autocomplete="off"
     >
     <div class="form-text" id="hints_{{inp_id}}" class="overflow" for="{{inp_id}}"></div>
   </div>
+{% if inp_label != "" %}
 </div>
+{% endif %}
 

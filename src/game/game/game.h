@@ -78,6 +78,7 @@ class Game {
     void h_list_attributes(const std::string& event, const std::string& ctx_id);
     void h_list_all_attributes(const std::string& event, const std::string& ctx_id);
     void h_list_linked_contexts(const std::string& event, const std::string& ctx_id);
+    void h_list_contexts(const std::string& event, const std::string& ctx_id);
 
     void h_reset_game(const std::string& event, const std::string& ctx_id);
     void h_reset_user(const std::string& event, const std::string& ctx_id);

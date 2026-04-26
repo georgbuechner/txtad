@@ -20,9 +20,10 @@ class STD extends State {
   handler(e) { 
     if (e.key == "{") {
       StateMaschine.transition(new REP_All(this));
-    }    
-    else if (e.key == "$") {
+    } else if (e.key == "$") {
       StateMaschine.transition(new GOPT(this));
+    } else if (e.key == "#") {
+      StateMaschine.transition(new ROPT(this));
     }
   }
 };
@@ -37,7 +38,10 @@ class REP extends State {
   handler(e) { 
     if (e.key.length == 1 && isValidIdStr(e.key)) {
       this.inp += e.key;
-      this.suggestions = this.base_suggestions.filter((id) => id.indexOf(this.inp) == 0);
+      this.suggestions = [
+        ...this.base_suggestions.filter((id) => id.indexOf(this.inp) === 0),
+        ...this.base_suggestions.filter((id) => id.indexOf(this.inp) !== -1)
+      ]
     } else if (e.key === "Backspace") {
       if (this.inp.length > 0) {
         this.inp = this.inp.substr(0, this.inp.length-1);
@@ -128,7 +132,7 @@ class REP_ATTS extends REP {
 
 class REP_VAR extends REP {
   constructor(prev, full) {
-    super("VAR", (full) ? ["name", "desc", "*"] : ["name", "desc"], prev);
+    super("VAR", (full) ? ["id", "name", "desc", "*"] : ["id", "name", "desc"], prev);
     this.full = full;
   }
   handler(e) {
@@ -187,7 +191,7 @@ class OPT extends State {
       return;
     } else if (e.key.length == 1 && e.key == ".") {
       const id = this.prev.suggestions[this.prev.index];
-      const options = (this.prev.name == "REP_ALL") ? context_attributes(id) : type_attributes(id);
+      const options = (id.indexOf("*") !== 0) ? context_attributes(id) : type_attributes(id);
       StateMaschine.transition(new REP_ATTS(options, this)); 
     } else if (e.key.length == 1 && e.key == "-") {
       this.inp = "-";
@@ -247,6 +251,33 @@ class GOPT_ARGS extends GOPT {
     }
   }
 
+}
+
+class ROPT extends REP {
+  constructor(prev, name, suggestions) {
+    if (name === undefined) {
+      name = "ROPT";
+    }
+    if (suggestions === undefined) {
+      suggestions = ["event", "uid", "new_connection", "remove_user"];
+    }
+    super(name, suggestions, prev);
+    this.prev = prev;
+  }
+  handler(e) {
+    if (e.key == "Enter") {
+      e.preventDefault();
+      if (REP.ApplySuggestion(this)) {
+        let sug = this.suggestions[this.index];
+        StateMaschine.transition(new STD());
+      }
+    } else if (e.key == " ") {
+      StateMaschine.transition(new STD());
+      return;
+    } else {
+      super.handler(e);
+    }
+  }
 }
 
 const StateMaschine = {

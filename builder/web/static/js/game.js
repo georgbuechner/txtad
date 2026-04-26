@@ -1,3 +1,21 @@
+const events_config = {
+  "#ctx remove": ["[ctx]"], // manually tested
+  "#ctx add": ["<ctx>"], // manually tested
+  "#ctx replace": ["[ctx]", " -> ", "<ctx>"], // manually tested
+  "#ctx name": ["[ctx]", " = ", "<free>"], // manually tested
+  "#sa": ["[ctx]", ".", "[attr]", "<opt>", "<free>"], // manually tested
+  "#lst atts": ["[ctx]"], // manually tested
+  "#lst* atts": ["[ctx]"], // manually tested
+  "#lst linked_ctxs": ["[ctx]", "->", "[type]", "<ptr>", "[tattr|var]"], // TODO ???
+  "#lst* ctxs": ["[ctx]", "<ptr>", "[tattr|var]"], // TODO ???
+  "#>": ["<free>"], // manually tested
+  "#>>": ["<free>"], // manually tested
+  "#->": ["<free>"], // manually tested
+  "#reset game": [], // manually tested
+  "#reset user": [], // manually tested
+  "#remove_user": ["[ctx]", ".", "[attr]"], // manually tested
+};
+
 const DataStore = {
   ready: false, 
   data: {}
@@ -9,7 +27,8 @@ AppInit.register(async () => {
 });
 
 async function LoadAllData() {
-  const types = ["ctx-ids", "text-ids", "types", "ctx-attributes", "type-attributes", "media-audios"];
+  const types = ["ctx-ids", "text-ids", "types", "ctx-attributes", "type-attributes", 
+    "media-audios", "custom-handlers"];
 
   // Request data from server
   const results = await Promise.all(
@@ -26,6 +45,14 @@ async function LoadAllData() {
   DataStore.data["ctx-types"] = DataStore.data["ctx-ids"].concat(DataStore.data["types"]);
 
   DataStore.ready = true;
+
+  console.log("custom-handlers: ", DataStore.data["custom-handlers"]);
+  for (const h of  DataStore.data["custom-handlers"]) {
+    let evt = h.replaceAll("(.*)", "").replaceAll(".*", "").trim();
+    if (!(evt in events_config)) {
+      events_config[evt] = ["<free>"];
+    }
+  }
 }
 
 function game_id() {
@@ -169,11 +196,11 @@ function isValidIdStr(str) {
 
   for (i = 0, len = str.length; i < len; i++) {
     code = str.charCodeAt(i);
-    console.log(str[i], code);
+    console.log("CODE: ", str[i], code);
     if (!(code > 47 && code < 58) && // numeric (0-9)
         !(code > 64 && code < 91) && // upper alpha (A-Z)
         !(code > 96 && code < 123) && // lower alpha (a-z)
-        !(code == 47 || code == 42)) { // slash ('/')
+        !(code == 47 || code == 42 || code == 95)) { // slash ('/'), ???, ('_')
       return false;
     }
   }
