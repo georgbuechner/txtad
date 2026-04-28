@@ -29,6 +29,8 @@ namespace txtad {
   const std::string EVENT_REPLACEMENT = "#event";
   const std::string UID_REPLACEMENT = "#uid";
   const std::string NO_REPLACEMENT = "#no_subsitute";
+  const std::string RAN_NUM = "#ran_num";
+  const std::string RAN_ELEM = "#ran";
   
   const std::string CTX_REPLACEMENT = "<ctx>";
   const std::string IS_USER_REPLACEMENT = "<user-inp>";

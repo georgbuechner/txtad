@@ -6,6 +6,7 @@
 #include "shared/utils/utils.h"
 #include <memory>
 #include <optional>
+#include <utility>
 
 User::User(const std::string& game_id, const std::string& id, const txtad::MsgFn& cout,
     const std::map<std::string, std::shared_ptr<Context>>& contexts, 
@@ -205,24 +206,45 @@ std::vector<std::shared_ptr<Context>> User::GetContext(const std::string& ctx_id
     util::Logger()->warn("User::GetContext. Context \"{}\" not found.", id);
   }
 
-  if (query != "") {
+  bool chose_random = false;
+  if (query == txtad::RAN_ELEM) {
+    chose_random = true;
+  } else if (query != "") {
     util::Logger()->debug("User::GetContext. Fitering {} ctx with query: {}", ctxs.size(), query);
     std::vector<std::shared_ptr<Context>> filtered_ctxs;
 
+    // remove random qualifier
+    auto pos = query.find(", " + txtad::RAN_ELEM);
+    if (pos != std::string::npos) {
+      query = query.substr(0, pos);
+      chose_random = true;
+      util::Logger()->debug("User::GetContext. reduced query {}", query);
+    }
+
     // Find position before operand to insert '}'
-    auto pos = query.find(" ");
+    pos = query.find(" ");
     if (pos == std::string::npos) {
       util::Logger()->warn("User::GetContext. Query opts must be surrounded by spaces! {}", query);
       return {};
     }
     query[pos] = '}';
 
+    // filter contexts not matching query
     for (const auto& ctx : ctxs) {
       if (parser.Evaluate("{" + ctx->id() + query) == "1") {
         filtered_ctxs.push_back(ctx);
       }
     }
-    return filtered_ctxs;
+
+    // set to filtered ctx
+    ctxs = std::move(filtered_ctxs);
+  }
+
+  // Check if choose-random was selected
+  if (chose_random) {
+    util::Logger()->debug("User::GetContext. returning random from {} ctxs.", ctxs.size());
+    int ran = util::ran(0, ctxs.size());
+    return {ctxs.at(ran)};
   }
   util::Logger()->debug("User::GetContext. returning {} ctxs.", ctxs.size());
   return ctxs;

@@ -14,6 +14,7 @@
 #include <spdlog/common.h>
 #include <spdlog/logger.h>
 #include <string>
+#include <unordered_set>
 
 namespace util
 {
@@ -59,6 +60,7 @@ namespace util
    * @return striped string
    */
   std::string Strip(std::string str, char c=' ');
+  std::string Strip(std::string str, const std::unordered_set<char>& chars);
 
   /** 
    * Replace all ocurences of `from` with `to` and return modified string 
@@ -145,6 +147,8 @@ namespace util
   bool IsSubPathOf(const std::vector<std::string>& paths, const std::string& sub);
 
   std::string GetContentType(const std::string& extension);
+
+  int ran(int from, int to);
 
 
   class TmpPath {

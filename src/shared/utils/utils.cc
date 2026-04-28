@@ -20,6 +20,8 @@
 #include <openssl/evp.h>
 #include <openssl/sha.h>
 #include <stdexcept>
+#include <stdio.h>
+#include <stdlib.h>
 
 
 std::string util::LOGGER = "---";
@@ -91,6 +93,19 @@ std::string util::Strip(std::string str, char c) {
   }
   return str;
 }
+
+std::string util::Strip(std::string str, const std::unordered_set<char>& chars) {
+  for(;;) {
+    if (chars.contains(str.front()))
+      str.erase(0, 1);
+    else if (chars.contains(str.back())) 
+      str.pop_back();
+    else 
+      break;
+  }
+  return str;
+}
+
 
 std::string util::ReplaceAll(std::string str, const std::string& from, const std::string& to) {
   size_t pos = 0;
@@ -362,4 +377,8 @@ std::string util::GetContentType(const std::string& extension) {
     return it->second;
   }
   throw std::invalid_argument("Unkown/unhandled extension: " + extension);
+}
+
+int util::ran(int from, int to) {
+  return rand() % (to-from) + from;
 }

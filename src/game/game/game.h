@@ -41,6 +41,7 @@ class Game {
     void HandleEvent(const std::string& user_id, const std::string& event);
     std::shared_ptr<User> CreateNewUser(std::string user_id);
     std::string CheckLogic(const std::string& logic);
+    static std::string RanSubstitute(const std::string& substitue);
 
   protected: 
     static MsgFn _global_cout;
