@@ -1,5 +1,8 @@
+#include "game/game/game.h"
+#include "game/utils/defines.h"
 #include "shared/utils/fuzzy_search/fuzzy.h"
 #include "shared/utils/parser/expression_parser.h"
+#include "shared/utils/test_helpers.h"
 #include <catch2/catch_test_macros.hpp>
 #include <string>
 
@@ -137,7 +140,11 @@ TEST_CASE("Text replacements", "[parser]") {
   std::map<std::string, std::string> substitutes = {{"player_name", "chars/fux"}, {"inventory", "[book; tabako; wine]"},
     {"rooms/closet", "Closet"}, {"players", "chars/fux; chars/alex"}};
   ExpressionParser::SubstituteFN fn = [&substitutes](const std::string& str) { 
-    return (substitutes.count(str) > 0) ? substitutes.at(str) : ""; };
+    if (substitutes.contains(str)) {
+      return substitutes.at(str);
+    }
+    return Game::RanSubstitute(str);
+  };
   ExpressionParser parser(fn);
 
   // name reduction
@@ -154,4 +161,9 @@ TEST_CASE("Text replacements", "[parser]") {
   REQUIRE(parser.Evaluate("tabako:{inventory}") == "1");
   REQUIRE(parser.Evaluate("[{fuzzy}] : (tobako~:{inventory})") == "1");
   REQUIRE(parser.Evaluate("cigarettes:{inventory}") == "0");
+
+  // random
+  REQUIRE(parser.Evaluate("{#ran_num}") == txtad::NO_REPLACEMENT);
+  REQUIRE(parser.Evaluate("{#ran_num|dog|1}") == txtad::NO_REPLACEMENT);
+  test::test_random_parser(parser, "{#ran_num|1|10} = 5", "1", 0.1);
 }

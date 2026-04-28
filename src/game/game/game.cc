@@ -479,8 +479,10 @@ std::string Game::t_substitue_fn(const std::string& subsitute) {
       return _cur_user->PrintCtxAttribute(print_ctx->ctx_id, print_ctx->key, _parser);
   } else if (_cur_user->texts().count(subsitute) > 0) {
     return GetText("", _cur_user->PrintTxt(subsitute, _parser));
+  } else if (subsitute.starts_with(txtad::RAN_NUM)) {
+    return Game::RanSubstitute(subsitute);
   } else {
-    util::Logger()->info("Handler::cout. {} did not match pattern.", subsitute);
+    util::Logger()->info("Handler::t_substitue_fn. {} did not match pattern.", subsitute);
   }
   return txtad::NO_REPLACEMENT;
 }
@@ -503,4 +505,20 @@ std::string Game::GetText(std::string event, std::string args) {
     }
   }
   return txt;
+}
+
+std::string Game::RanSubstitute(const std::string& subsitute) {
+  auto parts = util::Split(subsitute, "|");
+  if (parts.size() < 2) {
+    util::Logger()->warn("Handler::t_substitue_fn. {} RAN_NUM requires to and from, f.e. #ran_num|1|10.", subsitute);
+    return txtad::NO_REPLACEMENT;
+  }
+  try { 
+    int from = std::stoi(parts[1]);
+    int to = std::stoi(parts[2]);
+    return std::to_string(util::ran(from, to));
+  } catch (std::exception& e) {
+    util::Logger()->warn("Handler::t_substitue_fn. {} RAN_NUM requires arguments to be ints, f.e. #ran_num|1|10.", subsitute);
+    return txtad::NO_REPLACEMENT;
+  }
 }

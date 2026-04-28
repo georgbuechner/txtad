@@ -3,6 +3,8 @@
 #include "shared/utils/parser/game_file_parser.h"
 #include "shared/utils/utils.h"
 #include <catch2/catch_test_macros.hpp>
+#include <unordered_set>
+#include <vector>
 
 TEST_CASE("Test LoggerContext", "[utils]") {
   const std::string INITIAL_LOGGER = "hello";
@@ -74,5 +76,46 @@ TEST_CASE("Test GetDirsFromIDs", "[parser]") {
   REQUIRE(types.size() == expected_types.size());
   for (const auto& type : expected_types) {
     REQUIRE(std::find(types.begin(), types.end(), type) != types.end());
+  }
+}
+
+TEST_CASE("Test Strip functions", "[uparser]") {
+  static const std::unordered_set<char> chars = {')', '(', '\'', ' '};
+  const std::string out = "hello world";
+  const std::vector<std::string> inputs = {"'hello world'", "((hello world))", " hello world     ", " ( 'hello world' ) )"};
+  for (const auto& in : inputs) {
+    REQUIRE(util::Strip(in, chars) == out);
+  }
+}
+
+TEST_CASE("Test ran range ticked", "[utils]") {
+  std::set<int> ticked;
+  int from = 161;
+  int to = 212;
+  for (int i=0;i<1000;i++) {
+    int ran = util::ran(from, to); 
+    REQUIRE(ran >= from);
+    REQUIRE(ran < to);
+    ticked.insert(ran);
+  }
+  for (int i=from; i<to; i++) {
+    if (!ticked.contains(i)) {
+      util::Logger()->error("FORGOT TO TICK: {}", i);
+    }
+    REQUIRE(ticked.contains(i));
+  }
+}
+
+TEST_CASE("Test ran range bounds", "[utils]") {
+  std::vector<int> vec = {1, 2, 3, 4, 5, 6};
+  std::set<int> ticked;
+  for (int i=0;i<10000;i++) {
+    int ran = util::ran(0, vec.size()); 
+    REQUIRE(ran >= 0);
+    REQUIRE(ran < vec.size());
+    ticked.insert(vec.at(ran));
+  }
+  for (const auto& it : vec) {
+    REQUIRE(ticked.contains(it));
   }
 }

@@ -12,8 +12,12 @@
 #include <spdlog/spdlog.h>
 #include <string>
 #include <thread>
+#include <stdio.h>
+#include <stdlib.h>
+#include <time.h>
 
 int main() {
+  srand (time(NULL));
 
   util::SetUpLogger(txtad::FILES_PATH, txtad::LOGGER, spdlog::level::debug);
   util::LoggerContext scope(txtad::LOGGER);

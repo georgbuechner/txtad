@@ -971,11 +971,25 @@ TEST_CASE("Test multi print", "[game]") {
   game.HandleEvent(USER_ID, "#> {**users.life}");
   REQUIRE(get_cout() == "10;20");
 
-  game.HandleEvent(USER_ID, "#> poisened users: {**users[.poisened > 0]->name}");
-  REQUIRE(get_cout() == "poisened users: User 1, User 2");
+  SECTION("Test queries") {
+    game.HandleEvent(USER_ID, "#> poisened users: {**users[.poisened > 0]->name}");
+    REQUIRE(get_cout() == "poisened users: User 1, User 2");
 
-  game.HandleEvent(USER_ID, "#sa **users[.poisened > 0].life -= 5;#sa **users[.poisened > 0].poisened -= 1");
+    game.HandleEvent(USER_ID, "#sa **users[.poisened > 0].life -= 5;#sa **users[.poisened > 0].poisened -= 1");
 
-  game.HandleEvent(USER_ID, "#> poisened users: {**users[.poisened > 0]->name}");
-  REQUIRE(cout == "poisened users: User 2");
+    game.HandleEvent(USER_ID, "#> poisened users: {**users[.poisened > 0]->name}");
+    REQUIRE(get_cout() == "poisened users: User 2");
+  }
+
+  SECTION ("TEST RANDOM ALL") {
+    test::test_random_cout(game, USER_ID, cout, "#> random user: {**users[#ran]->id}", {
+       "random user: users/user_1", "random user: users/user_2"});
+  }
+
+  SECTION ("TEST RANDOM SOME") {
+    test::test_random_cout(game, USER_ID, cout, "#> random user: {**users[.poisened > 0, #ran]->id}", 
+        {"random user: users/user_1", "random user: users/user_2"});
+    test::test_random_cout(game, USER_ID, cout, "#> random user: {**users[.poisened > 1, #ran]->id}", 
+        {"random user: users/user_2"});
+  }
 }

@@ -139,7 +139,7 @@ std::string ExpressionParser::evaluate(std::string input) const {
 
 std::string ExpressionParser::StripAndSubstitute(std::string str) const {
   // strip string from whitespaces and brackets
-  return util::Strip(util::Strip(util::Strip(util::Strip(str), ')'), '('), '\'');
+  return util::Strip(str, {')', '(', '\'', ' '});
 }
 
 

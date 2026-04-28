@@ -1,7 +1,9 @@
 #include "test_helpers.h"
+#include "game/game/game.h"
 #include "shared/utils/parser/expression_parser.h"
 #include "shared/utils/utils.h"
 #include <vector>
+#include <catch2/catch_test_macros.hpp>
 
 namespace fs = std::filesystem;
 
@@ -87,3 +89,36 @@ void test::SetAttribute(std::map<std::string, std::string>& attributes, std::str
     attributes[attribute] = std::to_string(std::stoi(attributes.at(attribute)) / std::stoi(parser.Evaluate(expression)));
 }
 
+void test::test_random_parser(const ExpressionParser& parser, const std::string& query, const std::string& res, float p) {
+  const int n = 100;
+  int matches = 0;
+  for (int i=0; i<n; i++) {
+    if (parser.Evaluate(query) == res) {
+      matches++;
+    }
+  }
+  const int p_lower = int(n*p)-12;
+  const int p_upper = int(n*p)+12;
+  REQUIRE(matches >= p_lower); 
+  REQUIRE(matches <= p_upper);
+}
+
+void test::test_random_cout(Game& game, const std::string& user_id, std::string& cout, const std::string& query, 
+    std::vector<std::string> options) {
+  std::map<std::string, bool> ticks;
+  for (const auto& it : options) {
+    ticks[it] = false;
+  }
+  for (int i=0; i<10; i++) {
+    game.HandleEvent(user_id, "#> random user: {**users[#ran]->id}");
+    for (const auto& it : options) {
+      if (cout == it) {
+        ticks[it] = true;
+      }
+    }
+    cout = "";
+  }
+  for (const auto& it : options) {
+    REQUIRE(ticks[it]);
+  }
+}
