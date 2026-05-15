@@ -58,7 +58,7 @@ TEST_CASE("Test Creating Game", "[game]") {
   };
 
   const std::string GAME_NAME = "test_game";
-  const std::string GAME_PATH = txtad::GAMES_PATH + GAME_NAME;
+  const std::string GAME_PATH = txtad::GamesPath() + GAME_NAME;
   test::GameWrapper test_game_wrapper(GAME_NAME, settings, {{"", {ctx_general}}, {"rooms", {ctx_room_1, 
       ctx_room_2}}}, {{"texts/start", txt_text_1}});
 
@@ -129,12 +129,12 @@ TEST_CASE("Test two games and multiple users (shared)", "[game]") {
 
   SECTION ("Test two games") {
     const std::string GAME_1_NAME = "test_game";
-    const std::string GAME_1_PATH = txtad::GAMES_PATH + GAME_1_NAME;
+    const std::string GAME_1_PATH = txtad::GamesPath() + GAME_1_NAME;
     test::GameWrapper test_game_wrapper_1(GAME_1_NAME, settings, {{"", {ctx_general}}}, {});
     Game game_1(GAME_1_PATH, GAME_1_NAME);
 
     const std::string GAME_2_NAME = "test_game_2";
-    const std::string GAME_2_PATH = txtad::GAMES_PATH + GAME_2_NAME;
+    const std::string GAME_2_PATH = txtad::GamesPath() + GAME_2_NAME;
     test::GameWrapper test_game_wrapper_2(GAME_2_NAME, settings, {{"", {ctx_general}}}, {});
     Game game_2(GAME_2_PATH, GAME_2_NAME);
     
@@ -160,7 +160,7 @@ TEST_CASE("Test two games and multiple users (shared)", "[game]") {
   SECTION ("Test one games and two user") {
     // Create game
     const std::string GAME_NAME = "test_game";
-    const std::string GAME_PATH = txtad::GAMES_PATH + GAME_NAME;
+    const std::string GAME_PATH = txtad::GamesPath() + GAME_NAME;
     test::GameWrapper test_game_wrapper(GAME_NAME, settings, {{"", {ctx_general}}}, {});
     Game game(GAME_PATH, GAME_NAME);
 
@@ -198,7 +198,7 @@ TEST_CASE("Test two users and non-shared contexts", "[game]") {
   SECTION ("Test one games and two user") {
     // Create game
     const std::string GAME_NAME = "test_game";
-    const std::string GAME_PATH = txtad::GAMES_PATH + GAME_NAME;
+    const std::string GAME_PATH = txtad::GamesPath() + GAME_NAME;
     test::GameWrapper test_game_wrapper(GAME_NAME, settings, {{"", {ctx_general}}}, {});
     Game game(GAME_PATH, GAME_NAME);
 
@@ -293,7 +293,7 @@ TEST_CASE("Test Game handlers/mechanics", "[game]") {
   SECTION ("Test h_add_ctx and h_remove_ctx") {
     // Create game
     const std::string GAME_NAME = "test_game";
-    const std::string GAME_PATH = txtad::GAMES_PATH + GAME_NAME;
+    const std::string GAME_PATH = txtad::GamesPath() + GAME_NAME;
     test::GameWrapper test_game_wrapper(GAME_NAME, settings, {{"", {ctx_general}}, {"items", {ctx_item_1}},
         {"rooms", {ctx_room_1, ctx_room_2, ctx_room_3}}}, {});
     Game game(GAME_PATH, GAME_NAME);
@@ -320,7 +320,7 @@ TEST_CASE("Test Game handlers/mechanics", "[game]") {
 
     // Create game
     const std::string GAME_NAME = "test_game";
-    const std::string GAME_PATH = txtad::GAMES_PATH + GAME_NAME;
+    const std::string GAME_PATH = txtad::GamesPath() + GAME_NAME;
     test::GameWrapper test_game_wrapper(GAME_NAME, settings, {{"", {ctx_general}}, {"items", {ctx_item_1}},
         {"rooms", {ctx_room_1, ctx_room_2, ctx_room_3}}}, {});
     Game game(GAME_PATH, GAME_NAME);
@@ -350,7 +350,7 @@ TEST_CASE("Test Game handlers/mechanics", "[game]") {
       {"initial_contexts", {"general", "rooms/room_1"}}
     };
     const std::string GAME_NAME = "test_game";
-    const std::string GAME_PATH = txtad::GAMES_PATH + GAME_NAME;
+    const std::string GAME_PATH = txtad::GamesPath() + GAME_NAME;
     test::GameWrapper test_game_wrapper(GAME_NAME, settings, {{"", {ctx_general}}, {"items", {ctx_item_1}},
         {"rooms", {ctx_room_1, ctx_room_2, ctx_room_3}}}, {{"texts/start", txt_text_1}});
     Game game(GAME_PATH, GAME_NAME);
@@ -367,7 +367,7 @@ TEST_CASE("Test Game handlers/mechanics", "[game]") {
   SECTION ("Test h_set_attribute") {
     const nlohmann::json settings = { {"initial_events", ""}, {"initial_contexts", {"general"}} };
     const std::string GAME_NAME = "test_game";
-    const std::string GAME_PATH = txtad::GAMES_PATH + GAME_NAME;
+    const std::string GAME_PATH = txtad::GamesPath() + GAME_NAME;
     test::GameWrapper test_game_wrapper(GAME_NAME, settings, {{"", {ctx_general}}, {"items", {ctx_item_1}},
         {"rooms", {ctx_room_1, ctx_room_2, ctx_room_3}}}, {});
     Game game(GAME_PATH, GAME_NAME);
@@ -418,7 +418,7 @@ TEST_CASE("Test Game handlers/mechanics", "[game]") {
       {"initial_contexts", {"general"}} 
     };
     const std::string GAME_NAME = "test_game";
-    const std::string GAME_PATH = txtad::GAMES_PATH + GAME_NAME;
+    const std::string GAME_PATH = txtad::GamesPath() + GAME_NAME;
     test::GameWrapper test_game_wrapper(GAME_NAME, settings, {{"", {ctx_general}},{"items", {ctx_item_1}},
         {"rooms", {ctx_room_1, ctx_room_2, ctx_room_3}}}, {});
     Game game(GAME_PATH, GAME_NAME);
@@ -440,7 +440,7 @@ TEST_CASE("Test Game handlers/mechanics", "[game]") {
       {"initial_contexts", {"general", "rooms/room_1"}}
     };
     const std::string GAME_NAME = "test_game";
-    const std::string GAME_PATH = txtad::GAMES_PATH + GAME_NAME;
+    const std::string GAME_PATH = txtad::GamesPath() + GAME_NAME;
     test::GameWrapper test_game_wrapper(GAME_NAME, settings, {{"", {ctx_general}}, {"items", {ctx_item_1}},
         {"rooms", {ctx_room_1, ctx_room_2, ctx_room_3}}}, {{"texts/start", txt_text_1}});
     Game game(GAME_PATH, GAME_NAME);
@@ -466,7 +466,7 @@ TEST_CASE("Test Game handlers/mechanics", "[game]") {
       {"initial_contexts", {"general", "rooms/room_1"}}
     };
     const std::string GAME_NAME = "test_game";
-    const std::string GAME_PATH = txtad::GAMES_PATH + GAME_NAME;
+    const std::string GAME_PATH = txtad::GamesPath() + GAME_NAME;
     test::GameWrapper test_game_wrapper(GAME_NAME, settings, {{"", {ctx_general}}, {"items", {ctx_item_1}},
         {"rooms", {ctx_room_1, ctx_room_2, ctx_room_3}}}, {{"texts/start", txt_text_1}});
     Game game(GAME_PATH, GAME_NAME);
@@ -561,7 +561,7 @@ TEST_CASE("Test exec listeners", "[game]") {
   SECTION ("Test one games and two user") {
     // Create game
     const std::string GAME_NAME = "test_game";
-    const std::string GAME_PATH = txtad::GAMES_PATH + GAME_NAME;
+    const std::string GAME_PATH = txtad::GamesPath() + GAME_NAME;
     test::GameWrapper test_game_wrapper(GAME_NAME, settings, {{"", {ctx_general}}}, {});
     Game game(GAME_PATH, GAME_NAME);
 
@@ -649,7 +649,7 @@ TEST_CASE("Test game-tests", "[game]") {
   });
 
   const std::string GAME_NAME = "test_game";
-  const std::string GAME_PATH = txtad::GAMES_PATH + GAME_NAME;
+  const std::string GAME_PATH = txtad::GamesPath() + GAME_NAME;
   test::GameWrapper test_game_wrapper(GAME_NAME, settings, {{"", {ctx_general}}, {"rooms", {ctx_room_1, 
       ctx_room_2, ctx_room_3}}}, {{"texts/start", txt_text_1}}, tests);
 
@@ -709,7 +709,7 @@ TEST_CASE("Store game", "[game]") {
   };
 
   const std::string GAME_NAME = "test_game";
-  const std::string GAME_PATH = txtad::GAMES_PATH + GAME_NAME;
+  const std::string GAME_PATH = txtad::GamesPath() + GAME_NAME;
   test::GameWrapper test_game_wrapper(GAME_NAME, settings, {{"", {ctx_general}}, {"rooms", {ctx_room_1, ctx_room_2}}}, 
       {{"texts/start", txt_text_1}});
   BuilderGame game(GAME_PATH, GAME_NAME);
@@ -827,7 +827,7 @@ TEST_CASE("Test Game example dialog", "[game]") {
   };
 
   const std::string GAME_NAME = "test_game_dialogs";
-  const std::string GAME_PATH = txtad::GAMES_PATH + GAME_NAME;
+  const std::string GAME_PATH = txtad::GamesPath() + GAME_NAME;
   test::GameWrapper test_game_wrapper(GAME_NAME, settings, {{"", {ctx_general}},
       {"dialogs", {dialog_state_1, dialog_state_2, dialog_state_3}}}, {});
   Game game(GAME_PATH, GAME_NAME);
@@ -885,7 +885,7 @@ TEST_CASE("Test multi-edit", "[game]") {
   };
 
   const std::string GAME_NAME = "test_game_multiple";
-  const std::string GAME_PATH = txtad::GAMES_PATH + GAME_NAME;
+  const std::string GAME_PATH = txtad::GamesPath() + GAME_NAME;
   test::GameWrapper test_game_wrapper(GAME_NAME, settings, {{"", {ctx_general}},
       {"users", {user_1, user_2}}}, {});
   Game game(GAME_PATH, GAME_NAME);
@@ -953,7 +953,7 @@ TEST_CASE("Test multi print", "[game]") {
   };
 
   const std::string GAME_NAME = "test_game_multiple";
-  const std::string GAME_PATH = txtad::GAMES_PATH + GAME_NAME;
+  const std::string GAME_PATH = txtad::GamesPath() + GAME_NAME;
   test::GameWrapper test_game_wrapper(GAME_NAME, settings, {{"", {ctx_general}},
       {"users", {user_1, user_2}}}, {});
   Game game(GAME_PATH, GAME_NAME);

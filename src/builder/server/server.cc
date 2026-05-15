@@ -23,7 +23,7 @@ using namespace std::chrono_literals;
 Builder::Builder(int port, std::string cli_address, int cli_port, const nlohmann::json& config) 
       : _cli(cli_address, cli_port), _env(builder::TEMPLATE_PATH), _txtad_addr(config.at("txtad").at("address")) {
   // init games
-  _games = parser::InitGames<BuilderGame>(txtad::GAMES_PATH);
+  _games = parser::InitGames<BuilderGame>(txtad::GamesPath());
 
   // init game-server client
   _cli.set_connection_timeout(0, 200000);
@@ -747,7 +747,7 @@ void Builder::LoadMedia(const httplib::Request& req, httplib::Response& resp) {
 // GAMES
 void Builder::CreateNewGame(const httplib::Request& req, httplib::Response& resp) {
   const std::string game_id = req.form.get_field("game_id");
-  const std::string game_path = txtad::GAMES_PATH + game_id + "/";
+  const std::string game_path = txtad::GamesPath() + game_id + "/";
 
   // Check whether game already exists
   if (_games.contains(game_id)) {
@@ -826,7 +826,7 @@ void Builder::SaveTests(const httplib::Request& req, httplib::Response& resp) {
       TestCase tc(it);
       tcs++; ts += tc.tests().size();
     }
-    util::WriteJsonToDisc(txtad::GAMES_PATH + game_id + "/" + txtad::GAME_TESTS, j["test_cases"]);
+    util::WriteJsonToDisc(txtad::GamesPath() + game_id + "/" + txtad::GAME_TESTS, j["test_cases"]);
     resp.status = 200;
     resp.set_content("Successfully saved " + std::to_string(tcs) + " test cases with " 
         + std::to_string(ts) + " tests.", "text/txt");

@@ -40,7 +40,7 @@ TEST_CASE("Test Creating Listener", "[builder]") {
     {"use_ctx_regex", UseCtx::NO}};
 
   const std::string GAME_NAME = "test_game";
-  const std::string GAME_PATH = txtad::GAMES_PATH + GAME_NAME;
+  const std::string GAME_PATH = txtad::GamesPath() + GAME_NAME;
   test::GameWrapper test_game_wrapper(GAME_NAME, settings, { {"rooms", {ctx_room_1, ctx_room_2}} }, {});
 
   BuilderGame builder(GAME_PATH, GAME_NAME);

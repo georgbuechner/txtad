@@ -13,7 +13,7 @@ namespace txtad {
   const std::string TEST_LOGGER = "LMainTest";
   const std::string FILES_PATH = "game/";
   const std::string HTML_PATH = "web/";
-  const std::string GAMES_PATH = "data/games/";
+  const std::string& GamesPath();
   const std::string GAME_SETTINGS = "settings.json";
   const std::string GAME_TESTS = "tests.json";
   const std::string GAME_FILES = "game_files/";

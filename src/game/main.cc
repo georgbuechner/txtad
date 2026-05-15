@@ -35,7 +35,7 @@ int main() {
   });
 
   // Create games
-  auto games = parser::InitGames<Game>(txtad::GAMES_PATH);
+  auto games = parser::InitGames<Game>(txtad::GamesPath());
   for (auto& [_, game]: games) {
     game->set_running(true);
   }
@@ -59,7 +59,7 @@ int main() {
     for (const auto& game : games) {
       http_server.set_mount_point("/" + game.second->name(), game.second->path() + "/" + txtad::HTML_PATH);
       http_server.set_mount_point("/" + game.second->name(), txtad::FILES_PATH + "/" + txtad::HTML_PATH);
-      http_server.set_mount_point("/" + game.second->name(), txtad::GAMES_PATH + game.second->name());
+      http_server.set_mount_point("/" + game.second->name(), txtad::GamesPath() + game.second->name());
     }
 
     http_server.Get("/api/games/running", [&](const httplib::Request& req, httplib::Response& resp) {
@@ -75,7 +75,7 @@ int main() {
     http_server.Get("/api/game/reload/:game_id", [&](const httplib::Request& req, httplib::Response& resp) {
         std::unique_lock sl(mtx);
         std::string game_id = req.path_params.at("game_id");
-        std::string game_path = txtad::GAMES_PATH + game_id;
+        std::string game_path = txtad::GamesPath() + game_id;
         if (std::filesystem::is_directory(game_path)) {
           games.erase(game_id);
           games[game_id] = std::make_shared<Game>(game_path, game_id);

@@ -6,7 +6,7 @@
 
 TEST_CASE("Test get paths", "[gf_parser]") {
   SECTION ("Get requesting all paths") {
-    auto res = parser::GetPaths(txtad::GAMES_PATH + "original");
+    auto res = parser::GetPaths(txtad::GamesPath() + "original");
     REQUIRE(res.at("items") == builder::FileType::DIR);
     REQUIRE(res.at("catch") == builder::FileType::CTX);
     REQUIRE(res.at("general") == builder::FileType::CTX);
@@ -14,7 +14,7 @@ TEST_CASE("Test get paths", "[gf_parser]") {
     REQUIRE(res.at("items/heiltrank") == builder::FileType::CTX);
   }
   SECTION ("Get requesting only root") {
-    auto res = parser::GetPaths(txtad::GAMES_PATH + "original", "");
+    auto res = parser::GetPaths(txtad::GamesPath() + "original", "");
     REQUIRE(res.at("items") == builder::FileType::DIR);
     REQUIRE(res.at("catch") == builder::FileType::CTX);
     REQUIRE(res.at("general") == builder::FileType::CTX);
@@ -22,7 +22,7 @@ TEST_CASE("Test get paths", "[gf_parser]") {
     REQUIRE(!res.contains("items/heiltrank"));
   }
   SECTION ("Get requesting only deeper path") {
-    auto res = parser::GetPaths(txtad::GAMES_PATH + "original", "items");
+    auto res = parser::GetPaths(txtad::GamesPath() + "original", "items");
     REQUIRE(res.at("heiltrank") == builder::FileType::CTX);
     REQUIRE(!res.contains("items"));
     REQUIRE(!res.contains("catch"));
@@ -30,7 +30,7 @@ TEST_CASE("Test get paths", "[gf_parser]") {
     REQUIRE(!res.contains("start"));
   }
   
-  BuilderGame game(txtad::GAMES_PATH + "original", "original");
+  BuilderGame game(txtad::GamesPath() + "original", "original");
   SECTION ("Get requesting all paths") {
     auto res = game.GetPaths();
     REQUIRE(res.at("items") == builder::FileType::DIR);

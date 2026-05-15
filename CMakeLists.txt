@@ -20,6 +20,7 @@ set(GAME_SRC_FILES
   src/shared/utils/eventmanager/context_stack.cc
   src/shared/utils/eventmanager/listener.cc
   src/shared/utils/utils.cc
+  src/game/utils/defines.cc
   src/shared/utils/parser/expression_parser.cc
   src/shared/utils/parser/game_file_parser.cc
   src/shared/utils/parser/pattern_parser.cc
@@ -49,6 +50,7 @@ set(GAME_TEST_FILES
   src/shared/utils/eventmanager/context_stack.cc
   src/shared/utils/eventmanager/listener.cc
   src/shared/utils/utils.cc
+  src/game/utils/defines.cc
   src/shared/utils/parser/expression_parser.cc
   src/shared/utils/parser/game_file_parser.cc
   src/shared/utils/parser/test_file_parser.cc
@@ -71,6 +73,7 @@ set(BUILDER_SRC_FILES
   src/shared/utils/eventmanager/context_stack.cc
   src/shared/utils/eventmanager/listener.cc
   src/shared/utils/utils.cc
+  src/game/utils/defines.cc
   src/shared/utils/git_wrapper/git_wrapper.cc
   src/shared/utils/parser/expression_parser.cc
   src/shared/utils/parser/game_file_parser.cc

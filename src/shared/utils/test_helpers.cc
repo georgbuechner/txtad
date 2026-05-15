@@ -10,7 +10,7 @@ namespace fs = std::filesystem;
 test::GameWrapper::GameWrapper(const std::string& name, const nlohmann::json& settings, 
       const std::map<std::string, std::vector<nlohmann::json>>& contexts,
       const std::map<std::string, nlohmann::json>& texts, const nlohmann::json& tests) 
-    : _path(txtad::GAMES_PATH + "/" + name) {
+    : _path(txtad::GamesPath() + "/" + name) {
   const std::string game_files_path = _path + "/" + txtad::GAME_FILES;
   fs::create_directory(_path);
 

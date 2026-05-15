@@ -1,5 +1,6 @@
 {
   "txtad": {
-    "address": "http://localhost:4080/"
+    "address": "http://localhost:4080/",
+    "games_path": "data/games/"
   }
 }
