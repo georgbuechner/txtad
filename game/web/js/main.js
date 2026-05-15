@@ -308,7 +308,7 @@ function scrollToBottom() {
   requestAnimationFrame(() => {
     window.scrollTo({
       top: document.body.scrollHeight,
-      behavior: "smooth"
+      behavior: "auto"
     });
   });
 }
