@@ -3,6 +3,8 @@ Description=Txtad Builder
 After=network.target
 
 [Service]
+User=fux
+Group=fux
 WorkingDirectory=/usr/bin/txtad/
 ExecStart=/usr/bin/txtad/builder/builder.o
 Type=simple

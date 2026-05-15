@@ -3,6 +3,8 @@ Description=Txtad Builder
 After=network.target
 
 [Service]
+User=txtad
+Group=txtad
 WorkingDirectory=/usr/bin/txtad/
 ExecStart=/usr/bin/txtad/game/txtad.o
 Type=simple
