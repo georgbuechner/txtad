@@ -19,7 +19,7 @@ class CreatorManager {
 
   public:
     CreatorManager() {
-      for (const auto& dir : std::filesystem::directory_iterator(builder::FILES_PATH + builder::CREATORS_PATH)) {
+      for (const auto& dir : std::filesystem::directory_iterator(builder::CreatorPath())) {
         if (dir.path().filename() == ".keep") {
           continue;
         }

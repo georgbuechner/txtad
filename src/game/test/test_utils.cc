@@ -9,8 +9,8 @@
 TEST_CASE("Test LoggerContext", "[utils]") {
   const std::string INITIAL_LOGGER = "hello";
   const std::string NEW_LOGGER = "world";
-  util::SetUpLogger(txtad::FILES_PATH, INITIAL_LOGGER, spdlog::level::info);
-  util::SetUpLogger(txtad::FILES_PATH, NEW_LOGGER, spdlog::level::info);
+  util::SetUpLogger(txtad::LoggerPath(), INITIAL_LOGGER, spdlog::level::info);
+  util::SetUpLogger(txtad::LoggerPath(), NEW_LOGGER, spdlog::level::info);
 
   // Test simple scopes
   REQUIRE(util::LOGGER == txtad::TEST_LOGGER);

@@ -15,7 +15,8 @@ namespace builder {
   const std::string STATIC_PATH = HTML_PATH + "static/";
   const std::string MEDIA_PATH = HTML_PATH + "media/";
   const std::string TEMPLATE_PATH = HTML_PATH + "templates/";
-  const std::string CREATORS_PATH = "creators/";
+  const std::string& LoggerPath();
+  const std::string& CreatorPath();
 
   const std::string COOKIE_NAME = "SESSID";
   const int COOKIE_NAME_LEN = 6;

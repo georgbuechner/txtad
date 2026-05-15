@@ -43,7 +43,7 @@ class Creator {
       creator_json["games"] = _games; 
       creator_json["shared"] = _shared; 
       creator_json["pending"] = _pending; 
-      util::WriteJsonToDisc(builder::FILES_PATH + builder::CREATORS_PATH + _username + ".json", creator_json);
+      util::WriteJsonToDisc(builder::CreatorPath() + _username + ".json", creator_json);
     }
 
     bool HasAccessToGame(const std::string& game_id, const std::set<std::string>& hidden={}, const std::string& path="") {

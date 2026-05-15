@@ -29,7 +29,7 @@ std::string util::LOGGER = "---";
 void util::SetUpLogger(const std::string& main_path, const std::string& name, spdlog::level::level_enum log_level) {
   std::vector<spdlog::sink_ptr> sinks;
   sinks.push_back(std::make_shared<spdlog::sinks::stderr_color_sink_st>());
-  sinks.push_back(std::make_shared<spdlog::sinks::daily_file_sink_mt>(main_path + "/logs/" + name + "_logfile.txt", 21, 15));
+  sinks.push_back(std::make_shared<spdlog::sinks::daily_file_sink_mt>(main_path + name + "_logfile.txt", 21, 15));
   auto logger = std::make_shared<spdlog::logger>(name, begin(sinks), end(sinks));
   spdlog::register_logger(logger);
   spdlog::flush_every(std::chrono::seconds(5));

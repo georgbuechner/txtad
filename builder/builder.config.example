@@ -1,6 +1,9 @@
 {
   "txtad": {
     "address": "http://localhost:4080/",
-    "games_path": "data/games/"
-  }
+    "games_path": "data/games/",
+    "logger_path": "game/logs/"
+  },
+  "logger_path": "builder/logs/",
+  "creators_path": "builder/creators/"
 }
