@@ -22,7 +22,7 @@ Game::Game(std::string path, std::string name) : _cout(_global_cout), _path(path
     _cur_user(nullptr), _running(false), _parser(std::bind(&Game::t_substitue_fn, this, std::placeholders::_1)),
     _settings(*util::LoadJsonFromDisc(_path + "/" + txtad::GAME_SETTINGS)),
     _builder_settings(util::LoadJsonFromDisc(_path + "/" + txtad::BUILDER_EXTENSION).value_or(nlohmann::json::object())) {
-  util::SetUpLogger(txtad::FILES_PATH, _name, util::Logger()->level());
+  util::SetUpLogger(txtad::LoggerPath(), _name, util::Logger()->level());
   util::LoggerContext scope(_name);
   
   // Create baisc handlers
