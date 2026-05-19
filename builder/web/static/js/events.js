@@ -169,6 +169,7 @@ function CreateEventFields(cmd, args) {
           <select class="form-select"> 
             '<option selected>---</option>'
             '<option selected>#event</option>'
+            '<option>&lt;ctx&gt;</option>'
             ${context_ids().map(ctx_id =>
               '<option' + ((tvalue.startsWith(ctx_id)) ? ' selected >' : '>') + ctx_id + '</option>'
             )}
