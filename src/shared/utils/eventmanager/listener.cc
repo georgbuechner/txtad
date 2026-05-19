@@ -148,19 +148,22 @@ bool LContextForwarder::Test(const std::string& event, const ExpressionParser& p
     if (base_match.size() == 2) {
       const std::string ctx_name = GetCtxName(_ctx);
       std::string arg = base_match[1].str();
-      util::Logger()->debug("- LContextForwarder::Test: {} =={}, {} ", ctx_name, std::to_string(_use_ctx_regex), arg);
+      util::Logger()->debug("- LContextForwarder::Test: {} =={}, {} ", arg, std::to_string(_use_ctx_regex), ctx_name);
+      int res = fuzzy::fuzzy(arg, ctx_name);
       switch(_use_ctx_regex) {
         case UseCtx::NO: 
           return true;
         case UseCtx::NAME: 
-          return fuzzy::fuzzy(arg, ctx_name) == fuzzy::FuzzyMatch::DIRECT;
+          return res == fuzzy::FuzzyMatch::DIRECT;
         case UseCtx::NAME_FUZZY:
-          return fuzzy::fuzzy(arg, ctx_name) == fuzzy::FuzzyMatch::FUZZY;
+          return res != 0 && (res == fuzzy::FuzzyMatch::DIRECT 
+              || res == fuzzy::FuzzyMatch::FUZZY);
         case UseCtx::NAME_STARTS_WITH:
-          return fuzzy::fuzzy(arg, ctx_name) == fuzzy::FuzzyMatch::STARTS_WITH;
+          return res != 0 && (res == fuzzy::FuzzyMatch::DIRECT 
+              || res == fuzzy::FuzzyMatch::STARTS_WITH);
         case UseCtx::NAME_FUZZY_OR_STARTS_WITH:
-          return fuzzy::fuzzy(arg, ctx_name) == fuzzy::FuzzyMatch::FUZZY 
-            || fuzzy::fuzzy(arg, ctx_name) == fuzzy::FuzzyMatch::STARTS_WITH;
+          return res != 0 && (res == fuzzy::FuzzyMatch::DIRECT 
+              || res == fuzzy::FuzzyMatch::STARTS_WITH || fuzzy::FuzzyMatch::FUZZY);
         case UseCtx::REGEX: 
           if (auto ctx = _ctx.lock()) {
             return ctx->CheckEntry(arg);
