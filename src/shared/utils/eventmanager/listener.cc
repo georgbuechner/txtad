@@ -148,8 +148,8 @@ bool LContextForwarder::Test(const std::string& event, const ExpressionParser& p
     if (base_match.size() == 2) {
       const std::string ctx_name = GetCtxName(_ctx);
       std::string arg = base_match[1].str();
-      util::Logger()->debug("- LContextForwarder::Test: {} =={}, {} ", arg, std::to_string(_use_ctx_regex), ctx_name);
-      int res = fuzzy::fuzzy(arg, ctx_name);
+      int res = fuzzy::fuzzy(ctx_name, arg);
+      util::Logger()->debug("- LContextForwarder::Test: {} =={}, {} => ", arg, std::to_string(_use_ctx_regex), ctx_name, res);
       switch(_use_ctx_regex) {
         case UseCtx::NO: 
           return true;
