@@ -4,6 +4,8 @@ let _audio_block = false;
 let _receiving = false;
 let _content = null;
 let _cmd = null;
+let _cmd_history = [];
+let _cmd_history_index = -1;
 
 let _bg_sound_file = ''
 let _bg_sound = ''
@@ -93,10 +95,60 @@ window.onbeforeunload = function() {
 function SendInput(event) {
   if (event.keyCode == 13 && !_audio_block) {
     RemovePromptIfExists();
-    if (_cmd.value != "")
+    const value = _cmd.value;
+
+    if (_cmd.value !== "") {
       _socket.send(CreateEvent(_cmd.value));
-    _cmd.value = "";
+
+      // Avoid storing duplicate consecutive commands 
+      if (_cmd_history[_cmd_history.length-1] !== value) {
+        _cmd_history.push(value);
+      }
+
+      _cmd_history_index = _cmd_history.length;
+      _cmd.value = "";
+      _cmd.placeholder = "What are you talking about?!";
+      return;
+    }
   }
+   // Arrow Up
+  if (event.keyCode === 38) {
+    event.preventDefault();
+
+    if (_cmd_history.length === 0) return;
+
+    if (_cmd_history_index > 0) {
+      _cmd_history_index--;
+    }
+
+    _cmd.value = _cmd_history[_cmd_history_index];
+    moveCursorToEnd(_cmd);
+    return;
+  }
+
+  // Arrow Down
+  if (event.keyCode === 40) {
+    event.preventDefault();
+
+    if (_cmd_history.length === 0) return;
+
+    if (_cmd_history_index < _cmd_history.length - 1) {
+      _cmd_history_index++;
+      _cmd.value = _cmd_history[_cmd_history_index];
+    } else {
+      _cmd_history_index = _cmd_history.length;
+      _cmd.value = "";
+      _cmd.placeholder = "";
+    }
+
+    moveCursorToEnd(_cmd);
+  }
+}
+
+function moveCursorToEnd(input) {
+  const len = input.value.length;
+  input.focus();
+  input.setSelectionRange(len, len);
 }
 
 function RemovePromptIfExists() {
@@ -289,6 +341,7 @@ function AddInput(payload) {
 
   _content.appendChild(p);
   _cmd.value = "";
+  _cmd.placeholder = "";
   scrollToBottom();
 }
 
