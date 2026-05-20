@@ -32,6 +32,7 @@ TEST_CASE("Text expression parser", "[parser]") {
   REQUIRE(parser.Evaluate("Mimesis ~ Mimisis = {fuzzy}") == "1"); // read as: "Hund ~ JahrHUNDert == fuzzy -match
   REQUIRE(parser.Evaluate("book:[bottle; lighter; book]") == "1");
   REQUIRE(parser.Evaluate("tabako:[bottle; lighter; book]") == "0");
+  REQUIRE(parser.Evaluate("tabako:[bottle; lighter; book] = 0") == "1");
   REQUIRE(parser.Evaluate("[tabako|lighter]:[bottle; lighter; book]") == "1");
   REQUIRE(parser.Evaluate("tobako~:[Bottle; Lighter; Tabako; Book]") == "[4]");
   // => read as: "tobako~:[Bottle; Lighter; Tabako; Book] == [fuzzy-match]
