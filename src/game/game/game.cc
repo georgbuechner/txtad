@@ -450,10 +450,17 @@ void Game::h_reset_user(const std::string& event, const std::string& ctx_id) {
     return;
   }
   std::string user_id = _cur_user->id();
+  util::Logger()->info("Game::h_reset_user: Resetting user: {}. ", user_id);
   _users.erase(user_id);
+  util::Logger()->info("Game::h_reset_user: Erased! cur_user use count: {}. ", _cur_user.use_count());
+  _cur_user = nullptr;
+  util::Logger()->info("Game::h_reset_user: Deleted! cur_user use count: {}. ", _cur_user.use_count());
   _cur_user = CreateNewUser(user_id);
+  util::Logger()->info("Game::h_reset_user: Created new user with ID {}. ", _cur_user->id());
   _cout(user_id, txtad::WEB_CMD_CLEAR_CONSOLE);
+  util::Logger()->info("Game::h_reset_user: Running initial cmds for: {}", _cur_user->id());
   _cur_user->HandleEvent(_settings.initial_events(), _parser);
+  util::Logger()->info("Game::h_reset_user: DONE: {}", _cur_user->id());
 }
 
 void Game::h_remove_user(const std::string& event, const std::string& ctx_id) {

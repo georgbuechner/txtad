@@ -33,12 +33,14 @@ class EventManager {
       util::Logger()->debug("EventManager::TakeEvent: \"{}\"", event);
       bool accepted = false;
       for (const auto& it : _listeners) {
-        util::Logger()->debug("EventManager::TakeEvent: - checking \"{}\" with {}", it.first, it.second->event());
         if (it.second->Test(event, parser)) {
+          util::Logger()->debug("EventManager::TakeEvent: - ACCEPTED: \"{}\" with {}", it.first, it.second->event());
           accepted = true;
           it.second->Execute(event);
           if (!it.second->permeable())
             return true;
+        } else {
+          util::Logger()->debug("EventManager::TakeEvent: - REJECTED : \"{}\" with {}", it.first, it.second->event());
         }
       }
       return accepted;
