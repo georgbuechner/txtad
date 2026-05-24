@@ -19,11 +19,13 @@
 Game::MsgFn Game::_global_cout= nullptr;
 
 Game::Game(std::string path, std::string name) : _cout(_global_cout), _path(path), _name(name), 
-    _cur_user(nullptr), _running(false), _parser(std::bind(&Game::t_substitue_fn, this, std::placeholders::_1)),
+    _cur_user(nullptr), _running(false), 
+    _parser(std::bind(&Game::t_substitue_fn, this, std::placeholders::_1)),
     _settings(*util::LoadJsonFromDisc(_path + "/" + txtad::GAME_SETTINGS)),
     _builder_settings(util::LoadJsonFromDisc(_path + "/" + txtad::BUILDER_EXTENSION).value_or(nlohmann::json::object())) {
   util::SetUpLogger(txtad::LoggerPath(), _name, util::Logger()->level());
   util::LoggerContext scope(_name);
+  util::Logger()->info(fmt::format("Game::Game. Creating game: {}", name));
   
   // Create baisc handlers
   LForwarder::set_overwite_fn(std::bind(&Game::h_add_to_eventqueue, this, std::placeholders::_1, 
@@ -141,6 +143,7 @@ void Game::HandleEvent(const std::string& user_id, const std::string& event) {
         user_id);
     }
   }
+  util::Logger()->debug("Game::HandleEvent: Handling inp: {}. Done", event);
 }
 
 std::shared_ptr<User> Game::CreateNewUser(std::string user_id) {
@@ -168,10 +171,14 @@ void Game::h_add_ctx(const std::string& event, const std::string& ctx_id) {
     util::Logger()->error("Game::h_add_ctx: {}, {}. _cur_user is NULL", event, ctx_id);
     return;
   }
-  if (_cur_user->contexts().count(ctx_id) > 0)
-    _cur_user->LinkContextToStack(_cur_user->contexts().at(ctx_id));
-  else 
+  const auto& ctxs = _cur_user->GetContext(ctx_id, _parser);
+  for (const auto& ctx : ctxs) {
+    _cur_user->LinkContextToStack(ctx);
+  }
+  // #TODO: Add option for ID replacement here !
+  if (ctxs.size() == 0) {
     util::Logger()->warn("Handler::link_ctx. Context \"{}\" not found.", ctx_id);
+  }
 }
 
 void Game::h_remove_ctx(const std::string& event, const std::string& ctx_id) {
