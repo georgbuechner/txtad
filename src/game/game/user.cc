@@ -179,7 +179,8 @@ void User::AddVariableToText(const std::shared_ptr<Context>& ctx, const std::str
   }
 }
 
-std::vector<std::shared_ptr<Context>> User::GetContext(const std::string& ctx_id, const ExpressionParser& parser) {
+std::vector<std::shared_ptr<Context>> User::GetContext(const std::string& ctx_id, 
+    const ExpressionParser& parser) {
   std::vector<std::shared_ptr<Context>> ctxs;
 
   auto pos = ctx_id.find("[");

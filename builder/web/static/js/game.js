@@ -489,6 +489,88 @@ function renderReferences(list, containerId, gameId) {
   });
 }
 
+async function openLogsModal(button) {
+  const gameId = button.dataset.gameId;
+
+  const modalEl = document.getElementById("logsModal");
+  const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
+
+  const loadingEl = document.getElementById("logsLoading");
+  const errorEl = document.getElementById("logsError");
+  const accordionEl = document.getElementById("logsAccordion");
+  const titleEl = document.getElementById("logsModalLabel");
+
+  titleEl.textContent = `Game logs: ${gameId}`;
+  loadingEl.classList.remove("d-none");
+  errorEl.classList.add("d-none");
+  errorEl.textContent = "";
+  accordionEl.innerHTML = "";
+
+  modal.show();
+
+  try {
+    const response = await fetch(`/api/logs/latest/${encodeURIComponent(gameId)}`);
+
+    if (!response.ok) {
+      throw new Error(`Failed to load logs (${response.status})`);
+    }
+
+    const logs = await response.json();
+
+    loadingEl.classList.add("d-none");
+
+    if (!logs || Object.keys(logs).length === 0) {
+      accordionEl.innerHTML = `<div class="text-muted">No logs found.</div>`;
+      return;
+    }
+
+    let index = 0;
+
+    for (const [name, lines] of Object.entries(logs)) {
+      const itemId = `logsItem${index}`;
+      const collapseId = `logsCollapse${index}`;
+
+      const text = Array.isArray(lines)
+        ? lines.join("\n")
+        : String(lines);
+
+      accordionEl.insertAdjacentHTML("beforeend", `
+        <div class="accordion-item">
+          <h2 class="accordion-header" id="${itemId}">
+            <button
+              class="accordion-button ${index === 0 ? "" : "collapsed"}"
+              type="button"
+              data-bs-toggle="collapse"
+              data-bs-target="#${collapseId}"
+              aria-expanded="${index === 0 ? "true" : "false"}"
+              aria-controls="${collapseId}"
+            >
+              ${escapeHtml(name)}
+            </button>
+          </h2>
+
+          <div
+            id="${collapseId}"
+            class="accordion-collapse collapse ${index === 0 ? "show" : ""}"
+            aria-labelledby="${itemId}"
+            data-bs-parent="#logsAccordion"
+          >
+            <div class="accordion-body">
+              <pre class="mb-0 small bg-light p-3 rounded overflow-auto"><code>${escapeHtml(text)}</code></pre>
+            </div>
+          </div>
+        </div>
+      `);
+
+      index++;
+    }
+  } catch (err) {
+    loadingEl.classList.add("d-none");
+    errorEl.classList.remove("d-none");
+    errorEl.textContent = err.message || "Could not load logs.";
+  }
+}
+
 /** Simple HTML escaper for user-controlled text */
 function escapeHtml(str) {
   return String(str)

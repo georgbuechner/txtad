@@ -125,6 +125,9 @@ void Builder::Start() {
   _srv.Get("/api/archive/commit/:game_id", [&](const httplib::Request& req, httplib::Response& resp) {
       ApiCommitMessage(req, resp); });
 
+  _srv.Get("/api/logs/latest/:game_id", [&](const httplib::Request& req, httplib::Response& resp) {
+      ApiCommitMessage(req, resp); });
+
   // PAGES 
   _srv.Get("/", [&](const httplib::Request& req, httplib::Response& resp) {
     LoadTemplate(resp, "index.html", CreateParams(req)); });
@@ -711,6 +714,15 @@ void Builder::ApiCommitMessage(const httplib::Request& req, httplib::Response& r
   resp.status = 200;
   resp.set_content(git::commit_message(game_path, commit_sha), "application/json");
 }
+
+void Builder::ApiLogsLates(const httplib::Request& req, httplib::Response& resp) {
+  std::string game_id = req.path_params.at("game_id");
+
+  auto logs = util::LoadLatestGameLogs(game_id);
+  resp.status = 200;
+  resp.set_content(nlohmann::json(logs).dump(), "application/json");
+}
+
 // PAGES 
 
 void Builder::PagesGame(const httplib::Request& req, httplib::Response& resp) {

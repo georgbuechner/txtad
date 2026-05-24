@@ -37,6 +37,14 @@
     >
       <i class="bi bi-archive"></i>
     </button>
+    <button
+      type="button"
+      class="btn btn-outline-secondary"
+      data-game-id="test_game"
+      onclick="openLogsModal(this)"
+    >
+      Show logs
+    </button>
   </div>
 </div>
 
@@ -355,6 +363,23 @@
             <button type="submit" name="action" value="MEDIA" class="btn btn-primary" title="Upload media.">upload</button>
           </div>
         </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal fade" id="logsModal" tabindex="-1" aria-labelledby="logsModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-xl modal-dialog-scrollable">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="logsModalLabel">Game logs</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+
+      <div class="modal-body">
+        <div id="logsLoading" class="text-muted">Loading logs…</div>
+        <div id="logsError" class="alert alert-danger d-none"></div>
+        <div class="accordion" id="logsAccordion"></div>
       </div>
     </div>
   </div>

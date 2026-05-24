@@ -49,6 +49,8 @@ namespace util
       std::string _prev;
   };
 
+  std::map<std::string, std::vector<std::string>> LoadLatestGameLogs(const std::string& game_name);
+
   std::string Join(const std::vector<std::string>& vec, const std::string& separator);
 
   std::vector<std::string> Split(std::string str, std::string delimiter);

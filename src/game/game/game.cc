@@ -22,7 +22,8 @@ Game::Game(std::string path, std::string name) : _cout(_global_cout), _path(path
     _cur_user(nullptr), _running(false), 
     _parser(std::bind(&Game::t_substitue_fn, this, std::placeholders::_1)),
     _settings(*util::LoadJsonFromDisc(_path + "/" + txtad::GAME_SETTINGS)),
-    _builder_settings(util::LoadJsonFromDisc(_path + "/" + txtad::BUILDER_EXTENSION).value_or(nlohmann::json::object())) {
+    _builder_settings(util::LoadJsonFromDisc(_path + "/" 
+          + txtad::BUILDER_EXTENSION).value_or(nlohmann::json::object())) {
   util::SetUpLogger(txtad::LoggerPath(), _name, util::Logger()->level());
   util::LoggerContext scope(_name);
   util::Logger()->info(fmt::format("Game::Game. Creating game: {}", name));
@@ -116,7 +117,7 @@ void Game::set_running(bool status) { _running = status; }
 void Game::HandleEvent(const std::string& user_id, const std::string& event) {
   util::LoggerContext scope(_name);
 
-  util::Logger()->debug("Game::HandleEvent: Handling inp: {}", event);
+  util::Logger()->info("Game::HandleEvent: Handling inp: {}", event);
   std::unique_lock ul(_mutex);
 
   // Inform all users about new connection
@@ -143,7 +144,7 @@ void Game::HandleEvent(const std::string& user_id, const std::string& event) {
         user_id);
     }
   }
-  util::Logger()->debug("Game::HandleEvent: Handling inp: {}. Done", event);
+  util::Logger()->info("Game::HandleEvent: Handling inp: {}. Done", event);
 }
 
 std::shared_ptr<User> Game::CreateNewUser(std::string user_id) {

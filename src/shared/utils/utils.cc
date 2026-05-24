@@ -42,6 +42,112 @@ std::shared_ptr<spdlog::logger> util::Logger() {
   return spdlog::get(LOGGER);
 }
 
+std::map<std::string, std::vector<std::string>> util::LoadLatestGameLogs(const std::string& game_name) {
+  const std::filesystem::path log_dir = txtad::LoggerPath();
+  const std::string prefix = game_name + "_logfile_";
+  const std::string suffix = ".txt";
+
+  std::optional<std::filesystem::path> newest_file;
+  std::filesystem::file_time_type newest_time;
+
+  for (const auto& entry : std::filesystem::directory_iterator(log_dir)) {
+    if (!entry.is_regular_file()) 
+      continue;
+    const auto filename = entry.path().filename().string();
+    if (filename.starts_with(prefix) && filename.ends_with(suffix)) {
+      const auto t = std::filesystem::last_write_time(entry.path());
+      if (!newest_file || t > newest_time) {
+        newest_file = entry.path();
+        newest_time = t;
+      }
+    }
+  }
+
+  if (!newest_file) {
+    return {};
+  }
+
+  std::ifstream file(*newest_file);
+  if (!file.is_open()) {
+    return {};
+  }
+
+  std::vector<std::string> lines;
+  std::string line;
+
+  while (std::getline(file, line)) {
+    lines.push_back(line);
+  }
+
+  const std::string creating_marker = "Game::Game. Creating game:";
+  const std::string created_marker = "Game::Game. Created game with desc:";
+  const std::string handle_begin_marker = "Game::HandleEvent: Handling inp:";
+  const std::string handle_done_marker = ". Done";
+
+  // Find most recent "Creating game"
+  std::size_t start = std::string::npos;
+
+  for (std::size_t i = 0; i < lines.size(); ++i) {
+    if (lines[i].find(creating_marker) != std::string::npos) {
+      start = i;
+    }
+  }
+
+  if (start == std::string::npos) {
+    return {};
+  }
+
+  std::map<std::string, std::vector<std::string>> result;
+
+  std::vector<std::string> setup_logs;
+  std::size_t i = start;
+
+  // Setup: from Creating game until Created game with desc
+  for (; i < lines.size(); ++i) {
+    setup_logs.push_back(lines[i]);
+    if (lines[i].find(created_marker) != std::string::npos) {
+      ++i;
+      break;
+    }
+  }
+
+  result["Setup"] = setup_logs;
+
+  std::regex input_regex(
+    R"(Game::HandleEvent: Handling inp:\s*(.*?)(?:\. Done)?$)"
+  );
+
+  while (i < lines.size()) {
+    if (lines[i].find(handle_begin_marker) == std::string::npos ||
+      lines[i].find(handle_done_marker) != std::string::npos) {
+      ++i;
+      continue;
+    }
+
+    std::smatch match;
+    std::string input = "Unknown";
+
+    if (std::regex_search(lines[i], match, input_regex) && match.size() > 1) {
+      input = match[1].str();
+    }
+
+    const std::string key = "Input: " + input;
+    std::vector<std::string> event_logs;
+    for (; i < lines.size(); ++i) {
+      event_logs.push_back(lines[i]);
+      const bool is_done = lines[i].find(handle_begin_marker) != std::string::npos &&
+          lines[i].find(handle_done_marker) != std::string::npos;
+
+      if (is_done) {
+        ++i;
+        break;
+      }
+    }
+    result[key] = event_logs;
+  }
+  return result;
+}
+
 struct CommaIterator : public std::iterator<std::output_iterator_tag, void, void, void, void> {
   std::ostream *os;
   std::string comma;
