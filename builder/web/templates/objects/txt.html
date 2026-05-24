@@ -6,7 +6,7 @@
 {% for txt in text %}
   <p class="text-primary">
     {% if txt.logic != "" %}
-    <span>[{{txt.logic|trim}}]</span><br>
+      <span class="text-primary small"><i>[{{txt.logic|trim}}]</i></span><br>
     {% endif %}
     <span><i>{{txt.txt}}</i></span>
   </p>

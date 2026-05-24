@@ -2,4 +2,7 @@
   <span class="">{{listener.event|safe}}</span> 
   <span class="mx-2">⇒</span>
   <span class="">{{listener.arguments|safe}}</span>
+  {% if listener.ctx != "" %} 
+    <span class="text-primary small">[{{listener.ctx}}]</span>
+  {% endif %}
 </div>
