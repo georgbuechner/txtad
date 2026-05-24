@@ -126,7 +126,7 @@ void Builder::Start() {
       ApiCommitMessage(req, resp); });
 
   _srv.Get("/api/logs/latest/:game_id", [&](const httplib::Request& req, httplib::Response& resp) {
-      ApiCommitMessage(req, resp); });
+      ApiLogsLates(req, resp); });
 
   // PAGES 
   _srv.Get("/", [&](const httplib::Request& req, httplib::Response& resp) {

@@ -531,8 +531,8 @@ async function openLogsModal(button) {
       const collapseId = `logsCollapse${index}`;
 
       const text = Array.isArray(lines)
-        ? lines.join("\n")
-        : String(lines);
+        ? lines.map(formatLogLine).join("\n")
+        : formatLogLine(String(lines));
 
       accordionEl.insertAdjacentHTML("beforeend", `
         <div class="accordion-item">
@@ -556,7 +556,7 @@ async function openLogsModal(button) {
             data-bs-parent="#logsAccordion"
           >
             <div class="accordion-body">
-              <pre class="mb-0 small bg-light p-3 rounded overflow-auto"><code>${escapeHtml(text)}</code></pre>
+              <pre class="mb-0 small bg-light p-3 rounded overflow-auto text-start"><code>${text}</code></pre>
             </div>
           </div>
         </div>
@@ -569,6 +569,16 @@ async function openLogsModal(button) {
     errorEl.classList.remove("d-none");
     errorEl.textContent = err.message || "Could not load logs.";
   }
+}
+
+function formatLogLine(line) {
+  const escaped = escapeHtml(line);
+
+  if (escaped.includes("ContextStack::TakeEvents: ")) {
+    return `<strong>${escaped}</strong>`;
+  }
+
+  return escaped;
 }
 
 /** Simple HTML escaper for user-controlled text */
