@@ -31,6 +31,11 @@ class EventManager {
 
     bool TakeEvent(std::string event, const ExpressionParser& parser) {
       util::Logger()->debug("EventManager::TakeEvent: \"{}\"", event);
+      std::string all = "";
+      for (const auto& it : _listeners) {
+        all += it.first + ", ";
+      }
+      util::Logger()->debug("EventManager::TakeEvent: listeners: \"{}\"", all);
       bool accepted = false;
       for (const auto& it : _listeners) {
         if (it.second->Test(event, parser)) {
