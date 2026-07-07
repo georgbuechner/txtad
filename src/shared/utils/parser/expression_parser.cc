@@ -4,6 +4,7 @@
 #include "shared/utils/fuzzy_search/fuzzy.h"
 #include "shared/utils/utils.h"
 #include <algorithm>
+#include <exception>
 #include <optional>
 #include <spdlog/spdlog.h>
 #include <string>
@@ -134,7 +135,12 @@ std::string ExpressionParser::evaluate(std::string input) const {
   std::string b = util::Strip(input.substr(pos+opt.length(), input.length()-(pos + opt.length()-1)));
 
   util::Logger()->debug(" - '{}', '{}', {}", a, opt, b);
-  return (*_opts[opt])(StripAndSubstitute(a), StripAndSubstitute(b)); 
+  try {
+    std::string resp = (*_opts[opt])(StripAndSubstitute(a), StripAndSubstitute(b)); 
+  } catch(std::exception& e) {
+    util::Logger()->warn("ExpressionParser::evaluate failed: {}", e.what());
+    return "0";
+  }
 }
 
 std::string ExpressionParser::StripAndSubstitute(std::string str) const {
