@@ -262,7 +262,7 @@ void Game::h_set_attribute(const std::string& event, const std::string& args) {
 void Game::h_add_to_eventqueue(const std::string& event, const std::string& args) {
   if (_cur_user) {
     std::string copy_args = args;
-    int pos = copy_args.find("#{"); 
+    int pos = copy_args.find("${"); 
     while (pos != std::string::npos) {
       int closing = util::ClosingBracket(copy_args, pos+2, '{', '}');
       if (closing != -1) {
@@ -272,7 +272,7 @@ void Game::h_add_to_eventqueue(const std::string& event, const std::string& args
       } else {
         util::Logger()->warn("Handler::AddToEventQueue: sending to user via subsitute: closing bracket not found.");
       }
-      pos = copy_args.find("#{",pos+2); 
+      pos = copy_args.find("${",pos+2); 
     }
     _cur_user->AddToEventQueue(copy_args);
   }

@@ -924,7 +924,7 @@ TEST_CASE("Test multi print", "[game]") {
       {{"id", "L1"}, {"re_event", "increase-counter"}, {"arguments", 
         "#sa general.counter++"}, {"permeable", true}},
       {{"id", "L2"}, {"re_event", "register (.*)"}, {"arguments", 
-        "#info #{**users[->name = #event]->id}"}, {"permeable", true}},
+        "#info ${**users[->name = #event]->id}"}, {"permeable", true}},
       {{"id", "L3"}, {"re_event", "#info (.*)"}, {"arguments", 
         "#> char_info: {#event.life}"}, {"permeable", true}},
     }},
