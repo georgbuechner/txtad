@@ -28,7 +28,7 @@ Game::Game(std::string path, std::string name) : _cout(_global_cout), _path(path
   util::LoggerContext scope(_name);
   util::Logger()->info(fmt::format("Game::Game. Creating game: {}", name));
   
-  // Create baisc handlers
+  // Create basc handlers
   LForwarder::set_overwite_fn(std::bind(&Game::h_add_to_eventqueue, this, std::placeholders::_1, 
         std::placeholders::_2));
 
@@ -260,8 +260,9 @@ void Game::h_set_attribute(const std::string& event, const std::string& args) {
 }
 
 void Game::h_add_to_eventqueue(const std::string& event, const std::string& args) {
-  if (_cur_user)
-    _cur_user->AddToEventQueue(args);
+  if (_cur_user) {
+    _cur_user->AddToEventQueue(GetText(event, args));
+  }
   else 
     util::Logger()->error("Game::h_add_to_eventqueue. Invalid Game state. Current user no longer valid!");
 }
