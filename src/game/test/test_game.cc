@@ -923,6 +923,10 @@ TEST_CASE("Test multi print", "[game]") {
     {"listeners", {
       {{"id", "L1"}, {"re_event", "increase-counter"}, {"arguments", 
         "#sa general.counter++"}, {"permeable", true}},
+      {{"id", "L2"}, {"re_event", "register (.*)"}, {"arguments", 
+        "#info #{**users[->name = #event]->id}"}, {"permeable", true}},
+      {{"id", "L3"}, {"re_event", "#info (.*)"}, {"arguments", 
+        "#> char_info: {#event.life}"}, {"permeable", true}},
     }},
   };
 
@@ -991,5 +995,10 @@ TEST_CASE("Test multi print", "[game]") {
         {"random user: users/user_1", "random user: users/user_2"});
     test::test_random_cout(game, USER_ID, cout, "#> random user: {**users[.poisened > 1, #ran]->id}", 
         {"random user: users/user_2"});
+  }
+
+  SECTION ("Test forward-replace") {
+    game.HandleEvent(USER_ID, "register User 1");
+    REQUIRE(get_cout() == "char_info: 10");
   }
 }

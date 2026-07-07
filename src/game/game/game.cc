@@ -261,7 +261,20 @@ void Game::h_set_attribute(const std::string& event, const std::string& args) {
 
 void Game::h_add_to_eventqueue(const std::string& event, const std::string& args) {
   if (_cur_user) {
-    _cur_user->AddToEventQueue(GetText(event, args));
+    std::string copy_args = args;
+    int pos = copy_args.find("#{"); 
+    while (pos != std::string::npos) {
+      int closing = util::ClosingBracket(copy_args, pos+2, '{', '}');
+      if (closing != -1) {
+        std::string subsitute = copy_args.substr(pos+2, closing-pos-2);
+        util::Logger()->debug("Handler::AddToEventQueue: FOUND SUBSTITUE: {}", subsitute);
+        copy_args.replace(pos, closing-pos+1, t_substitue_fn(subsitute));
+      } else {
+        util::Logger()->warn("Handler::AddToEventQueue: sending to user via subsitute: closing bracket not found.");
+      }
+      pos = copy_args.find("#{",pos+2); 
+    }
+    _cur_user->AddToEventQueue(copy_args);
   }
   else 
     util::Logger()->error("Game::h_add_to_eventqueue. Invalid Game state. Current user no longer valid!");

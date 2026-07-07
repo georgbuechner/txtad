@@ -137,6 +137,7 @@ std::string ExpressionParser::evaluate(std::string input) const {
   util::Logger()->debug(" - '{}', '{}', {}", a, opt, b);
   try {
     std::string resp = (*_opts[opt])(StripAndSubstitute(a), StripAndSubstitute(b)); 
+    return resp;
   } catch(std::exception& e) {
     util::Logger()->warn("ExpressionParser::evaluate failed: {}", e.what());
     return "0";
