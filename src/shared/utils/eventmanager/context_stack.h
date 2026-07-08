@@ -23,7 +23,7 @@ class ContextStack {
     std::vector<std::shared_ptr<Context>> find(const std::string& id_part);
 
     std::vector<std::string> GetOrder();
-    void TakeEvents(std::string& events, const ExpressionParser& parser);
+    void TakeEvents(std::string& events, const ExpressionParser& parser, bool user_inp=false);
 
   private: 
     std::map<std::string, std::shared_ptr<Context>> _contexts;

@@ -69,12 +69,12 @@ const ContextStack& User::context_stack() const {
 }
 
 // methods 
-void User::HandleEvent(const std::string& event, const ExpressionParser& parser) {
+void User::HandleEvent(const std::string& event, const ExpressionParser& parser, bool user_inp) {
   _event_queue = event;
   util::Logger()->info("User::HandleEvent ({}): {}", _id, event);
   while (_event_queue != "") {
     _event_queue = util::ReplaceAll(_event_queue, txtad::UID_REPLACEMENT, _id);
-    _context_stack.TakeEvents(_event_queue, parser);
+    _context_stack.TakeEvents(_event_queue, parser, user_inp);
   }
 }
 

@@ -27,7 +27,7 @@ class User {
     const ContextStack& context_stack() const;
 
     // methods 
-    void HandleEvent(const std::string& event, const ExpressionParser& parser);
+    void HandleEvent(const std::string& event, const ExpressionParser& parser, bool user_inp=false);
 
     /**
      * Accepts *<type> syntax, but expects the result to be a single context.

@@ -82,7 +82,7 @@ std::vector<std::string> ContextStack::GetOrder() {
   return sorted_context_ids;
 }
 
-void ContextStack::TakeEvents(std::string& events, const ExpressionParser& parser) {
+void ContextStack::TakeEvents(std::string& events, const ExpressionParser& parser, bool user_inp) {
   // If events are empty, return
   if (events == "") {
     return;
