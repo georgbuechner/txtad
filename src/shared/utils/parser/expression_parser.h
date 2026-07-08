@@ -44,7 +44,7 @@ class ExpressionParser{
      * @param[in] input (logical/mathematical expression)
      * @return string
      */
-    std::string Evaluate(std::string input) const;
+    std::string Evaluate(std::string input, bool only_substitute=false) const;
 
   private:
 

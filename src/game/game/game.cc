@@ -238,8 +238,9 @@ void Game::h_set_attribute(const std::string& event, const std::string& args) {
         continue;
       }
       std::string res = "";
-      if (parsed->opt == "=")
+      if (parsed->opt == "=") {
         res = _parser.Evaluate(parsed->expression);
+      }
       else if (parsed->opt == "++")
         res = std::to_string(std::stoi(attribute) + 1);
       else if (parsed->opt == "--")

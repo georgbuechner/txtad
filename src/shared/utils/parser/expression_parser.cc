@@ -58,6 +58,8 @@ std::map<std::string, std::string(*)(const std::string&, const std::string&)> Ex
   {"/", [](const std::string& a, const std::string& b) { return std::to_string(std::stoi(a) / std::stoi(b)); } },
   {"||", [](const std::string& a, const std::string& b) { return std::to_string(a == "1" || b == "1"); } },
   {"&&", [](const std::string& a, const std::string& b) { return std::to_string(a == "1" && b == "1"); } },
+ // TODO (fux): Add power to 
+ // TODO (fux): try removing ' ' for integer operations
 };
 
 ExpressionParser::ExpressionParser() { 
@@ -73,7 +75,7 @@ ExpressionParser::ExpressionParser(const SubstituteFN& fn) {
   };
 }
 
-std::string ExpressionParser::Evaluate(std::string input) const {
+std::string ExpressionParser::Evaluate(std::string input, bool only_substitute) const {
   util::Logger()->info("EP:Evaluate. START: {}", input);
 
   // Check for substitutes
@@ -108,7 +110,14 @@ std::string ExpressionParser::Evaluate(std::string input) const {
     }
   }
 
-  auto res = evaluate(EnsureExecutionOrder(replaced));
+  std::string res = "";
+  try {
+    res = evaluate(EnsureExecutionOrder(replaced));
+  } catch (std::exception& e) {
+    util::Logger()->warn("ExpressionParser::evaluate failed: {}. Returning replaces string", e.what());
+    util::Logger()->info("EP:Evaluate (subsitute only). =>: {}", replaced);
+    return replaced;
+  }
 
   util::Logger()->info("EP:Evaluate. =>: {}", res);
   return res;
@@ -135,13 +144,7 @@ std::string ExpressionParser::evaluate(std::string input) const {
   std::string b = util::Strip(input.substr(pos+opt.length(), input.length()-(pos + opt.length()-1)));
 
   util::Logger()->debug(" - '{}', '{}', {}", a, opt, b);
-  try {
-    std::string resp = (*_opts[opt])(StripAndSubstitute(a), StripAndSubstitute(b)); 
-    return resp;
-  } catch(std::exception& e) {
-    util::Logger()->warn("ExpressionParser::evaluate failed: {}", e.what());
-    return "0";
-  }
+  return (*_opts[opt])(StripAndSubstitute(a), StripAndSubstitute(b)); 
 }
 
 std::string ExpressionParser::StripAndSubstitute(std::string str) const {
