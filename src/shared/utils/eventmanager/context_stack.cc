@@ -87,8 +87,8 @@ void ContextStack::TakeEvents(std::string& events, const ExpressionParser& parse
   if (events == "") {
     return;
   }
-  // Otherwise Split events and handle after eachother
-  auto vec_events = util::Split(events, ";");
+  // If user_inp don't split! Otherwise Split events and handle after eachother
+  auto vec_events = (user_inp) ? std::vector<std::string>{events} : util::Split(events, ";");
   events = "";
   for (auto event : vec_events) {
     if (event.find(" #") == 0) {

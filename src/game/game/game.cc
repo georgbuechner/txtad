@@ -138,7 +138,7 @@ void Game::HandleEvent(const std::string& user_id, const std::string& event) {
   else {
     if (auto cur_user = _users.at(user_id)) {
       _cur_user = cur_user;
-      _cur_user->HandleEvent(event, _parser);
+      _cur_user->HandleEvent(event, _parser, true);
     } else {
       util::Logger()->error("Game::HandleEvent. Invalid Game state. Existing user no longer valid! id: {}", 
         user_id);
