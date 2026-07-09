@@ -10,6 +10,8 @@
 #include <catch2/catch_test_macros.hpp>
 #include <nlohmann/json.hpp>
 #include <nlohmann/json_fwd.hpp>
+#include <string>
+#include <vector>
 
 TEST_CASE("Test Creating Game", "[game]") {
   const nlohmann::json settings = {
@@ -662,6 +664,30 @@ TEST_CASE("Test game-tests", "[game]") {
   auto test_cases = test_parser::LoadTestCases(GAME_NAME); 
   for (const auto& test_case : test_cases) {
     REQUIRE(test_case.Run(game) == "");
+  }
+}
+
+TEST_CASE("Run selected game test suites", "[game][game-tests]") {
+  const std::vector<std::string> game_ids = {
+    "dost",
+  };
+
+  for (const auto& game_id : game_ids) {
+    DYNAMIC_SECTION("game: " << game_id) {
+      auto test_cases = test_parser::LoadTestCases(game_id);
+      REQUIRE_FALSE(test_cases.empty());
+
+      std::shared_ptr<BuilderGame> game = std::make_shared<BuilderGame>(
+          txtad::GamesPath() + game_id, game_id);
+
+      for (const auto& test_case : test_cases) {
+        DYNAMIC_SECTION("test case: " << test_case.desc()) {
+          const std::string result = test_case.Run(game);
+          INFO(result);
+          REQUIRE(result == "");
+        }
+      }
+    }
   }
 }
 
