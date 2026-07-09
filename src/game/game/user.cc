@@ -75,6 +75,7 @@ void User::HandleEvent(const std::string& event, const ExpressionParser& parser,
   while (_event_queue != "") {
     _event_queue = util::ReplaceAll(_event_queue, txtad::UID_REPLACEMENT, _id);
     _context_stack.TakeEvents(_event_queue, parser, user_inp);
+    user_inp = false;
   }
 }
 

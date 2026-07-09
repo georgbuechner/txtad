@@ -449,13 +449,16 @@ TEST_CASE("Test Game handlers/mechanics", "[game]") {
     const std::string USER_ID = "0x1234";
     game.HandleEvent(USER_ID, "");
 
-    game.HandleEvent(USER_ID, "#> Rooms:;#lst ctxs rooms/room_1->*rooms->name");
+    game.HandleEvent(USER_ID, "#> Rooms:");
+    game.HandleEvent(USER_ID, "#lst ctxs rooms/room_1->*rooms->name");
     REQUIRE(get_cout() == "Rooms:\n- Room 2\n- Room 3");
-    game.HandleEvent(USER_ID, "#> Items:;#lst ctxs rooms/room_1->*items->name");
+    game.HandleEvent(USER_ID, "#> Items:");
+    game.HandleEvent(USER_ID, "#lst ctxs rooms/room_1->*items->name");
     REQUIRE(get_cout() == "Items:\n- Item 1");
     game.HandleEvent(USER_ID, "#lst ctxs rooms/room_1->*->name");
     REQUIRE(get_cout() == "- Room 2\n- Room 3\n- Item 1");
-    game.HandleEvent(USER_ID, "#> Rooms:;#lst ctxs *rooms->*rooms->name");
+    game.HandleEvent(USER_ID, "#> Rooms:");
+    game.HandleEvent(USER_ID, "#lst ctxs *rooms->*rooms->name");
     REQUIRE(get_cout() == "Rooms:\n- Room 2\n- Room 3");
   }
 
@@ -927,6 +930,8 @@ TEST_CASE("Test multi print", "[game]") {
         "#info ${**users[->name = #event]->id}"}, {"permeable", true}},
       {{"id", "L3"}, {"re_event", "#info (.*)"}, {"arguments", 
         "#> char_info: {#event.life}"}, {"permeable", true}},
+      {{"id", "L4"}, {"re_event", "#poisen_all_users"}, {"arguments", 
+        "#sa **users[.poisened > 0].life -= 5;#sa **users[.poisened > 0].poisened -= 1"}, {"permeable", true}},
     }},
   };
 
@@ -979,7 +984,7 @@ TEST_CASE("Test multi print", "[game]") {
     game.HandleEvent(USER_ID, "#> poisened users: {**users[.poisened > 0]->name}");
     REQUIRE(get_cout() == "poisened users: User 1, User 2");
 
-    game.HandleEvent(USER_ID, "#sa **users[.poisened > 0].life -= 5;#sa **users[.poisened > 0].poisened -= 1");
+    game.HandleEvent(USER_ID, "#poisen_all_users");
 
     game.HandleEvent(USER_ID, "#> poisened users: {**users[.poisened > 0]->name}");
     REQUIRE(get_cout() == "poisened users: User 2");
