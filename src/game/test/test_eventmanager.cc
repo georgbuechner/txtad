@@ -1,5 +1,6 @@
 #include "shared/utils/test_helpers.h"
 #include "game/utils/defines.h"
+#include "shared/objects/context/context.h"
 #include "shared/utils/eventmanager/eventmanager.h"
 #include "shared/utils/eventmanager/listener.h"
 #include "shared/utils/parser/expression_parser.h"
@@ -117,6 +118,111 @@ TEST_CASE("Test eventmanager basic use", "[eventmanager]") {
     REQUIRE(attributes["called"] == "1");
 
   }
+}
+
+TEST_CASE("Test eventmanager event match replacements", "[eventmanager]") {
+  EventManager em;
+  std::map<std::string, std::string> attributes = {
+    {"called", "0"},
+    {"date", ""},
+    {"first", ""},
+    {"legacy", ""},
+    {"msg", ""},
+    {"user", ""},
+  };
+  ExpressionParser::SubstituteFN fn = [&attributes](const std::string& str) {
+    return (attributes.count(str) > 0) ? attributes.at(str) : "";
+  };
+  ExpressionParser parser(fn);
+  std::string event_queue = "";
+
+  Listener::Fn set_attribute = [&attributes, &parser](std::string event, std::string args) {
+    test::SetAttribute(attributes, args, parser);
+  };
+
+  Listener::Fn add_to_eventqueue = [&event_queue](std::string event, std::string args) {
+    event_queue += ((event_queue != "") ? ";" : "") + args;
+  };
+  LForwarder::set_overwite_fn(add_to_eventqueue);
+
+  em.AddListener(std::make_shared<LHandler>("M1", "#sa (.*)", set_attribute));
+
+  SECTION("Legacy #event still uses the first capture") {
+    em.AddListener(std::make_shared<LForwarder>("P1", "say (.*)", "#sa called=#event", true));
+
+    em.TakeEvent("say hello", parser);
+    TakeEvents(event_queue, em, parser);
+
+    REQUIRE(attributes["called"] == "hello");
+  }
+
+  SECTION("Indexed captures can be used in arguments") {
+    em.AddListener(std::make_shared<LForwarder>("P1", "#add_diary_entry ([^|]+)\\|([^|]+)\\|(.*)",
+          "#sa user=#event1;#sa date='#event2';#sa msg=#event3", true));
+
+    em.TakeEvent("#add_diary_entry patricia|2026-07-10|hello world", parser);
+    TakeEvents(event_queue, em, parser);
+
+    REQUIRE(attributes["user"] == "patricia");
+    REQUIRE(attributes["date"] == "2026-07-10");
+    REQUIRE(attributes["msg"] == "hello world");
+  }
+
+  SECTION("Indexed captures are replaced before legacy #event") {
+    em.AddListener(std::make_shared<LForwarder>("P1", "say (.*)",
+          "#sa first=#event1;#sa legacy=#event", true));
+
+    em.TakeEvent("say hello", parser);
+    TakeEvents(event_queue, em, parser);
+
+    REQUIRE(attributes["first"] == "hello");
+    REQUIRE(attributes["legacy"] == "hello");
+  }
+
+  SECTION("Indexed captures can be used in listener logic") {
+    em.AddListener(std::make_shared<LForwarder>("P1", "login ([^|]+)\\|(.*)",
+          "#sa called=#event2", true, "'#event1' = 'patricia'"));
+
+    em.TakeEvent("login susie|blocked", parser);
+    TakeEvents(event_queue, em, parser);
+    REQUIRE(attributes["called"] == "0");
+
+    em.TakeEvent("login patricia|ok", parser);
+    TakeEvents(event_queue, em, parser);
+    REQUIRE(attributes["called"] == "ok");
+  }
+}
+
+TEST_CASE("Test context-forwarder single capture matching remains unchanged", "[eventmanager]") {
+  EventManager em;
+  std::map<std::string, std::string> attributes = {{"called", "0"}};
+  ExpressionParser::SubstituteFN fn = [&attributes](const std::string& str) {
+    return (attributes.count(str) > 0) ? attributes.at(str) : "";
+  };
+  ExpressionParser parser(fn);
+  std::string event_queue = "";
+  auto ctx_room = std::make_shared<Context>("rooms/room_1", "Room One", "");
+
+  Listener::Fn set_attribute = [&attributes, &parser](std::string event, std::string args) {
+    test::SetAttribute(attributes, args, parser);
+  };
+
+  Listener::Fn add_to_eventqueue = [&event_queue](std::string event, std::string args) {
+    event_queue += ((event_queue != "") ? ";" : "") + args;
+  };
+  LForwarder::set_overwite_fn(add_to_eventqueue);
+
+  em.AddListener(std::make_shared<LHandler>("M1", "#sa (.*)", set_attribute));
+  em.AddListener(std::make_shared<LContextForwarder>("P1", "go (.*)", ctx_room,
+        "#sa called=<ctx>", true, UseCtx::NAME));
+
+  em.TakeEvent("go Wrong Room", parser);
+  TakeEvents(event_queue, em, parser);
+  REQUIRE(attributes["called"] == "0");
+
+  em.TakeEvent("go Room One", parser);
+  TakeEvents(event_queue, em, parser);
+  REQUIRE(attributes["called"] == "rooms/room_1");
 }
 
 TEST_CASE("Test eventmanager: SetAttribute", "[eventmanager]") {

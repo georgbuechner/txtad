@@ -51,10 +51,22 @@ std::string LHandler::ReplacedArguments(const std::string& event, const std::str
     if (args == "") {
       return match;
     } 
-    // If arguments ask for event, replace "#event" with event
+    // If arguments ask for event1..n, replace "#event1..n" with match[1..n]
     else if (pos != std::string::npos) {
-      return util::ReplaceAll(args, txtad::EVENT_REPLACEMENT, match);
-    } 
+      std::string cpy_args = args;
+      for (size_t i = base_match.size() - 1; i >= 1; i--) {
+        const std::string event_n = txtad::EVENT_REPLACEMENT + std::to_string(i);
+        const std::string match_n = base_match[i].str();
+        if (cpy_args.find(event_n) != std::string::npos) {
+          cpy_args = util::ReplaceAll(cpy_args, event_n, match_n);
+        } 
+      }
+      // If only '#event' (legacy) is still found, replace that with the base match:
+      if (cpy_args.find(txtad::EVENT_REPLACEMENT) != std::string::npos) {
+        cpy_args = util::ReplaceAll(cpy_args, txtad::EVENT_REPLACEMENT, match);
+      }
+      return cpy_args;
+    }
     // Otherwise, return arguments
     else {
       return args;
