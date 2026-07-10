@@ -15,6 +15,7 @@ namespace txtad {
   const std::string HTML_PATH = "web/";
   const std::string& GamesPath();
   const std::string& LoggerPath();
+  const std::string& TmpPath();
   const std::string GAME_SETTINGS = "settings.json";
   const std::string GAME_TESTS = "tests.json";
   const std::string GAME_FILES = "game_files/";

@@ -155,7 +155,7 @@ namespace util
 
   class TmpPath {
     public: 
-      TmpPath(const std::vector<std::string>& dirs = {}) : _path("data/tmp/" + CreateRandomString(8)) {
+      TmpPath(const std::vector<std::string>& dirs = {}) : _path(txtad::TmpPath() + CreateRandomString(8)) {
         fs::create_directory(_path);
         for (const auto& it : dirs) {
           fs::create_directory(_path + "/" + it);

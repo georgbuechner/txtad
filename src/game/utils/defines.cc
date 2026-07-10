@@ -11,3 +11,8 @@ const std::string& txtad::LoggerPath() {
   static const std::string path = util::LoadJsonFromDisc(builder::CONFIG)->at("txtad").at("logger_path");
   return path;
 }
+
+const std::string& txtad::TmpPath() {
+  static const std::string path = util::LoadJsonFromDisc(builder::CONFIG)->at("txtad").at("tmp_path");
+  return path;
+}
