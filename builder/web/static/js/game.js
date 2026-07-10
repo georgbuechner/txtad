@@ -91,6 +91,7 @@ function media_audios() {
 async function SaveContent(game_id) {
   let container = document.getElementById("save_results");
   let tests_successfull = await RunTests(game_id, "save_test_results");
+  console.log("Test Successful?", tests_successfull);
   if (tests_successfull) {
     try {
       const payload = new FormData(); 
