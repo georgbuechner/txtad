@@ -195,7 +195,6 @@ std::vector<std::shared_ptr<Context>> User::GetContext(const std::string& ctx_id
 
   if (id.starts_with("**")) {
     for (const auto& it : _contexts) {
-      util::Logger()->debug("User::GetContext: {}, {}", it.first, id);
       if (it.first.find(id.substr(2)) == 0) {
         ctxs.push_back(it.second);
       }
