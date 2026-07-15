@@ -329,7 +329,14 @@ void Game::h_print_to(const std::string& event, const std::string& args) {
     if (closing != -1) {
       std::string subsitute = args.substr(1, closing-1);
       // use `substr(len+3) for acknowledging whitespace and brackets 
-      _cout(t_substitue_fn(subsitute), GetText(event, args_copy.substr(subsitute.length()+3)));
+      std::string res = t_substitue_fn(subsitute);
+      if (res.find(";") != std::string::npos) {
+        for (const auto& user : util::Split(res, ";")) {
+          _cout(user, GetText(event, args_copy.substr(subsitute.length()+3)));
+        }
+      } else {
+        _cout(res, GetText(event, args_copy.substr(subsitute.length()+3)));
+      }
     } else {
       util::Logger()->warn("Handler::h_print_to: sending to user via subsitute: closing bracket not found.");
     }
