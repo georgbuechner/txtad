@@ -217,48 +217,52 @@ void Game::h_set_attribute(const std::string& event, const std::string& args) {
     util::Logger()->error("Game::h_set_attribute: {}, {}. _cur_user is NULL", event, args);
     return;
   }
-  if (const auto parsed = pattern::set_attribute(args)) {
-    // Find context: 
-    auto ctxs = _cur_user->GetContext(parsed->ctx_id, _parser);
-    if (ctxs.empty()) {
-      util::Logger()->warn("Game::h_set_attribute: ctx {} not found", parsed->ctx_id);
+  try {
+    if (const auto parsed = pattern::set_attribute(args)) {
+      // Find context: 
+      auto ctxs = _cur_user->GetContext(parsed->ctx_id, _parser);
+      if (ctxs.empty()) {
+        util::Logger()->warn("Game::h_set_attribute: ctx {} not found", parsed->ctx_id);
+      }
+      for (auto ctx : ctxs) {
+        util::Logger()->debug("Game::h_set_attribute: ctx {}", ctx->id());
+        std::string attribute = "";
+        if (auto attr = ctx->GetAttribute(parsed->attribute_id)) {
+          attribute = *attr;
+        } else if (parsed->opt == "=") {
+          ctx->AddAttribute(parsed->attribute_id, "");
+          util::Logger()->warn("Game::h_set_attribute: attribute {} not found in ctx {}. New attribute created", 
+              parsed->attribute_id, ctx->id());
+        } else {
+          util::Logger()->warn("Game::h_set_attribute: attribute {} not found in ctx {}. New attribute created", 
+              parsed->attribute_id, ctx->id());
+          continue;
+        }
+        std::string res = "";
+        if (parsed->opt == "=") {
+          res = _parser.Evaluate(parsed->expression);
+        }
+        else if (parsed->opt == "++")
+          res = std::to_string(std::stoi(attribute) + 1);
+        else if (parsed->opt == "--")
+          res = std::to_string(std::stoi(attribute) - 1);
+        else if (parsed->opt == "+=")
+          res = std::to_string(std::stoi(attribute) + std::stoi(_parser.Evaluate(parsed->expression)));
+        else if (parsed->opt == "-=")
+          res = std::to_string(std::stoi(attribute) - std::stoi(_parser.Evaluate(parsed->expression)));
+        else if (parsed->opt == "*=")
+          res = std::to_string(std::stoi(attribute) * std::stoi(_parser.Evaluate(parsed->expression)));
+        else if (parsed->opt == "/=")
+          res = std::to_string(std::stoi(attribute) / std::stoi(_parser.Evaluate(parsed->expression)));
+        util::Logger()->debug("Game::h_set_attribute: setting {} to {}", parsed->attribute_id, res);
+        if (!ctx->SetAttribute(parsed->attribute_id, res))
+          util::Logger()->warn("Game::h_set_attribute: Failed setting attribute: {} to {}", parsed->attribute_id, res);
+      } 
+    } else {
+      util::Logger()->debug("Game::h_set_attribute: Parsing failed: {}", args);
     }
-    for (auto ctx : ctxs) {
-      util::Logger()->debug("Game::h_set_attribute: ctx {}", ctx->id());
-      std::string attribute = "";
-      if (auto attr = ctx->GetAttribute(parsed->attribute_id)) {
-        attribute = *attr;
-      } else if (parsed->opt == "=") {
-        ctx->AddAttribute(parsed->attribute_id, "");
-        util::Logger()->warn("Game::h_set_attribute: attribute {} not found in ctx {}. New attribute created", 
-            parsed->attribute_id, ctx->id());
-      } else {
-        util::Logger()->warn("Game::h_set_attribute: attribute {} not found in ctx {}. New attribute created", 
-            parsed->attribute_id, ctx->id());
-        continue;
-      }
-      std::string res = "";
-      if (parsed->opt == "=") {
-        res = _parser.Evaluate(parsed->expression);
-      }
-      else if (parsed->opt == "++")
-        res = std::to_string(std::stoi(attribute) + 1);
-      else if (parsed->opt == "--")
-        res = std::to_string(std::stoi(attribute) - 1);
-      else if (parsed->opt == "+=")
-        res = std::to_string(std::stoi(attribute) + std::stoi(_parser.Evaluate(parsed->expression)));
-      else if (parsed->opt == "-=")
-        res = std::to_string(std::stoi(attribute) - std::stoi(_parser.Evaluate(parsed->expression)));
-      else if (parsed->opt == "*=")
-        res = std::to_string(std::stoi(attribute) * std::stoi(_parser.Evaluate(parsed->expression)));
-      else if (parsed->opt == "/=")
-        res = std::to_string(std::stoi(attribute) / std::stoi(_parser.Evaluate(parsed->expression)));
-      util::Logger()->debug("Game::h_set_attribute: setting {} to {}", parsed->attribute_id, res);
-      if (!ctx->SetAttribute(parsed->attribute_id, res))
-        util::Logger()->warn("Game::h_set_attribute: Failed setting attribute: {} to {}", parsed->attribute_id, res);
-    } 
-  } else {
-    util::Logger()->debug("Game::h_set_attribute: Parsing failed: {}", args);
+  } catch(std::exception& e) {
+    util::Logger()->debug("Game::h_set_attribute: Parsing failed for {} -> {}", args, e.what());
   }
 }
 
