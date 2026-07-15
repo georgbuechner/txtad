@@ -257,6 +257,8 @@ void Game::h_set_attribute(const std::string& event, const std::string& args) {
       if (!ctx->SetAttribute(parsed->attribute_id, res))
         util::Logger()->warn("Game::h_set_attribute: Failed setting attribute: {} to {}", parsed->attribute_id, res);
     } 
+  } else {
+    util::Logger()->debug("Game::h_set_attribute: Parsing failed: {}", args);
   }
 }
 
