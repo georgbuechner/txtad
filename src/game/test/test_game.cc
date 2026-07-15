@@ -8,6 +8,7 @@
 #include "shared/utils/utils.h"
 #include "shared/objects/tests/test_case.h"
 #include <catch2/catch_test_macros.hpp>
+#include <map>
 #include <nlohmann/json.hpp>
 #include <nlohmann/json_fwd.hpp>
 #include <string>
@@ -689,6 +690,50 @@ TEST_CASE("Run selected game test suites", "[game][game-tests]") {
       }
     }
   }
+}
+
+TEST_CASE("DOST audio messenger service is notified about character presence", "[game][dost]") {
+  Game game(txtad::GamesPath() + "dost", "dost");
+
+  std::map<std::string, std::vector<std::string>> messages;
+  game.set_msg_fn([&messages](const std::string& user_id, const std::string& msg) {
+    messages[user_id].push_back(msg);
+  });
+
+  const std::string amc_service_id = "amc-service-connection";
+  const std::string character_conn_id = "character-connection";
+  const std::string character_key = "k36L-Tj3n-FUJU-aPw4";
+  const std::string character_name = "McKane, Mira";
+  const std::string online_info = "char_info_for: " + character_key + "|" + character_name + "|" + character_conn_id;
+  const std::string offline_info = "char_info_for: " + character_key + "|" + character_name + "|0";
+
+  auto sent_to = [&messages](const std::string& user_id, const std::string& expected) {
+    const auto it = messages.find(user_id);
+    if (it == messages.end()) {
+      return false;
+    }
+    for (const auto& msg : it->second) {
+      if (msg == expected) {
+        return true;
+      }
+    }
+    return false;
+  };
+
+  game.HandleEvent(amc_service_id, txtad::NEW_CONNECTION);
+  game.HandleEvent(amc_service_id, "Audio Messenger");
+  game.HandleEvent(amc_service_id, "u_audio_messenger");
+  REQUIRE(game.contexts().at("Services/audio_messenger")->GetAttribute("amc_online") == amc_service_id);
+
+  game.HandleEvent(character_conn_id, txtad::NEW_CONNECTION);
+  game.HandleEvent(character_conn_id, "Audio Messenger");
+  game.HandleEvent(character_conn_id, character_key);
+  REQUIRE(game.contexts().at("Characters/" + character_key)->GetAttribute("amc_online") == character_conn_id);
+  REQUIRE(sent_to(amc_service_id, online_info));
+
+  game.HandleEvent(character_conn_id, txtad::REMOVE_USER + " " + character_conn_id);
+  REQUIRE(game.contexts().at("Characters/" + character_key)->GetAttribute("amc_online") == "0");
+  REQUIRE(sent_to(amc_service_id, offline_info));
 }
 
 TEST_CASE("Store game", "[game]") {
