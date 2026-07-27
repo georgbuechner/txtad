@@ -4,9 +4,89 @@
 #include "shared/utils/parser/expression_parser.h"
 #include "shared/utils/parser/pattern_parser.h"
 #include "shared/utils/utils.h"
+#include <cctype>
 #include <memory>
 #include <optional>
 #include <utility>
+
+namespace {
+
+std::string ParenthesizeQueryClauses(const std::string& query) {
+  std::string parenthesized;
+  bool quoted = false;
+  int bracket_depth = 0;
+  std::size_t clause_begin = 0;
+  bool found_logical_operator = false;
+
+  for (std::size_t i = 0; i < query.size(); ++i) {
+    if (query[i] == '\'') {
+      quoted = !quoted;
+    } else if (!quoted && query[i] == '(') {
+      ++bracket_depth;
+    } else if (!quoted && query[i] == ')') {
+      --bracket_depth;
+    } else if (!quoted && bracket_depth == 0 && i + 1 < query.size() &&
+        ((query[i] == '&' && query[i + 1] == '&') ||
+         (query[i] == '|' && query[i + 1] == '|'))) {
+      parenthesized += "(" + query.substr(clause_begin, i - clause_begin) + ")";
+      parenthesized += query.substr(i, 2);
+      clause_begin = i + 2;
+      ++i;
+      found_logical_operator = true;
+    }
+  }
+
+  if (!found_logical_operator) {
+    return query;
+  }
+
+  return parenthesized + "(" + query.substr(clause_begin) + ")";
+}
+
+std::string ExpandQuery(const std::string& query, const std::string& context_id) {
+  std::string expanded;
+  bool quoted = false;
+
+  for (std::size_t i = 0; i < query.size();) {
+    if (query[i] == '\'') {
+      quoted = !quoted;
+      expanded += query[i++];
+      continue;
+    }
+
+    const bool attribute = query[i] == '.';
+    const bool variable = query[i] == '-' && i + 1 < query.size() && query[i + 1] == '>';
+    if (quoted || (!attribute && !variable)) {
+      expanded += query[i++];
+      continue;
+    }
+
+    const std::string member_access = attribute ? "." : "->";
+    i += member_access.size();
+    const std::size_t member_begin = i;
+    while (i < query.size() &&
+        (std::isalnum(static_cast<unsigned char>(query[i])) || query[i] == '_')) {
+      ++i;
+    }
+
+    if (member_begin == i) {
+      util::Logger()->warn("User::GetContext. Invalid relative member in query: {}", query);
+      return "";
+    }
+
+    expanded += "{" + context_id + member_access +
+      query.substr(member_begin, i - member_begin) + "}";
+  }
+
+  if (quoted) {
+    util::Logger()->warn("User::GetContext. Unclosed quote in query: {}", query);
+    return "";
+  }
+
+  return ParenthesizeQueryClauses(expanded);
+}
+
+} // namespace
 
 User::User(const std::string& game_id, const std::string& id, const txtad::MsgFn& cout,
     const std::map<std::string, std::shared_ptr<Context>>& contexts, 
@@ -222,17 +302,10 @@ std::vector<std::shared_ptr<Context>> User::GetContext(const std::string& ctx_id
       util::Logger()->debug("User::GetContext. reduced query {}", query);
     }
 
-    // Find position before operand to insert '}'
-    pos = query.find(" ");
-    if (pos == std::string::npos) {
-      util::Logger()->warn("User::GetContext. Query opts must be surrounded by spaces! {}", query);
-      return {};
-    }
-    query[pos] = '}';
-
     // filter contexts not matching query
     for (const auto& ctx : ctxs) {
-      if (parser.Evaluate("{" + ctx->id() + query) == "1") {
+      const std::string expanded_query = ExpandQuery(query, ctx->id());
+      if (!expanded_query.empty() && parser.Evaluate(expanded_query) == "1") {
         filtered_ctxs.push_back(ctx);
       }
     }

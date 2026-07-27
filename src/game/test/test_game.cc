@@ -1017,7 +1017,8 @@ TEST_CASE("Test multi print", "[game]") {
     {"id", "user_2"},
     {"name", "User 2"},
     {"description", { {"txt", "A normal user"}, }},
-    {"attributes", {{"life", "20"}, {"poisened", "2"}}},
+    {"attributes", {{"life", "20"}, {"poisened", "2"},
+      {"voice_example", "user-1-voice.mp3"}}},
     {"listeners", nlohmann::json::array() },
   };
 
@@ -1054,6 +1055,15 @@ TEST_CASE("Test multi print", "[game]") {
   SECTION("Test queries") {
     game.HandleEvent(USER_ID, "#> poisened users: {**users[.poisened > 0]->name}");
     REQUIRE(get_cout() == "poisened users: User 1, User 2");
+
+    game.HandleEvent(USER_ID,
+        "#> healthy poisened users: {**users[.poisened > 0 && .life > 10]->name}");
+    REQUIRE(get_cout() == "healthy poisened users: User 2");
+
+    game.HandleEvent(USER_ID,
+        "#> voiced poisened users: "
+        "{**users[.poisened > 0 && .voice_example = 'user-1-voice.mp3']->name}");
+    REQUIRE(get_cout() == "voiced poisened users: User 2");
 
     game.HandleEvent(USER_ID, "#poisen_all_users");
 
