@@ -133,9 +133,18 @@
                 {% set is_hidden = (p ~ "/") in game.hidden %}
                 {% if is_child(p, subpath) and not is_hidden %}
                   {% set t=all_paths[p] %}
-                  <li class="list-group-item {{t}}">
-                    {{ p }}
+                  <li 
+                    class="list-group-item {{t}}"
+                  >
+                    <b>{{ p }}</b>
                     <span class="{{t}} note">[{{t}}]: </span> 
+                    {% if t == "CTX" %} 
+                      {% set ctx = game.contexts[p] %}
+                      {% include "objects/ctx-short.html" %}
+                    {% elif t == "TXT" %} 
+                      {% set text = game.texts[p] %}
+                      {% include "objects/txt-short.html" %}
+                    {% endif %}
                   </li>
                 {% endif %}
               {% endfor %}

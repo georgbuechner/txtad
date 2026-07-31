@@ -1,0 +1,13 @@
+
+{% if label %} 
+  <span class="input-group-text">{{label}}</span>
+{% endif %}
+
+{% for txt in text %}
+  <p class="text-primary">
+    {% if txt.logic != "" %}
+      <span class="text-primary small"><i>[{{txt.logic|trim}}]</i></span><br>
+    {% endif %}
+    <span><i>{{txt.txt}}</i></span>
+  </p>
+{% endfor %}
