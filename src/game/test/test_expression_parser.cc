@@ -134,6 +134,15 @@ TEST_CASE("Text expression parser", "[parser]") {
   // Execution order 
   REQUIRE(parser.Evaluate("2+4*2") == "10");
   REQUIRE(parser.Evaluate("(10-10)*2+2+4*2") == "10");
+
+  SECTION ("TEST LISTS") {
+    REQUIRE(parser.Evaluate("Affair~:[affaire;eine auffaire;eine frau]") != "[]");
+    REQUIRE(parser.Evaluate("eine Affair~:[affaire;eine auffaire;eine frau]") != "[]");
+    REQUIRE(parser.Evaluate("eine Frau~:[affaire;eine auffaire;eine frau]") != "[]");
+    REQUIRE(parser.Evaluate("Liebe~:[affaire;eine auffaire;eine frau]") == "[]");
+    REQUIRE(parser.Evaluate("a~:[affaire;eine auffaire;eine frau]") == "[]");
+    REQUIRE(parser.Evaluate("f~:[affaire;eine auffaire;eine frau]") == "[]");
+  }
 }
 
 

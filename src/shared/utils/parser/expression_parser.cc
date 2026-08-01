@@ -42,15 +42,28 @@ std::map<std::string, std::string(*)(const std::string&, const std::string&)> Ex
           return "0";
         } },
   {"~:", [](const std::string& a, const std::string& b) -> std::string { 
-          std::string res_vec = "";
-          for (const auto& elem : util::Split(b.substr(1, b.length()-1), ";")) {
-            auto res = fuzzy::fuzzy(util::Strip(elem), a);
-            if (res != fuzzy::FuzzyMatch::NO_MATCH) 
-              res_vec += std::to_string(res) + ";";
+          try {
+            std::string res_vec = "";
+            for (const auto& elem : util::Split(b.substr(1, b.length()-1), ";")) {
+              auto res = fuzzy::fuzzy(util::Strip(elem), a);
+              std::cout << util::Strip(elem) << " ~= " << a << " => " << res << std::endl;
+              if (res != fuzzy::FuzzyMatch::NO_MATCH) {
+                if (res == fuzzy::FuzzyMatch::CONTAINS || res == fuzzy::FuzzyMatch::STARTS_WITH) {
+                  if (a.length() > (elem.length())/3) {
+                    res_vec += std::to_string(res) + ";";
+                  }
+                } else {
+                  res_vec += std::to_string(res) + ";";
+                }
+              }
+            }
+            if (res_vec.back() == ';') 
+              res_vec.pop_back();
+            return "[" + res_vec + "]";
+          } catch (std::exception& e) {
+            util::Logger()->warn("ExpressionParser: '{} ~: {}' failed: {}", a, b, e.what());
+            return "[]";
           }
-          if (res_vec.back() == ';') 
-            res_vec.pop_back();
-          return "[" + res_vec + "]";
         } },
   {"+", [](const std::string& a, const std::string& b) { return std::to_string(std::stoi(a) + std::stoi(b)); } },
   {"-", [](const std::string& a, const std::string& b) { return std::to_string(std::stoi(a) - std::stoi(b)); } },
